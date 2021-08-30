@@ -1,0 +1,7 @@
+# ffmpeg's memory pool is (probably) a tsan false positive
+fun:av_buffer_unref
+fun:av_buffer_pool_get
+fun:av_mallocz
+fun:avpriv_fits_header_parse_line
+fun:avpriv_h264_has_num_reorder_frames
+fun:avcodec_default_get_buffer2

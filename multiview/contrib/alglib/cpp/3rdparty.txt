@@ -1,0 +1,43 @@
+This text  file  lists  optional  3rd-party  components  included  in  the
+ALGLIB for C++, their functionality and special licensing terms  (if there
+are any). If you decide  not  to  use  these  optional  components,  their
+licensing terms do not apply to you.
+
+=== COMPONENT 1 ==========================================================
+
+LOCATION:       /cpp/mkl-windows
+                /cpp/mkl-interface
+DESCRIPTION:    Intel MKL extension for ALGLIB
+COPYRIGHT BY:   Intel Corporation
+SPECIAL TERMS:  see below
+
+MKL extension for ALGLIB is a special lightweight  distribution  of  Intel
+MKL software library which is used to accelerate linear algebra  and  some
+other ALGLIB functions. It also includes thin wrapper developed by  ALGLIB
+Project, which is used to connect MKL and ALGLIB. This extension  includes
+only those MKL functions which are used by ALGLIB.
+
+ALGLIB Project owns a license from Intel which allows our customers to use
+MKL as part of ALGLIB without paying additional fees  to  Intel. Its usage
+is mostly covered by ALGLIB License Agreement, but there is one  important
+additional restriction:
+
+    !
+    ! ADDITIONAL LICENSE TERMS:
+    !
+    ! you should use our MKL distribution  ONLY  TO ACCELERATE ALGLIB
+    ! and ONLY AS PART OF THE ALGLIB. You should not directly use MKL
+    ! binaries which are  shipped  with  ALGLIB.  It  is  technically
+    ! possible to directly work with mkl4alglib_32/64.dll, but  it is
+    ! strictly  prohibited  by  both  Intel MKL  license  and  ALGLIB
+    ! license agreement.
+    ! If you want to work with Intel MKL, and not  with  ALGLIB,  you
+    ! should buy separate license from Intel.
+    !
+
+This component should be used as add-on, i.e. if  you  want  to accelerate
+ALGLIB functions relying on Intel MKL (which is usually indicated in their
+comments), you should link this add-on with the rest of ALGLIB  and define
+several  preprocessor  symbols  (see  /cpp/mkl-windows/info.txt  for  more
+technical information).
+

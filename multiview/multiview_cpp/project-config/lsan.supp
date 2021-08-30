@@ -1,0 +1,5 @@
+
+leak:/usr/bin/python3
+leak:/usr/local/lib/python3
+# leak:vasprintf
+

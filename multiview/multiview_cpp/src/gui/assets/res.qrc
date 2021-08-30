@@ -1,0 +1,45 @@
+<RCC>
+  <qresource>
+  
+      <file>icons/quit.png</file>
+      <file>icons/image.png</file>
+      <file>icons/image-grey.png</file>
+      <file>icons/revert1.png</file>
+      <file>icons/revert2.png</file>
+      <file>icons/undo.png</file>
+      <file>icons/redo.png</file>
+      <file>icons/save.png</file>
+      <file>icons/web.png</file>
+      <file>icons/logo_web.png</file>
+      <file>icons/next-blue.png</file>
+      <file>icons/next-grey.png</file>
+      <file>icons/bare-cross.png</file>
+      <file>icons/bare-plus.png</file> 
+      <file>icons/green-tick.png</file> 
+      <file>icons/circle-cross.png</file>
+      <file>icons/circle-plus.png</file> 
+      <file>icons/circle-minus.png</file> 
+      <file>icons/circle-minus-grey.png</file>
+      
+      <file>icons/pose-stand.png</file>
+      <file>icons/pose-walk.png</file>
+      <file>icons/pose-sit.png</file>
+      <file>icons/pose-lay.png</file>
+      <file>icons/pose-phone.png</file>
+      <file>icons/pose-other.png</file>      
+      <file>icons/arrow-down.png</file>
+      <file>icons/arrow-up.png</file>
+      <file>icons/arrow-left.png</file>
+      <file>icons/arrow-right.png</file>
+
+      <file>icons/rotate-left.png</file>
+      <file>icons/rotate-right.png</file>  
+
+      <file>icons/zoom-in.png</file>
+      <file>icons/zoom-out.png</file>
+
+      <file>icons/trail.png</file>
+
+      <file>gui.css</file>
+  </qresource>
+</RCC>

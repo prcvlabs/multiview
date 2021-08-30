@@ -1,0 +1,232 @@
+
+ADDRESS_SANITIZE ?= 1
+TOOLCHAIN ?= gcc
+
+# ----------------------------- Generic part of the grand make file
+ifeq "$(VERSION)" "release"
+VERSION_FLAGS:=-O2 -DRELEASE
+VERSION_LINK:=	
+else
+
+VERSION_FLAGS:=-O0 -g3 -gdwarf-2 -DDEBUG -fno-omit-frame-pointer
+VERSION_LINK:=
+ifeq "$(ADDRESS_SANITIZE)" "1"
+VERSION_FLAGS:=-O0 -g3 -gdwarf-2 -DDEBUG -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls
+VERSION_LINK:=-fsanitize=address
+endif
+VERSION=debug
+
+endif
+
+SWIG_FLAGS ?=
+
+ALL_SRCS:=$(SRCS) $(QTSR)
+CPP_FILES:=$(filter %.cpp,$(ALL_SRCS))
+CXX_FILES:=$(filter %.cxx,$(ALL_SRCS))
+C_FILES:=$(filter %.c,$(ALL_SRCS))
+BUILDD:=/tmp/$(USER)-build/$(VERSION)-$(TOOLCHAIN)
+PPWD:=$(CURDIR)
+
+TARGET_EXE:=$(BUILDD)/bin/$(TARGET)
+TARGET_A:=$(BUILDD)/lib/lib$(TARGET).a
+TARGET_SO:=$(BUILDD)/lib/lib$(TARGET).so
+TARGET_PY:=$(BUILDD)/lib/_$(TARGET).so
+TARGET_BOOST_PY:=$(BUILDD)/lib/$(TARGET).so
+
+TARGET_F:=$(TARGET_EXE)
+ifdef BUILD_SO
+TARGET_F:=$(TARGET_SO)
+endif
+ifdef BUILD_A
+TARGET_F:=$(TARGET_A)
+endif
+ifdef BUILD_PY
+TARGET_F:=$(TARGET_PY)
+endif
+ifdef BUILD_BOOST_PY
+TARGET_F:=$(TARGET_BOOST_PY)
+endif
+
+DEP_LIBD:=$(BUILDD)/lib
+DEP_LINKD:=-Wl,-rpath,$(DEP_LIBD) -L$(DEP_LIBD)
+
+MOCEXE:=qtchooser -run-tool=moc -qt=5
+MOCD:=$(BUILDD)/moc
+
+ifdef OBJDIR_OVERRIDE
+OBJDIR:=$(BUILDD)/obj/$(OBJDIR_OVERRIDE)
+else
+OBJDIR:=$(BUILDD)/obj/$(TARGET)
+endif
+DEPDIR:=$(OBJDIR)
+MOC_OBJS:=$(patsubst %.cpp,${OBJDIR}/%.moc.o,$(QTSR))
+LEX_OBJS:=$(patsubst %.l,${OBJDIR}/%.o,${LEXF})
+SWIG_OBJS:=$(patsubst %.i,${OBJDIR}/%_wrap.o,$(SWIG_FILES))
+OBJ_FILES:=$(patsubst %.cpp,${OBJDIR}/%.o,$(CPP_FILES)) $(patsubst %.cxx,${OBJDIR}/%.o,$(CXX_FILES)) $(patsubst %.c,${OBJDIR}/%.o,$(C_FILES)) $(MOC_OBJS) $(LEX_OBJS) $(SWIG_OBJS)
+C_FLAGS_FIN:=$(C_FLAGS) $(VERSION_FLAGS)
+CPP_FLAGS_FIN:=-std=c++11 $(CPP_FLAGS) $(VERSION_FLAGS)
+CXX_FLAGS_FIN:=-std=c++11 $(CXX_FLAGS) $(VERSION_FLAGS)
+
+CPP_PCH:=
+CPP_PCH_FLAG:=
+CPP_PCH_T:=cpp_pch_dummy
+ifneq "$(PCH)" ""
+CPP_PCH_FLAG:=-include $(OBJDIR)/$(PCH).cpp
+CPP_PCH:=$(OBJDIR)/$(PCH).cpp.gch
+CPP_PCH_T:=$(CPP_PCH)
+endif
+
+HFILES:=$(shell cat $(ALL_SRCS:%=$(DEPDIR)/%.P) 2>/dev/null | sed -r -e 's,\s+,\n,g' | sed 's,\\$$,,g' | egrep -v *.o:$$ | egrep -v *.cpp$$ | sort | uniq)
+
+-include $(C_FILES:%=$(DEPDIR)/%.P)
+-include $(CPP_FILES:%=$(DEPDIR)/%.P)
+
+DEP_TARGETS:=$(shell for DEP in $(DEPENDS_ON) ; do [ -e "$$DEP/makefile" ] && cd "$$DEP" && $(MAKE) print-target VERSION=$(VERSION) ; done)
+
+# Automatic dependency generation
+MAKEDEPEND_C=$(CC) -MM $(C_FLAGS_FIN) $< | sed 's,\\$$,,' | while read L ; do for F in $$L ; do if [ "$${F%:}" != "$${F}" ] ; then printf '%s: \\\n' "$@" ; else if [ "$${F\#/}" != "$$F" ] ; then printf ' %s \\\n' "$$F" ; else printf ' %s \\\n' "$$PWD/$$F" ; fi ; fi ; done ; done | grep -v -E '^\s*/usr' | sed "\$$a\ " > "$(DEPDIR)/$<.P"
+MAKEDEPEND_CPP=$(CC) -MM $(CPP_FLAGS_FIN) $< | sed 's,\\$$,,' | while read L ; do for F in $$L ; do if [ "$${F%:}" != "$${F}" ] ; then printf '%s: \\\n' "$@" ; else if [ "$${F\#/}" != "$$F" ] ; then printf ' %s \\\n' "$$F" ; else printf ' %s \\\n' "$$PWD/$$F" ; fi ; fi ; done ; done | grep -v -E '^\s*/usr' | sed "\$$a\ " > "$(DEPDIR)/$<.P"
+MAKEDEPEND_CPP_PCH=$(CC) -MM $(CPP_FLAGS_FIN) $< | sed 's,^stdinc.o,$(OBJDIR)\/stdinc.h.cpp.gch,g' > $(OBJDIR)/stdinc.h.P
+
+# That pretty banner
+BANNER_IN=echo "\# \033[0;33m--- // $(BASED) $< // ---\033[0m"
+BANNER_OUT=echo "\# \033[0;35m--- // $(shell basename $@) // ---\033[0m"
+TODO=fgrep -n TODO "$<" | sed "/^\([0-9]*\):\s*/s//`printf "\033[34m$(shell basename "$<"):%s\033[0m " "\1"`/" | sed "/TODO/s//`printf "\033[34mTODO\033[0m"`/"
+
+.DEFAULT_GOAL:=$(TARGET_F)
+
+# ---------------------------------------------------------------------------------
+
+all: $(TARGET_F) 
+
+$(TARGET_EXE): $(OBJ_FILES) | base_libraries
+	@mkdir -p "$$(dirname "$@")"
+	@echo
+	@$(BANNER_OUT)
+	$(CC) -o $@ $(OBJ_FILES) $(DEP_LINKD) $(LINK_FLAGS) $(VERSION_LINK)
+	@echo
+	@printf "\033[1;36m.\033[0m\n"
+	@echo
+
+$(TARGET_SO): $(OBJ_FILES) | base_libraries
+	@mkdir -p "$$(dirname "$@")"
+	@echo
+	@$(BANNER_OUT)
+	$(CC) -o $@ -shared $(OBJ_FILES) $(DEP_LINKD) $(LINK_FLAGS) $(VERSION_LINK)
+	@echo
+
+$(TARGET_A): $(OBJ_FILES) | base_libraries
+	@mkdir -p "$$(dirname "$@")"
+	@echo
+	@$(BANNER_OUT)
+	ar rcs $@ $(OBJ_FILES)
+	@echo
+
+$(TARGET_PY): $(OBJ_FILES) | base_libraries
+	@mkdir -p "$$(dirname "$@")"
+	@echo
+	@$(BANNER_OUT)
+	$(CC) -o $@ -shared $(OBJ_FILES) $(DEP_LINKD) $(LINK_FLAGS) $(VERSION_LINK)
+	@echo
+
+$(TARGET_BOOST_PY): $(OBJ_FILES) | base_libraries
+	@mkdir -p "$$(dirname "$@")"
+	@echo
+	@$(BANNER_OUT)
+	$(CC) -o $@  -Wl,-h -Wl,$(shell basename $@) -shared -Wl,--start-group $(OBJ_FILES) $(DEP_LINKD) $(LINK_FLAGS) $(VERSION_LINK) -Wl,--end-group
+	@[ "$(VERSION)" = "release" ] && cp $@ $(CURDIR)
+	@echo
+
+${OBJDIR}/%.o: %.c
+	@mkdir -p "$$(dirname "$@")"
+	@$(MAKEDEPEND_C)
+	@echo
+	@$(BANNER_IN)
+	nice ionice -c3 $(CC) -x c $(C_FLAGS_FIN) -c -o $@ $<
+	@$(TODO)
+	@echo
+
+${OBJDIR}/%.o: %.cpp $(CPP_PCH)
+	@mkdir -p "$$(dirname "$@")"
+	@$(MAKEDEPEND_CPP);
+	@echo
+	@$(BANNER_IN)
+	nice ionice -c3 $(CC) -x c++ $(CPP_PCH_FLAG) $(CPP_FLAGS_FIN) -c -o $@ $<
+	@$(TODO)
+	@echo
+
+${OBJDIR}/%.o: %.cxx
+	@mkdir -p "$$(dirname "$@")"
+	@$(MAKEDEPEND_CPP);
+	@echo
+	@$(BANNER_IN)
+	nice ionice -c3 $(CC) -x c++ $(CXX_FLAGS_FIN) -c -o $@ $<
+	@$(TODO)
+	@echo
+
+${OBJDIR}/%.moc.o: %.hpp $(CPP_PCH)
+	@mkdir -p "$$(dirname "$@")"
+	@mkdir -p "$(MOCD)"
+	@echo
+	@$(BANNER_IN)
+	$(MOCEXE) $< > $(MOCD)/$(notdir $(basename $<)).moc.cpp
+	nice ionice -c3 $(CC) -x c++ $(CPP_PCH_FLAG) -I$(CURDIR) $(CPP_FLAGS_FIN) -c -o $@ $(MOCD)/$(notdir $(basename $<)).moc.cpp
+	@echo
+
+${OBJDIR}/%_wrap.o: %.i $(CPP_PCH) | base_libraries
+	@echo
+	@$(BANNER_IN)
+	@mkdir -p "$(shell dirname "$(patsubst %.i,${OBJDIR}/%_wrap.cpp,$<)")"
+	swig -c++ $(SWIG_FLAGS) -python -o $(patsubst %.i,${OBJDIR}/%_wrap.cpp,$<) -outdir "$(shell dirname "$(TARGET_PY)")" $<
+	@echo
+	nice ionice -c3 $(CC) -x c++ $(CPP_PCH_FLAG) $(CPP_FLAGS_FIN) $(shell pkg-config --cflags python3) -c -o $@ $(patsubst %.i,${OBJDIR}/%_wrap.cpp,$<)
+	@echo
+
+$(CPP_PCH_T): $(PCH) 
+	@mkdir -p "$$(dirname "$@")"
+	@$(MAKEDEPEND_CPP_PCH);
+	@echo
+	@$(BANNER_IN)
+	$(CC) -x c++-header $(CPP_FLAGS_FIN) -o $@ $< 
+	@echo
+
+base_libraries:
+	@for DEP in $(DEPENDS_ON) ; do if [ -e "$$DEP/makefile" ] ; then cd "$$DEP" && $(MAKE) --no-print-directory VERSION=$(VERSION) && DEP_TARGET="$$($(MAKE) --no-print-directory print-target VERSION=$(VERSION))" && [ "$$DEP_TARGET" -nt "$(TARGET_F)" ] && touch -t 197001010000 "$(TARGET_F)" ; cd "$(PPWD)" ; else echo "\033[31mERROR:\033[0m failed to find dependency makefile $$DEP/makefile" ; fi ; done
+
+clean:
+	@echo
+	@$(subst 35m,31m,$(BANNER_OUT))
+	rm -rf $(OBJDIR)
+	rm -f $(TARGET_F)
+	@PPWD=$(CURDIR)
+	@for D in $(DEPENDS_ON) ; do [ "$$D" != "" ] && cd "$$D" ; $(MAKE) --no-print-directory clean VERSION=$(VERSION) ; cd "$(PPWD)" ; done
+	@echo
+
+dust:
+	@echo
+	@$(subst 35m,31m,$(BANNER_OUT))
+	rm -rf $(OBJDIR)
+	rm -f $(TARGET_F)
+	@PPWD=$(CURDIR)
+	@echo
+
+info:
+	@echo "cpp:"
+	@for F in $(CPP_FILES) ; do echo "    $$F" ; done
+	@echo "qt: $(QTSR)"
+	@echo "swig: $(SWIG_FILES)"
+	@echo "c: $(C_FILES)"
+	@echo "target: $(TARGET_F)"
+	@echo "dep-targets: $(DEP_TARGETS)"
+
+print-target:
+	@echo $(TARGET_F)
+
+print-dep-targets:
+	@echo "$(DEP_TARGETS)"
+
+timestamps:
+	@ls --full-time $(CPP_FILES) $(HFILES) makefile 2>/dev/null
+
+.PHONY:	clean info print-target print-dep-targets timestamps dust
+

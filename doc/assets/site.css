@@ -1,0 +1,96 @@
+
+.formulaDsp
+{
+    transform: scale(1.20, 1.20);
+}
+
+#titlearea
+{
+    background-color: white;
+    padding: 0.8em;
+}
+
+#main-nav ul
+{
+    background-color: gray;
+}
+
+#main-menu .has-submenu span
+{
+    background-color: red;
+    display: none;
+}
+
+.sm-nowrap
+{
+    display: none !important;
+}
+
+#main-menu .has-submenu
+{
+    background-image: none;
+}
+
+.sm-dox
+{
+    background-image: none;
+}
+
+.sm-dox a
+{
+    color: black !important; 
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 36px;
+    text-shadow: none;
+    background-image: none;
+    padding: 0px 12px 2px 12px;
+}
+
+.sm-dox a:hover
+{
+    font-size: 13px;
+    text-shadow: none;
+    background-image: none;
+}
+
+a
+{
+    color: #3366BB !important;
+}
+
+.navpath ul
+{
+    background-image: none;
+}
+
+.memtitle
+{
+    background-image: none;
+}
+
+.dynheader
+{
+    display: none;
+}
+
+.memdoc
+{
+    box-shadow: none;
+    background-image: none;
+}
+
+.memname td
+{
+    font-family: "Monospace";
+}
+
+p
+{
+    font-family: "Bookman";
+}
+
+dl
+{
+    font-family: "Bookman";
+}

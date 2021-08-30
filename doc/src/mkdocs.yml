@@ -1,0 +1,29 @@
+
+site_name: Multiview
+
+theme: readthedocs
+
+pages:
+    - Home: index.md
+    - Howto:
+        - 'Calibration'    : howto/calibrate.gen.md
+    - Scripts:  bin_directory.md
+    - Multiview Cpp:
+        - 'Utils'          : multiview_cpp/utils.md
+        - 'Cost Functions' : multiview_cpp/cost_functions.md
+    - Base:
+        - 'Colors'       : base/colors.md   
+        - 'Homographies' : base/homographies.md   
+        - 'Math Utils'   : base/math_utils.md
+        - 'Optimize'     : base/optimize.md
+        - 'Perceive Data': base/perceive_data.md
+        - 'Static Vars'  : base/static_vars.md
+        - 'Video'        : base/video.md
+    - Calibration:
+        - 'Corners'           : calibrate/corners.md
+        - 'Distortion'        : calibrate/distortion.md
+        - 'Find Homographies' : calibrate/find_homographies.md
+        - 'Intrinsic Matrix'  : calibrate/intrinsic_matrix.md
+        - 'Stereo Calibration': calibrate/stereo_calibration.md      
+    - About: about.md
+

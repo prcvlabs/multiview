@@ -1,0 +1,105 @@
+
+# ------------------------------------------------------------------------ Rules
+
+# ------------------------ Compile Rules
+
+rule pch
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++-header $o_flag $cpp_flags -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc -c $in
+
+# Compile cpp with precompiled header
+rule cpp_pch
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++ -include $builddir/$pchfile $o_flag $cpp_flags -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc -c $in
+     
+rule mpp
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++-module $o_flag $cpp_flags -fmodules-ts -fprebuilt-module-path=$moduledir -MMD -MF $out.d -o $out --precompile $in
+     description = $cc_desc --precompile $in
+
+rule ipp
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++ $o_flag $cpp_flags -fmodules-ts -fprebuilt-module-path=$moduledir -fmodule-file=$$(dirname $out)/$$(basename $out .o).pcm -MMD -MF $out.d -o $out -c $in 
+     description = $cc_desc -c $in
+
+rule cpp
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++ $o_flag $cpp_flags -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc -c $in
+
+rule cpp_lite
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++ $o_flag $cpp_flags -w -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc (no-warn) -c $in
+
+rule cpp_Os
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c++ -Os $cpp_flags -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc -c $in
+     
+rule c_rule
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c $o_flag $c_flags -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc -c $in
+
+rule c_lite_rule
+     depfile = $out.d
+     deps = gcc
+     command = $CC -x c $o_flag $c_flags -w -MMD -MF $out.d -c $in -o $out
+     description = $cc_desc (no-warn) -c $in
+
+rule nvcc
+     deps = gcc
+     depfile = "$depfile"
+     command = /usr/local/cuda/bin/nvcc $nvcc_flags $o_flag -c $sourcefile -o $out
+     description = nvcc -c $in
+
+rule nvcc_deps
+     command = /usr/local/cuda/bin/nvcc $nvcc_flags $o_flag -M $in -o $out
+     description = nvcc-deps $in
+     
+rule make_unity_file
+     command = sed -e '$$s/$$/\n/' -s $in > $out
+     description = unity -c $in
+
+# ----------------------------------- Qt
+
+rule moc
+     depfile = $out.d
+     deps = gcc
+     command = $MOC $in | $CC -x c++ $o_flag $cpp_flags -MMD -MF $out.d -c - -o $out
+     description = moc $in
+
+rule qrc
+     command = $RCC $in | $CC -x c++ $o_flag $cpp_flags -c - -o $out
+     description = rcc $in
+
+# --------------------------- Link Rules
+
+rule link_exec
+     command = $CC -o $out $in $link_exec_flags
+     description = $cc_desc link -o $out
+    
+rule link_shared
+     # -Wl,--exclude-libs,ALL tells the linker to hide all symbols
+     # in all statically linked librarys, irrespective of symbol visibility
+     command = $CC -fvisibility=hidden -Wl,--exclude-libs,ALL -shared -o $out $in $link_so_flags
+     description = $cc_desc shared -o $out
+
+rule make_static
+     command = ar rcs $out $in
+     description = static $out
+
+rule subbuild
+     command = $in $toolchain $config
+     

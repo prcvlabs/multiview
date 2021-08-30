@@ -1,0 +1,71 @@
+
+---
+
+#https: // clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+#BasedOnStyle : LLVM
+IndentWidth : 3
+
+---
+
+Language : Cpp
+
+AlignConsecutiveAssignments : true
+AlignConsecutiveDeclarations : false
+AlignEscapedNewlines : true
+AlignOperands : true
+AlignTrailingComments : true
+
+AllowAllParametersOfDeclarationOnNextLine : false
+
+AllowShortBlocksOnASingleLine : true
+AllowShortCaseLabelsOnASingleLine : true
+AllowShortFunctionsOnASingleLine : All
+AllowShortIfStatementsOnASingleLine : true
+AllowShortLoopsOnASingleLine : true 
+
+AlwaysBreakBeforeMultilineStrings: false
+BinPackArguments : false
+BinPackParameters : false
+
+BreakBeforeBinaryOperators : All
+BreakBeforeTernaryOperators : true
+
+BreakConstructorInitializers: BeforeComma
+
+FixNamespaceComments : true
+
+BreakBeforeBraces: Custom
+BraceWrapping :
+  AfterFunction : true
+  AfterClass : true
+  AfterControlStatement : false
+  AfterEnum : false
+  AfterNamespace : true
+  AfterStruct : true
+  AfterUnion : true
+  BeforeCatch : false
+  BeforeElse : false
+  SplitEmptyFunction : false
+  SplitEmptyNamespace : false
+  SplitEmptyRecord : false  
+
+PointerAlignment : Left
+
+KeepEmptyLinesAtTheStartOfBlocks : false
+
+NamespaceIndentation : Inner
+ReflowComments : true
+SpaceAfterCStyleCast : true
+SpaceAfterTemplateKeyword : false
+SpaceBeforeAssignmentOperators : true
+SpaceBeforeParens : Never
+SpacesInSquareBrackets : false
+SortIncludes : true
+IncludeBlocks : Preserve
+
+UseTab : Never
+
+MaxEmptyLinesToKeep : 1
+ColumnLimit: 80
+---

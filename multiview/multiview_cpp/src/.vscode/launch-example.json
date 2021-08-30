@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/../multiview-test",
+            "args": ["distortion_calib", 
+                "-s", "STR00004",
+                "-f", "/home/zeus/Dropbox/perceive-data/calibration/calibration_videos/sensors/STR00004-140/manifest.text",
+                "-y", "-o", "/tmp/zap.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/..",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

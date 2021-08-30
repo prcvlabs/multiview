@@ -1,0 +1,62 @@
+This directory contains MKL extensions for ALGLIB.
+
+ALGLIB may utilize Intel MKL to speed-up some  calculations.  It  may  use
+already existing MKL installation  or special lightweight MKL distribution
+which is shipped with  Commercial Edition  of  ALGLIB  and  includes  only
+those MKL functions which are used by ALGLIB.
+
+ALGLIB Project owns license for Intel MKL, which allows us to redistribute
+MKL  static/dynamic  libraries.  Thus, you may use Intel MKL  to  speed-up
+ALGLIB without buying separate license from Intel!
+
+NOTE:      current version of ALGLIB features Windows-only MKL extensions,
+           but in future ALGLIB releases we will introduce MKL  extensions
+           for Linux systems.
+
+IMPORTANT: you should use our  MKL distribution  ONLY TO ACCELERATE ALGLIB
+           and ONLY AS PART OF THE ALGLIB. You should not directly use MKL
+           binaries which are  shipped  with  ALGLIB.  It  is  technically
+           possible to directly work with mkl4alglib_32/64.dll, but  it is
+           strictly  prohibited  by  both  Intel MKL  license  and  ALGLIB
+           license agreement.
+           If you want to work with Intel MKL, and not  with  ALGLIB,  you
+           should buy separate license from Intel.
+
+This directory includes following files:
+* ALGLIB-specific Intel MKL distribution - mkl4alglib_32/64.dll
+* import library mkl4alglib_32/64.lib for Intel MKL.
+
+In order to use MKL extensions, you should:
+* read 'Linking with Intel MKL' section of ALGLIB Reference Manual.
+* compile ALGLIB source files with following preprocessor symbols  defined
+  on at global level:
+  * AE_OS=AE_WINDOWS (to activate multithreading capabilities)
+  * AE_CPU=AE_INTEL  (to use SSE instructions provided by x86/x64 CPU's)
+  * AE_MKL           (to use Intel MKL functions in ALGLIB)
+  If you compile from command line, you may write
+      "/DAE_OS=AE_WINDOWS /DAE_CPU=AE_INTEL /DAE_MKL"
+* depending  on  CPU  architecture, choose 32-bit or 64-bit  LIB  file   -
+  mkl4alglib_32/64.lib - and link it with your application.
+* place mkl4alglib_32/64.dll into directory where it can  be  found during
+  application startup (usually - application dir)
+
+If you bought separate license for Intel MKL, and want  to  use  your  own
+installation  of  MKL  -  and  not our lightweight distribution - then you
+should perform all steps above except for linking with  mkl4alglib  static
+and dynamic libraries.
+
+Instead of linking  with  mkl4alglib,  you  should  add  to  your  project
+mkl4alglib.c file from mkl-interface directory and compile it (as C  file)
+along with the rest of ALGLIB.
+
+This C file implements interface between MKL and ALGLIB. Having this  file
+in your project and #defining AE_MKL preprocessor  definition  results  in
+ALGLIB using MKL functions.
+
+However, this C file is just interface! It is your responsibility to  make
+sure that C/C++ compiler can find MKL headers, and appropriate MKL static/
+dynamic libraries are linked to your application.
+
+NOTE:      if you link ALGLIB with your own installation if Intel MKL, you
+           may do so on any OS where MKL works - Windows or Linux.
+

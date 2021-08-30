@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="Icons">
+      <file>quit.png</file>
+      <file>web.png</file>
+      <file>logo_web.png</file>
+  </qresource>
+</RCC>

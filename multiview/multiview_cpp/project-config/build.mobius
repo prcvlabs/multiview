@@ -1,0 +1,109 @@
+
+# -------------------------------------------------------------------- Toolchain
+
+include ${MOBIUSDIR}/toolchains/flags-${ARCH}.ninja
+
+# ---------------------------------------------------------------- Configuration
+
+target   = ${TARGET}
+builddir = ${BUILDDIR}
+
+local_include = -isystem${PREFIX}/include
+local_lib = -L${PREFIX}/lib
+
+triclops_link = ${TRICLOPS_LINK}
+opengl_link = ${OPENGL_LINK}
+pcl_link = ${PCL_LINK}
+cuda_link = $local_lib -lopencv_cudastereo -lopencv_cudawarping -L/usr/local/cuda/lib64 -lcudart
+aws_link = $local_lib -laws-cpp-sdk-core -laws-cpp-sdk-s3
+assimp_link = $local_lib -lassimp
+boost_link = $local_lib -lboost_filesystem
+python_link = $local_lib ${PYTHON_LINK}
+opencv_link = $local_lib -lopencv_imgproc -lopencv_ximgproc -lopencv_core -lopencv_video -lopencv_videoio -lopencv_imgcodecs -lopencv_features2d -lopencv_xfeatures2d -lopencv_calib3d -lopencv_bgsegm -lopencv_aruco -lopencv_ml
+sgm_link =  ${SGM_LINK}
+
+version_inc = -DMULTIVIEW_VERSION="\"${MULTIVIEW_VERSION}\""
+
+ranges_inc = -isystemsrc/perceive/contrib/range-v3/include
+
+triclops_flags = ${TRICLOPS_FLAGS}
+opengl_flags = ${OPENGL_FLAG}
+cuda_flags = -isystem/usr/local/cuda/include
+pcl_flags = ${PCL_FLAG}
+python_flags = ${PYTHON_FLAG}
+prof_mem_flags = ${PROF_MEM_FLAG}
+
+imgui_flags = ${IMGUI_FLAG}
+
+inc_flags = -Isrc -I/usr/include/tirpc -isystemsrc/perceive/contrib -isystemsrc/perceive/contrib/fmt/include $ranges_inc $local_include $local_include/opencv4 -isystem../contrib -isystem../contrib/alglib/include -isystem../contrib/static-math_20180201/include
+
+# Warnings used when compiling GUI code
+w_user_gui  = -Wno-old-style-cast -Wno-deprecated-declarations -Wno-unused-local-typedef -Wno-shorten-64-to-32 -Wno-cast-align -Wno-unused-parameter -Wno-implicit-float-conversion -Wno-implicit-int-conversion -Wno-sign-conversion -Wno-double-promotion -Wno-float-conversion
+
+# Warnings use when compiling non-GUI code
+w_user = -Werror -Wno-unused-function 
+
+user_flags = -pthread -DINSTALLATION_ROOT="\"${PREFIX}\"" $python_flags $opengl_flags ${QT_FLAG} ${EGL_FLAG} ${SGM_FLAG} $triclops_flags $cuda_flags $version_inc -DUSE_CPU_FLOAT_PACKING -DBOOST_ERROR_CODE_HEADER_ONLY $prof_mem_flags $pcl_flags ${OPENPOSE_FLAGS} ${HYPERPOSE_FLAGS}
+
+user_link = -lutil -lm -ldl -pthread -lpthread -lncurses $cuda_link $opencv_link $python_link $boost_link $assimp_link $aws_link $opengl_link $triclops_link ${QT_LINK} ${EGL_LINK} ${SGM_LINK} $pcl_link $sgm_link ${OPENPOSE_LINK} -lsvm ${HYPERPOSE_LINK} ${IMGUI_LINK}
+
+pchfile    = ${PCHFILE}
+cpp_std    = -std=c++20
+o_flag     = ${O_FLAG}
+c_flags    = -DTARGET="$target" ${C_FLAGS} $user_flags
+cpp_flags  = -DTARGET="$target" ${CPP_FLAGS} $inc_flags $user_flags
+nvcc_flags = -ccbin ${CXX} -I /usr/local/cuda/include ${CUDA_GENCODE} -Xcompiler "-x c++" -Xcompiler "$inc_flags $user_flags"
+link_exec_flags = -lstdc++ -Wl,-rpath,${PREFIX}/lib ${LINK_FLAGS} $user_link
+
+# ------------------------------------------------------------------------ Rules
+
+include ${MOBIUSDIR}/rules.ninja
+
+# ------------------------------------------------------------------------ Build
+
+# -Wno-vla -Wno-strict-aliasing -Wno-unused-parameter -Wno-uninitialized -Wno-unused -Wno-ignored-qualifiers -Wno-extra
++src cd=../contrib/alglib/cpp/src ALGLIB_OBJS=*.o .
+- *.cpp         build $builddir/alglib/%.o: cpp_lite ../contrib/alglib/cpp/src/^
+  ~      cpp_flags = $cpp_flags
+
++src cd=. TARGET_OBJS=*.o ${SRC_DIRECTORIES}
+- *.pb.cc               build $builddir/%.o:       cpp ^
+  ~      cpp_flags = $cpp_flags -I$builddir
+- */im-gui/contrib/*.cpp build $builddir/%.o: cpp_lite ^
+  ~      cpp_flags = $cpp_flags $imgui_flags
+- */im-gui/*.cpp        build $builddir/%.o:       cpp_pch ^  | $builddir/$pchfile.gch
+  ~      cpp_flags = $cpp_flags $imgui_flags
+- *contrib/*.cpp        build $builddir/%.o:       cpp_lite ^
+- */gui/*.cpp           build $builddir/%.o:       cpp_pch ^  | $builddir/$pchfile.gch
+  ~      cpp_flags = $cpp_flags $w_user_gui
+- */gui/*.cc            build $builddir/%.o:       cpp ^
+  ~      cpp_flags = $cpp_flags $w_user_gui
+- */gui/widgets/*.hh    build $builddir/@/moc_&.o: moc ^
+  ~      cpp_flags = $cpp_flags $w_user_gui
+- */gui/interface/*.hh  build $builddir/@/moc_&.o: moc ^
+  ~      cpp_flags = $cpp_flags $w_user_gui
+- */gui/app-state.hh    build $builddir/@/moc_&.o: moc ^
+  ~      cpp_flags = $cpp_flags $w_user_gui
+- *.qrc                 build $builddir/%.o:       qrc ^
+- *.cpp                 build $builddir/%.o:       cpp_pch ^ | $builddir/$pchfile.gch
+- *.cxx                 build $builddir/%.o:       cpp ^
+- *.cc                  build $builddir/%.o:       cpp ^
+- *.c                   build $builddir/%.o:       c_rule ^
+- *.cu                  build $builddir/%.cu.o:    nvcc ^ $builddir/%.cu.d
+  ~      depfile = "$builddir/%.cu.d"
+  ~      sourcefile = ^
+  ~
+  ~build $builddir/%.cu.d: nvcc_deps ^
+- *.proto               build $builddir/%.pb.cc! $builddir/%.pb.h: proto ^
+
+# ----------------------------------------------------------------------- Target
+
+build $builddir/$pchfile.gch: pch $pchfile
+
+build $builddir/alglib.a: make_static ${ALGLIB_OBJS}
+
+build $target: ${LINK_COMMAND} ${TARGET_OBJS} $builddir/alglib.a
+
+# default
+default $target
+
