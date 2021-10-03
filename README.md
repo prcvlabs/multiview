@@ -72,6 +72,10 @@ Selected options are below. Use `-h` to see more.
 
 For demo videos and other media see the [PRCV website](https://prcvlabs.org).
 
+## Developing
+
+In VS Code, go to Settings > Watcher Exclude and add `**/contrib/**` and `**/doc/**` to enable file watching. These directories either never change or are automatically generated.
+
 ## Contributors
 
 This project was developed over the course of several years by [Aaron Michaux](https://pageofswords.net/press/) and is being maintained by PRCV Labs.
