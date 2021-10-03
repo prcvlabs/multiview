@@ -15,7 +15,9 @@ Over time we will split this library into components.
 
 ## Building multiview
 
-See `build/install-files/README.md` but the basic instructions are these:
+Download the install files [here](https://www.dropbox.com/sh/775n3sblawqinqt/AACalq6fX_ASjk2XS8GufmGna?dl=0) and run the `unzip` command. Then edit the `USER_INSTALL_FILES` variable in `build/install-files/base-scripts/env.sh` to point to that directory.
+
+Then run:
 ```
 sudo base-scripts/install-cuda.sh
 sudo build-scripts/build-all.sh
@@ -29,7 +31,7 @@ and has been tested on:
 * AMD Ryzen 5 3600 6-Core
 * Nvidia GeForce RTX 3060 (CUDA Capability 86)
 
-The build scripts will attempt to download from S3. This obviously won't work and instead you can get the files [here](https://www.dropbox.com/sh/775n3sblawqinqt/AACalq6fX_ASjk2XS8GufmGna?dl=0) and edit the scripts. Sorry about this - it's one of the first things we are fixing.
+See `build/install-files/README.md` for an extended explanation of the steps involved.
 
 ## Running testcases
 
