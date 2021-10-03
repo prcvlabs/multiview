@@ -80,16 +80,14 @@ else
 fi
 
 # --------------------------------------------------------------- grabbing files
-
-export INSTALL_FILE_URL="https://perceive-multiview.s3.amazonaws.com/install-files"
-export INSTALL_FILE_S3="s3://perceive-multiview/install-files"
+export USER_INSTALL_FILES="/home/zeus/code/OPEN/install-files"
 
 get_install_file()
 {
     local FILE="$1"
     local HASH="$2"
 
-    local INSTALL_D="/home/zeus/Dropbox/perceive-data/multiview/install-files"
+    local INSTALL_D="$USER_INSTALL_FILES"
     if [ -f "$INSTALL_D/$FILE" ] ; then
         local H2="$(md5sum "$INSTALL_D/$FILE" | awk '{ print $1 }')"
         if [ "$H2" != "$HASH" ] ; then
@@ -100,12 +98,6 @@ get_install_file()
             cp "$INSTALL_D/$FILE" .
             return 0
         fi
-    fi
-
-    if [ "$DOCKER_MODE" = "1" ] ; then
-        wget -nv "$INSTALL_FILE_URL/$FILE"
-    else
-        aws s3 cp "$INSTALL_FILE_S3/$FILE" .
     fi
     
     local H2="$(md5sum "$FILE" | awk '{ print $1 }')"

@@ -13,11 +13,11 @@ The install script deals with [1-3], and the deploy system with [4-5].
 
 ## 1. The Nvidia Drivers and Cuda Installation ##
 
-Nvidia and ubuntu seem to have a volatile relationship that makes it difficult to manage driver and cuda installation. As of writing, we're using CUDA 10.1, although this may change in the future. Nvidia requires a match between the driver, the cuda installation, and if running within docker, then the same with the docker container. In theory this shouldn't be to hard. In practice I have found it impossible to create a reliable script.
+Nvidia and ubuntu seem to have a volatile relationship that makes it difficult to manage driver and cuda installation. As of writing, we're using CUDA 11.2. Nvidia requires a match between the driver, the cuda installation, and if running within docker, then the same with the docker container. In theory this shouldn't be to hard. In practice it can be difficult to create a reliable script.
 
 As such, the human user is responsible for installing the driver. On the google cloud, I was able to install the nvidia driver using the instructions here: `https://cloud.google.com/compute/docs/gpus/install-drivers-gpu`
 
-The script `multiview/build/install-cuda_10-1.sh` is a guide (or may just work) for getting CUDA 10.1 installed. There is no problem having multiple cuda installations.
+The script `multiview/build/install-cuda.sh` is a guide (or may just work) for getting CUDA 11.2 installed. There is no problem having multiple cuda installations.
 
 ## 2. Packages ##
 
@@ -49,7 +49,7 @@ The multiview project depends on [1-3], but primarily on 3. above. Multiview can
 
 ## 5. Deploy System ##
 
-The `multiview/build/build.sh` script is the primary tool for deploying multiview. Currently we build to tagged docker containers: `multiview:test`, `multiview:dev`, `multiview:staging`, and Matt (or Sam) takes the final step of re-tagging `multiview:staging` to `multiview:production`.
+The `multiview/build/build.sh` script is the primary tool for deploying multiview. Currently we build to tagged docker containers: `multiview:test`, `multiview:dev`, `multiview:staging`, and these can be retagged.
 
 Deployment involves:
 
