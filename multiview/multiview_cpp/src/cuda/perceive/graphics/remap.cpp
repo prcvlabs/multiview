@@ -22,13 +22,15 @@ void cuda_remap(const uint8_t* src,
                 const float border_value[4],
                 cudaStream_t stream);
 
+// ------------------------------------------------------------------ check-cuda
+
 static void check_cuda(cudaError_t err, const char* what)
 {
    if(err != cudaSuccess)
       throw std::runtime_error(format("{}: {}", what, cudaGetErrorString(err)));
 }
 
-// ------------------------------------------------------------------ RemapMaps
+// ------------------------------------------------------ RemapMaps construction
 
 RemapMaps::RemapMaps(RemapMaps&& o) noexcept { *this = std::move(o); }
 
@@ -43,6 +45,8 @@ RemapMaps& RemapMaps::operator=(RemapMaps&& o) noexcept
    return *this;
 }
 
+// ---------------------------------------------------------- RemapMaps::release
+
 void RemapMaps::release_() noexcept
 {
    cudaFree(mapx_);
@@ -52,6 +56,8 @@ void RemapMaps::release_() noexcept
    width_  = 0;
    height_ = 0;
 }
+
+// ----------------------------------------------------------- RemapMaps::upload
 
 void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
 {
@@ -80,7 +86,7 @@ void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
    height_ = unsigned(mapx.rows);
 }
 
-// ------------------------------------------------------------------- Remapper
+// ------------------------------------------------------ Remapper::DeviceBuffer
 
 Remapper::DeviceBuffer::~DeviceBuffer() { cudaFree(data); }
 
@@ -94,10 +100,14 @@ void Remapper::DeviceBuffer::create(size_t n_bytes)
    size = n_bytes;
 }
 
+// ------------------------------------------------------- Remapper construction
+
 Remapper::~Remapper()
 {
    if(stream_ != nullptr) cudaStreamDestroy(cudaStream_t(stream_));
 }
+
+// ---------------------------------------------------------- Remapper::supports
 
 bool Remapper::supports(const cv::Mat& src, int interpolation) noexcept
 {
@@ -105,6 +115,8 @@ bool Remapper::supports(const cv::Mat& src, int interpolation) noexcept
           and (interpolation == cv::INTER_NEAREST
                or interpolation == cv::INTER_LINEAR);
 }
+
+// ------------------------------------------------------------- Remapper::remap
 
 cv::Mat Remapper::remap(const cv::Mat& src,
                         const RemapMaps& maps,
