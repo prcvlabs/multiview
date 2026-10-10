@@ -204,12 +204,11 @@ calc_hash()
 }
 
 DO_DOWNLOAD=0
-S3_D="s3://perceive-multiview/testcases"
-CACHE_D="$HOME/.cache/multiview-data/testcases"
-TESTCASE_D="$CACHE_D/$TESTCASE_NAME"
+FETCH_SH="$PPWD/../build/fetch-testcases.sh"
+DATA_D="${MULTIVIEW_TESTCASE_DATA:-$HOME/multiview-data}"
+TESTCASE_D="$DATA_D/testcases/$TESTCASE_NAME"
 HASH_F="hash.md5"
 
-#echo "hashf = $S3_D/$TESTCASE_NAME/$HASH_F"
 #echo "REMOTE = $REMOTE_HASH"
 
 REMOTE_HASH_S="$REMOTE_HASH"
@@ -291,7 +290,7 @@ if [ "$DO_DOWNLOAD" = "1" ] ; then
     echo "Downloading"
     echo
     mkdir -p "$TESTCASE_D"
-    aws s3 cp --recursive "$S3_D/$TESTCASE_NAME" "$TESTCASE_D"    
+    "$FETCH_SH" -d "$DATA_D" "$TESTCASE_NAME" || exit 1
 fi
 
 # ------------------------------------------------------------- run the testcase
@@ -310,11 +309,6 @@ TRACKS_F="--tracks-file $TESTCASE_D/ground-truth.json"
 PIPE_TEST="--pipeline-testcase"
 RUN_MODE="pipeline"
 
-if [ "$DO_DOWNLOAD" = "0" ] && [ "$BUILD_ONLY" = "" ] ; then
-    echo "Downloading latest ground-truth.json (it may not exist)"
-    aws s3 cp "$S3_D/$TESTCASE_NAME/ground-truth.json" "$TESTCASE_D/ground-truth.json"
-fi
-
 if [ ! -f "$TESTCASE_D/ground-truth.json" ] ; then
     TRACKS_F=""
     PIPE_TEST=""
@@ -326,7 +320,7 @@ if [ "$EDITOR" = "1" ] ; then
     TRACKS_F=""
     PIPE_TEST=""
     RUN_MODE="gui"
-    GUI_OPTS="--annotations-directory $S3_D/$TESTCASE_NAME"
+    GUI_OPTS="--annotations-directory $TESTCASE_D"
 fi
 
 export MULTIVIEW_OPENPOSE_DISABLED=0
