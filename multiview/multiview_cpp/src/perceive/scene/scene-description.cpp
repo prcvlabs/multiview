@@ -192,7 +192,6 @@ struct This::Pimpl
 
    std::once_flag floor_grid_flag;
    shared_ptr<const vector<ARGBImage>> floor_grids_ptr = nullptr;
-   std::atomic<bool> floor_grids_pending               = false;
 
    void accumulate_sensor(const cv::Mat& im, int frame_no, int sensor_no) const
    {
@@ -280,12 +279,23 @@ struct This::Pimpl
 This::This()
     : pimpl_(make_unique<Pimpl>())
 {}
-This::~This()
+This::~This() { floor_grids_job_.wait(); }
+
+// --------------------------------------------------------------- FloorGridsJob
+//
+This::FloorGridsJob::FloorGridsJob(FloorGridsJob&& o) noexcept { o.wait(); }
+
+This::FloorGridsJob& This::FloorGridsJob::operator=(FloorGridsJob&& o) noexcept
 {
-   // The floor grids are calculated by a scheduled job that uses `this`
-   if(pimpl_ != nullptr)
-      while(pimpl_->floor_grids_pending)
-         if(!try_one_scheduled_job()) std::this_thread::yield();
+   wait();
+   o.wait();
+   return *this;
+}
+
+void This::FloorGridsJob::wait() const noexcept
+{
+   while(pending)
+      if(!try_one_scheduled_job()) std::this_thread::yield();
 }
 
 Timestamp This::current_timestamp() const noexcept
@@ -1230,10 +1240,10 @@ void This::init(const SceneManifest& SM,
    }
 
    { // ---- Asychronously calculate the floor grids
-      P.floor_grids_pending = true;
+      floor_grids_job_.pending = true;
       schedule([this]() {
          pimpl_->calc_floor_grids_(this);
-         pimpl_->floor_grids_pending = false;
+         floor_grids_job_.pending = false;
       });
    }
 
