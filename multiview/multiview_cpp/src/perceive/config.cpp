@@ -191,6 +191,7 @@ static Json::Value read_env()
    get_w_default("MULTIVIEW_ASSET_DIR", ""s);
    get_w_default("MULTIVIEW_CACHE_DIR", ""s);
    get_w_default("MULTIVIEW_LAZY_S3_DIR", ""s);
+   get_w_default("MULTIVIEW_HYPERPOSE_DIR", ""s);
    get_bool_w_default("MULTIVIEW_TRACE_MODE");
    get_bool_w_default("MULTIVIEW_DEBUG_LOCKS");
    get_bool_w_default("MULTIVIEW_OPENPOSE_SERIAL");
@@ -262,7 +263,9 @@ void EnvironmentVariables::init_config(const Json::Value& o)
    if(!is_directory(installation_root))
       FATAL(format("failed to find installation root: {}", installation_root));
 
-   hyperpose_path = format("{}/opt/hyperpose", installation_root);
+   hyperpose_path = o["MULTIVIEW_HYPERPOSE_DIR"].asString();
+   if(hyperpose_path.empty())
+      hyperpose_path = format("{}/opt/hyperpose", installation_root);
 #ifdef WITH_HYPERPOSE
    if(!is_directory(hyperpose_path))
       WARN(format("failed to find hyperpose directory = '{}'", hyperpose_path));

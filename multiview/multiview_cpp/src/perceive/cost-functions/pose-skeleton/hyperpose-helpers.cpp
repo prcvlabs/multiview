@@ -52,7 +52,6 @@ void clear_hyperpose_registry() noexcept {}
 // ----------------------------------------------------------- WITH HYPERPOSE --
 // -----------------------------------------------------------------------------
 
-#include <gflags/gflags.h>
 #include <hyperpose/hyperpose.hpp>
 #include <variant>
 
