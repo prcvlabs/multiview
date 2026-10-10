@@ -107,7 +107,8 @@ the only way to build the pose detection and GUI targets.
 
 ## Running testcases
 
-The following scenarios are available to test:  
+The testcases are listed by `./bin/testcase.sh -h`, for example:
+
    * 001_site01_short          -- Two people walking through site01.
    * 002_site02_gaze           -- Track 1 person, but gaze is over the shoulder.
    * 003_site02_cluster        -- People are tightly clustered together.
@@ -123,7 +124,18 @@ The following scenarios are available to test:
    * 013_site06_occlude        -- Three people in a tight space, with occlusion. Frames [1900-2100).
    * 014_site06_sitting        -- A group walking to a table, and some sitting. Frames [5300-5650).
 
-Testcases can be run via `./bin/testcase.sh`. One test case has data available today which can be downloaded [here](https://www.dropbox.com/sh/btpqu9p9nv68txj/AACajIaTwKjXO7vSe4CrJiROa?dl=0). Like the build scripts we need to reorganize the data to make them all available.
+The calibration data and each testcase's manifest and ground truth are
+bundled in [`data/`](data/README.md). The videos are in the Hugging Face
+dataset
+[prcvlabs/multiview-retail-tracking](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking),
+which is gated: accept its terms, run `hf auth login`, and then download
+testcases with `build/fetch-testcases.sh` (`--list` lists them):
+
+```
+build/fetch-testcases.sh 7          # into ~/multiview-data/testcases
+build/fetch-testcases.sh all
+./bin/testcase.sh 007_site03_sparse_tracks  # downloads it if needed
+```
 
 ## Running multiview
 
@@ -138,13 +150,22 @@ $CLI undistort -h
 $CLI dump_default_params -d /tmp/params /path/to/manifest.json
 ```
 
-Commands that load a scene (`pipeline`, `dump_default_params`, ...) need its
-calibration data from the asset store (`MULTIVIEW_ASSET_STORE`, default
-`LAZY_S3` with bucket `s3://perceive-multiview`). That bucket is no longer
-available, so these commands currently fail with a `NoSuchBucket` error
-unless you provide the calibration files yourself in a local store
-(`MULTIVIEW_ASSET_STORE=MULTIVIEW_ASSET_DIR` and `MULTIVIEW_ASSET_DIR=/abs/path`,
-using the same layout as the bucket, e.g. `calibration/scenes/<scene-key>.json`).
+Commands that load a scene (`pipeline`, `dump_default_params`, ...) read its
+calibration data from the asset store. By default this is the bundled
+`data/` directory (`MULTIVIEW_ASSET_STORE=MULTIVIEW_ASSET_DIR`, with
+`MULTIVIEW_ASSET_DIR` set to the absolute path of `data/` at build time), so
+a downloaded testcase needs no further setup:
+
+```
+$CLI dump_default_params -d /tmp/params ~/multiview-data/testcases/007_site03_sparse_tracks/manifest.json
+```
+
+Set `MULTIVIEW_ASSET_DIR=/abs/path` to use another directory with the same
+layout (e.g. `calibration/scenes/<scene-key>.json`), or
+`MULTIVIEW_ASSET_STORE=S3` (or `LAZY_S3`) and `MULTIVIEW_ASSET_S3_BUCKET` to
+use an S3 bucket with that layout. Cached data, such as
+undistortion maps, is written to `MULTIVIEW_CACHE_DIR` (default
+`~/.cache/multiview-data/cache`), never to the asset directory.
 
 Selected commands are below.
 
