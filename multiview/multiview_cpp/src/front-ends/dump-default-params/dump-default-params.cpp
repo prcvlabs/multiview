@@ -117,7 +117,17 @@ int run_main(int argc, char** argv)
    SceneDescription::InitOptions opts;
    opts.optional_search_path = dirname(config.manifest_fname);
    opts.on_the_fly_still     = true;
-   auto scene_desc = load_scene_from_manifest(config.manifest_fname, opts);
+   // Note: passing the filename directly would implicitly convert it to a
+   // JSON *string* value, so read and parse the file first.
+   shared_ptr<SceneDescription> scene_desc = nullptr;
+   try {
+      scene_desc = load_scene_from_manifest(
+          parse_json(file_get_contents(config.manifest_fname)), opts);
+   } catch(std::exception& e) {
+      LOG_ERR(format("failed to read manifest '{:s}': {:s}",
+                     config.manifest_fname,
+                     e.what()));
+   }
    if(scene_desc == nullptr) {
       LOG_ERR(format("failed to load manifest '{:s}', aborting",
                      config.manifest_fname));
