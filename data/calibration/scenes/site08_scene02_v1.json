@@ -1,0 +1,35 @@
+{
+    "type":             "SceneDescriptionInfo",
+
+    "store-id":         2,
+    "scene-key":        "site08_scene01_v3",
+
+    "cad-model-key":    "site08_model_v4.few-triangles.stl",
+    "cad-model-transform": {
+        "translation": [0.0, 0.0, 0.0],
+        "rotation":    [0.0, 0.0, 0.0, 1.0],
+        "scale":        0.001
+    },
+    
+    "bcam-keys":        ["C000000050"],
+    
+    "bcam-transforms":
+    [
+        {
+            "rotation" : 
+            [
+                0.49121296799948511,
+                    -0.69197694080753969,
+                    -0.39579819244530251,
+                0.35102923570096944
+            ],
+            "scale" : 1,
+            "translation" : 
+            [
+                6.4913227345928455,
+                1.5322202384014321,
+                2.3101707275951266
+            ]
+        }
+    ]
+}

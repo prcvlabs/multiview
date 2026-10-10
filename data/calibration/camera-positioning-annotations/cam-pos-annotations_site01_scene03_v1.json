@@ -1,0 +1,19 @@
+{
+   "lines" : [],
+   "points" : [
+      {
+         "camera_no" : 1,
+         "is_origin" : false,
+         "label" : 1,
+         "on_floor" : true,
+         "x" : [ 312.67095947265625, 255.13951110839844 ]
+      },
+      {
+         "camera_no" : 0,
+         "is_origin" : false,
+         "label" : 1,
+         "on_floor" : true,
+         "x" : [ 659.77972412109375, 515.3623046875 ]
+      }
+   ]
+}

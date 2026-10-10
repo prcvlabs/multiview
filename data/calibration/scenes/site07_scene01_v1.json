@@ -1,0 +1,16 @@
+
+{
+    "store-id":         0,
+    "type":             "SceneDescriptionInfo",
+    "scene-key":        "site07_scene01_v1",
+    "bcam-keys":        ["c42_v13"],
+    "bcam-transforms":
+    [
+        {
+            "translation": [0, 0, 0],
+            "rotation":    [0, 0, 0, 1],
+            "scale":        1.0
+        }
+    ]
+}
+

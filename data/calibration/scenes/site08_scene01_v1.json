@@ -1,0 +1,9 @@
+{
+    "type":             "SceneDescriptionInfo",
+    "scene-key":        "site08_scene01_v1",
+    "cad-model-key":    "site08_model_v2.FBX",
+    "bcam-keys":        ["C000000047_v1", "C000000048_v1"],
+    "bcam-transforms":
+    [{ "translation": [0.0, 0.0, 0.0], "axis-angle": [1.0, 0.0, 0.0, 0.0] },
+     { "translation": [1.0, 2.0, 3.0], "axis-angle": [1.0, 0.0, 0.0, 0.5] }]
+}

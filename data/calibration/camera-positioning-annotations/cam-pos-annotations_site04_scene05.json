@@ -1,0 +1,453 @@
+{
+   "lines" : [
+      {
+         "axis" : 1,
+         "camera_no" : 2,
+         "label" : 0,
+         "on_floor" : true,
+         "x0" : [ 513.2696533203125, 385.30078125 ],
+         "x1" : [ 0.93198776245117188, 380.74746704101562 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 2,
+         "label" : 1,
+         "on_floor" : false,
+         "x0" : [ 256.43893432617188, 262.71414184570312 ],
+         "x1" : [ 185.85546875, 2.7585227489471436 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 2,
+         "label" : 2,
+         "on_floor" : false,
+         "x0" : [ 283.91299438476562, 247.30497741699219 ],
+         "x1" : [ 259.01171875, 143.30987548828125 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 2,
+         "label" : 3,
+         "on_floor" : false,
+         "x0" : [ 319.98989868164062, 93.878898620605469 ],
+         "x1" : [ 307.08975219726562, 7.6527976989746094 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 7,
+         "label" : 1,
+         "on_floor" : false,
+         "x0" : [ 150.20404052734375, 322.94677734375 ],
+         "x1" : [ 5.0140714645385742, 128.513916015625 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 7,
+         "label" : 2,
+         "on_floor" : false,
+         "x0" : [ 267.71090698242188, 320.45028686523438 ],
+         "x1" : [ 206.45396423339844, 183.59130859375 ]
+      },
+      {
+         "axis" : 3,
+         "camera_no" : 7,
+         "label" : 3,
+         "on_floor" : false,
+         "x0" : [ 723.51666259765625, 238.668701171875 ],
+         "x1" : [ 858.03759765625, 19.193635940551758 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 2,
+         "label" : 4,
+         "on_floor" : true,
+         "x0" : [ 427.72518920898438, 229.07951354980469 ],
+         "x1" : [ 417.58059692382812, 380.77688598632812 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 7,
+         "label" : 4,
+         "on_floor" : true,
+         "x0" : [ 338.56564331054688, 597.745849609375 ],
+         "x1" : [ 52.244819641113281, 604.05035400390625 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 2,
+         "label" : 5,
+         "on_floor" : true,
+         "x0" : [ 327.18624877929688, 281.6776123046875 ],
+         "x1" : [ 292.08810424804688, 372.99234008789062 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 7,
+         "label" : 5,
+         "on_floor" : true,
+         "x0" : [ 163.72628784179688, 413.06143188476562 ],
+         "x1" : [ 1.779633641242981, 416.0274658203125 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 2,
+         "label" : 6,
+         "on_floor" : true,
+         "x0" : [ 265.55551147460938, 290.09054565429688 ],
+         "x1" : [ 285.24191284179688, 257.216796875 ]
+      },
+      {
+         "axis" : 2,
+         "camera_no" : 7,
+         "label" : 6,
+         "on_floor" : true,
+         "x0" : [ 163.34439086914062, 335.83273315429688 ],
+         "x1" : [ 258.10906982421875, 335.66400146484375 ]
+      }
+   ],
+   "points" : [
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 0,
+         "on_floor" : false,
+         "x" : [ 359.36187744140625, 103.23100280761719 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 0,
+         "on_floor" : false,
+         "x" : [ 582.06402587890625, 292.89749145507812 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 1,
+         "on_floor" : true,
+         "x" : [ 310.8590087890625, 272.22015380859375 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 1,
+         "on_floor" : true,
+         "x" : [ 200.46023559570312, 385.66806030273438 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : true,
+         "label" : 2,
+         "on_floor" : true,
+         "x" : [ 368.0, 249.80000305175781 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : true,
+         "label" : 2,
+         "on_floor" : true,
+         "x" : [ 243.60148620605469, 466.68359375 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 3,
+         "on_floor" : true,
+         "x" : [ 255.91023254394531, 521.43548583984375 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 3,
+         "on_floor" : true,
+         "x" : [ 395.04714965820312, 244.00773620605469 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 4,
+         "on_floor" : true,
+         "x" : [ 359.39999389648438, 615.70001220703125 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 4,
+         "on_floor" : true,
+         "x" : [ 435.84613037109375, 223.69181823730469 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 5,
+         "on_floor" : false,
+         "x" : [ 423.01693725585938, 112.82606506347656 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 5,
+         "on_floor" : false,
+         "x" : [ 343.78216552734375, 501.1456298828125 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 6,
+         "on_floor" : false,
+         "x" : [ 303.79168701171875, 145.76426696777344 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 7,
+         "on_floor" : true,
+         "x" : [ 333.22213745117188, 169.10343933105469 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 7,
+         "on_floor" : true,
+         "x" : [ 686.624755859375, 331.98068237304688 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 6,
+         "on_floor" : false,
+         "x" : [ 516.65380859375, 250.32640075683594 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 8,
+         "on_floor" : false,
+         "x" : [ 263.82037353515625, 190.8447265625 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 9,
+         "on_floor" : false,
+         "x" : [ 263.21896362304688, 229.53536987304688 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 8,
+         "on_floor" : false,
+         "x" : [ 211.22445678710938, 247.60406494140625 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 9,
+         "on_floor" : false,
+         "x" : [ 186.35269165039062, 284.79806518554688 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 10,
+         "on_floor" : false,
+         "x" : [ 316.03640747070312, 123.32103729248047 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 10,
+         "on_floor" : false,
+         "x" : [ 654.5047607421875, 241.16142272949219 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 11,
+         "on_floor" : false,
+         "x" : [ 287.35397338867188, 164.58940124511719 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 11,
+         "on_floor" : false,
+         "x" : [ 389.58883666992188, 250.75253295898438 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 12,
+         "on_floor" : false,
+         "x" : [ 273.145263671875, 80.780845642089844 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 13,
+         "on_floor" : false,
+         "x" : [ 262.27578735351562, 86.301040649414062 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 13,
+         "on_floor" : false,
+         "x" : [ 703.70062255859375, 101.78373718261719 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 14,
+         "on_floor" : false,
+         "x" : [ 720.5640869140625, 102.76766967773438 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : true,
+         "label" : 2,
+         "on_floor" : true,
+         "x" : [ 206.49276733398438, 382.11285400390625 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 15,
+         "on_floor" : true,
+         "x" : [ 157.54891967773438, 336.70901489257812 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 15,
+         "on_floor" : true,
+         "x" : [ 264.70001220703125, 291.20001220703125 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 15,
+         "on_floor" : true,
+         "x" : [ 227.36070251464844, 535.20477294921875 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 1,
+         "on_floor" : true,
+         "x" : [ 236.7451171875, 447.12155151367188 ]
+      },
+      {
+         "camera_no" : 7,
+         "is_origin" : false,
+         "label" : 16,
+         "on_floor" : true,
+         "x" : [ 487.2890625, 593.51861572265625 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 16,
+         "on_floor" : true,
+         "x" : [ 124.27014923095703, 305.16531372070312 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 17,
+         "on_floor" : true,
+         "x" : [ 525.01068115234375, 288.89736938476562 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 18,
+         "on_floor" : true,
+         "x" : [ 504.45648193359375, 354.231201171875 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 19,
+         "on_floor" : true,
+         "x" : [ 471.33450317382812, 502.65496826171875 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 20,
+         "on_floor" : false,
+         "x" : [ 415.4005126953125, 616.938720703125 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 21,
+         "on_floor" : false,
+         "x" : [ 10.52314281463623, 484.45431518554688 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 21,
+         "on_floor" : false,
+         "x" : [ 188.29409790039062, 168.71484375 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 17,
+         "on_floor" : true,
+         "x" : [ 541.78460693359375, 387.15383911132812 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 18,
+         "on_floor" : true,
+         "x" : [ 429.42642211914062, 382.33840942382812 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 19,
+         "on_floor" : true,
+         "x" : [ 277.1739501953125, 379.28240966796875 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 20,
+         "on_floor" : false,
+         "x" : [ 121.08079528808594, 285.12030029296875 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 22,
+         "on_floor" : true,
+         "x" : [ 477.2628173828125, 259.7274169921875 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 22,
+         "on_floor" : true,
+         "x" : [ 300.860107421875, 286.50494384765625 ]
+      },
+      {
+         "camera_no" : 6,
+         "is_origin" : false,
+         "label" : 23,
+         "on_floor" : false,
+         "x" : [ 274.06204223632812, 206.84687805175781 ]
+      },
+      {
+         "camera_no" : 2,
+         "is_origin" : false,
+         "label" : 23,
+         "on_floor" : false,
+         "x" : [ 483.379638671875, 186.13336181640625 ]
+      }
+   ]
+}

@@ -1,0 +1,48 @@
+
+{
+    "type":                  "SceneDescriptionInfo",
+    "store-id":               2,
+    "scene-key":              "site08_scene03",
+    "aruco-result-key":       "",
+    "cad-model-key":          "site08_model_v4.few-triangles.stl",
+    "cad-model-transform":    {
+	"rotation" : 
+	[
+	    0,
+	    0,
+	    0,
+	    1
+	],
+	"scale" : 0.001,
+	"translation" : 
+	[
+	    0,
+	    0,
+	    0
+	]
+    },
+    
+    "bcam-keys":             ["C000000050"],
+    "bcam-transforms":
+    [
+        {
+            "translation":
+            [
+                6.573539126996560177929e+00,
+                1.476848455007733873501e+00,
+                2.309808171894122352796e+00
+            ],
+
+            "rotation" :
+            [
+                0.49121296799948511,
+                    -0.69197694080753969,
+                    -0.39579819244530251,
+                0.35102923570096944
+            ],
+
+            "scale" : 1.0
+        }
+    ]                      
+}
+

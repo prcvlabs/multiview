@@ -1,0 +1,33 @@
+{
+    "type":             "Aruco Result",
+   
+    "scene-key":        "site08_scene01_v2",
+   
+    "reference-sensor": "STR00003",
+    
+    "global-translation": [0.0, 0.0, 0.0],
+    "global-rotation":    [0.0, 0.0, 0.0, 1.0],
+    
+    "aruco-result": [
+        {
+            "sensor-id":   "STR00003",
+            "translation": [0.937, 1.600, 2.423],
+            "rotation":    [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "sensor-id":   "STR00004",
+            "translation": [0.937, 1.750, 2.423],
+            "rotation":    [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "sensor-id":   "STR00002",
+            "translation": [6.806, 1.350, 2.423],
+            "rotation":    [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "sensor-id":   "STR00005",
+            "translation": [6.950, 1.350, 2.423],
+            "rotation":    [0.0, 0.0, 0.0, 1.0]
+        }
+    ]
+} 

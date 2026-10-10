@@ -1,0 +1,31 @@
+
+{
+    "type":                  "SceneDescriptionInfo",
+    "store-id":               0,
+    "scene-key":              "site02_scene01_v2",
+    "aruco-result-key":       "",
+    "cad-model-key":          "",
+    "cad-model-transform":    {
+	"rotation" : [0, 0, 0, 1],
+	"scale" : 1,
+	"translation" : [0, 0, 0]
+    },
+    
+    "hist-aabb":             [-0.75, -2.5, 3, 2.5],
+    
+    "entrance-zone":         [[-0.75, -1.00],
+                              [ 0.50, -1.00],
+                              [ 0.50,  1.00],
+                              [-0.75,  1.00]],
+    
+    "global-transformation": {
+        "translation": [0, 0, 0],
+        "rotation" : [0, 0, 0, 1],
+        "scale" : 1.0
+    },
+    
+   "bcam-keys":             ["C0001011_v4"],
+   "bcam-transforms":       [{"translation": [4.174202674378069133354e+00, 2.440705667719924143455e+00, 3.207383151216594008304e+00],
+                              "rotation" : [-4.405845330199578691044e-01, -7.540191723100938547830e-01, 4.278185492494328556745e-01, 2.330485914364152644218e-01],
+                              "scale" : 1.0}]
+}

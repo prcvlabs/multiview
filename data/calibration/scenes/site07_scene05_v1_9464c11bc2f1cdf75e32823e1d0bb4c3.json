@@ -1,0 +1,28 @@
+
+{
+   "type":                  "SceneDescriptionInfo",
+   "store-id":               0,
+   "scene-key":              "site07_scene05_v1",
+   "cad-model-key":          "",
+   "cad-model-transform":    {
+   "translation": [0.0, 0.0, 0.0],
+   "rotation": [0.0, 0.0, 0.0, 1.0],
+   "scale": 1.0
+}
+,
+   "entrance-zone":         [],
+   "staff-zone":            [],
+   "dead-zones":            [],
+   "look-zones":            [],
+   "background-image":       "",
+   "hist-aabb":             [-1,2,4,-4],
+   "global-transformation":  {"translation": [0.000000000000000000000e+00, 0.000000000000000000000e+00, 0.000000000000000000000e+00],
+                              "rotation" : [0.000000000000000000000e+00, 0.000000000000000000000e+00, 0.000000000000000000000e+00, 1.000000000000000000000e+00],
+                              "scale" : 1.0},
+   "bcam-keys":             ["C0001082_v1_134e5915896b140ca2ea5dd61dc84b66"],
+   "bcam-transforms":       [{"translation": [-4.179432871293022322412e-01, 1.450124401393794171256e+00, 2.378081972379871622536e+00],
+                              "rotation" : [3.846948286234035951914e-01, -8.111483133726891114890e-01, 4.116064856027164542418e-01, -1.569343925111148230211e-01],
+                              "scale" : 1.0}],
+   "known-planes":          [],
+   "stills":                []
+}

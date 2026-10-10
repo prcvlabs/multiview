@@ -1,0 +1,32 @@
+{
+    "type":             "SceneDescriptionInfo",
+
+    "scene-key":        "site08_scene01_v2",
+
+    "cad-model-key":          "site08_model_v3.many-triangles.stl",
+    "cad-model-transform": {
+        "translation": [0.0, 0.0, 0.0],
+        "rotation":    [0.0, 0.0, 0.0, 1.0],
+        "scale":        0.001
+    },
+    
+    "bcam-keys":        ["C000000047_v1", "C000000048_v1"],
+    "bcam-transforms":
+    [
+        {
+            "translation": [9.370000000000000550671e-01,
+                            1.600000000000000088818e+00,
+                            2.423000000000000042633e+00],
+            "rotation":    [-5.517935849753832222575e-01,
+                            -6.905367888961122524449e-01,
+                            -3.627328814866468964517e-01,
+                            -2.951400336271827740120e-01],
+            "scale":        1.0
+        },
+        {
+            "translation": [0.0, 0.0, 0.0],
+            "rotation":    [0.0, 0.0, 0.0, 1.0],
+            "scale":        1.0
+        }
+    ]
+}

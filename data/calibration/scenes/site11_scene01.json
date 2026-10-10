@@ -1,0 +1,25 @@
+{
+    "store-id": 5,
+    "type": "SceneDescriptionInfo",
+    "scene-key": "site11_scene01",
+    "hist-aabb": [4, 0, 14, 10],
+    "bcam-keys": [
+        "C0001026_v3",
+        "C0001028_v1"
+    ],
+    "bcam-transforms": [
+        {
+            "name": "C0001026",
+            "translation": [12.453906, 5.937422, 3.329993],
+            "rotation": [-0.628910, -0.683369, 0.285962, 0.236017],
+            "scale": 1.000000
+        },
+        {
+            "name": "C0001028",
+            "translation": [7.400000, 1.500000, 4.029993],
+            "rotation": [-0.935522, -0.011744, 0.037249, 0.351103],
+            "scale": 1.000000
+        }
+    ]
+}
+ 

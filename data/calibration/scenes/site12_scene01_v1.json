@@ -1,0 +1,45 @@
+
+{
+    "type":             "SceneDescriptionInfo",
+
+    "comment":
+    [
+        "C07 -> C1007,  STR 39,32",
+        "C08 -> C1008,  STR 38,13",
+        "C09 -> C1009,  STR 34,33",
+        "C10 -> C1010,  STR 30,24"
+        ],
+    
+    "scene-key":        "site12_scene01_v1",
+    "store-id":          2,
+    
+    "aruco-result-key": "",
+    
+    "cad-model-key":    "site08_model_v4.many-triangles.stl",
+    "cad-model-transform": {
+        "translation": [0.0, 0.0, 0.0],
+        "rotation":    [0.0, 0.0, 0.0, 1.0],
+        "scale":        0.001
+    },
+    
+    "bcam-keyz":       ["C0001007_v4",
+                        "C0001008_v5",
+                        "C0001009_v4"],
+    
+    "bcam-keys":       ["C0001009_v4"],
+    
+    "bcam-transforms":
+    [        
+        {
+            "rotation" : [-0.49012249670552421,
+                          -0.77189330804186462,
+                          0.34629126513412478,
+                          0.20986428689783734],
+            "scale" : 1,
+            "translation" : [9.5844001701806043,
+                             3.6781393826834514,
+                             3.3053819778204425]
+        }
+    ]
+}
+
