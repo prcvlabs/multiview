@@ -1,0 +1,37 @@
+# User-space build environment for multiview (no sudo, no /opt/multiview).
+#
+#   micromamba create -f build/environment.yml     # or: conda env create -f ...
+#   micromamba activate multiview
+#
+# Tested on Ubuntu 24.04, NVIDIA driver 595, RTX 3090 (sm_86).
+# Versions are pinned where newer releases break the code:
+#   * OpenCV 5 removed/relocated APIs used here (keep 4.x)
+#   * Boost >= 1.88 switched <boost/process.hpp> to process v2
+#   * Eigen 5 is untested
+name: multiview
+channels:
+  - conda-forge
+  - nvidia
+dependencies:
+  # toolchain
+  - gcc_linux-64=13
+  - gxx_linux-64=13
+  - cmake>=3.24
+  - ninja
+  - pkg-config
+  # CUDA (12.8 supports sm_50..sm_120 and gcc <= 14)
+  - cuda-version=12.8
+  - cuda-nvcc
+  - cuda-cudart-dev
+  # libraries
+  - libopencv=4.12   # includes contrib: ximgproc, xfeatures2d, bgsegm, aruco
+  - eigen=3.4
+  - libboost-devel=1.86
+  - aws-sdk-cpp
+  - assimp
+  - libsvm
+  - libtirpc
+  - ncurses
+  - tbb-devel
+  - ffmpeg           # the `ffmpeg` executable is used at runtime for video I/O
+  - graphviz         # optional: `dot` renders pipeline task graphs
