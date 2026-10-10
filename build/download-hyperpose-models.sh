@@ -21,8 +21,11 @@ mkdir -p "$DEST/models"
 ARCHIVE="${HYPERPOSE_MODELS_ARCHIVE:-${MULTIVIEW_ASSET_DIR:-}/install-files/hyperpose-models.tar.bz2}"
 ARCHIVE_MD5=ac13e4b62e7733198a15eacb8e448501
 if [ -f "$ARCHIVE" ] ; then
-    echo "$ARCHIVE_MD5  $ARCHIVE" | md5sum -c -
-    tar -xjf "$ARCHIVE" -C "$DEST" --wildcards 'models/*.onnx'
+    if echo "$ARCHIVE_MD5  $ARCHIVE" | md5sum -c - ; then
+        tar -xjf "$ARCHIVE" -C "$DEST" --wildcards 'models/*.onnx'
+    else
+        echo "warning: $ARCHIVE has the wrong md5, ignoring it"
+    fi
 fi
 
 # name  google-drive-id  md5

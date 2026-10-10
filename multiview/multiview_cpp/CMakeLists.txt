@@ -63,7 +63,7 @@ find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 find_package(OpenCV REQUIRED COMPONENTS
   core imgproc imgcodecs video videoio features2d calib3d ml
   ximgproc xfeatures2d bgsegm aruco
-  OPTIONAL_COMPONENTS cudastereo cudawarping)
+  OPTIONAL_COMPONENTS cudastereo)
 find_package(assimp REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TIRPC REQUIRED IMPORTED_TARGET libtirpc)
@@ -93,13 +93,13 @@ if(MULTIVIEW_WITH_CUDA)
   find_package(CUDAToolkit REQUIRED)
   list(APPEND MV_DEFS WITH_CUDA)
   list(APPEND MV_LIBS CUDA::cudart)
-  # OpenCV's CUDA modules (GPU StereoBM, GPU remap) are optional
-  if(OpenCV_cudastereo_FOUND AND OpenCV_cudawarping_FOUND)
+  # OpenCV's cudastereo module (GPU StereoBM/SGBM) is optional
+  if(OpenCV_cudastereo_FOUND)
     list(APPEND MV_DEFS WITH_OPENCV_CUDA)
-    message(STATUS "multiview: OpenCV CUDA modules found (WITH_OPENCV_CUDA)")
+    message(STATUS "multiview: OpenCV cudastereo found (WITH_OPENCV_CUDA)")
   else()
-    message(STATUS "multiview: OpenCV has no CUDA modules; "
-                   "GPU stereo/remap disabled, project CUDA kernels enabled")
+    message(STATUS "multiview: OpenCV has no cudastereo; "
+                   "GPU StereoBM/SGBM disabled, project CUDA kernels enabled")
   endif()
 endif()
 

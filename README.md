@@ -78,8 +78,8 @@ and configure `multiview/multiview_cpp/CMakeLists.txt` as usual.
 
 Rectification (`calc_rectified`) uses a native CUDA remap kernel whenever
 `MULTIVIEW_WITH_CUDA` is on. `WITH_OPENCV_CUDA` (GPU StereoBM/SGBM) is turned
-on automatically if your OpenCV has the `cudastereo` and `cudawarping`
-modules; the conda-forge OpenCV does not, so those run on the CPU.
+on automatically if your OpenCV has the `cudastereo` module; the conda-forge
+OpenCV does not, so those run on the CPU.
 
 These are **not** supported by the CMake build: OpenPose/Caffe pose
 detection, Triclops, PCL, OpenGL and the GUIs

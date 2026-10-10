@@ -75,7 +75,8 @@ install_tensorrt()
         return 0
     fi
 
-    local TMPD="$(mktemp -d)"
+    local TMPD
+    TMPD="$(mktemp -d)"
     trap 'rm -rf "$TMPD"' RETURN
     local WHEEL="${TRT_WHEEL_FILE:-$TMPD/trt.whl}" # reuse a downloaded wheel
     if [ ! -f "$WHEEL" ] ; then
