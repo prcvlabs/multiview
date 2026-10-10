@@ -1,10 +1,8 @@
 
 #include "rgb-to-lab.hpp"
 
+#include "cuda-check.hpp"
 #include "perceive/utils/cuda-spec.hpp"
-
-#include <cuda_runtime.h>
-#include <stdexcept>
 
 namespace perceive::cuda
 {
@@ -15,12 +13,6 @@ void cuda_convert_rgb_to_lab(
                             // B values are assumed to be contiguous
     size_t lab_pixel_size,  // bytes from one pixel to next
     cudaStream_t stream);
-
-static void check_cuda(cudaError_t err, const char* what)
-{
-   if(err != cudaSuccess)
-      throw std::runtime_error(format("{}: {}", what, cudaGetErrorString(err)));
-}
 
 // Zero-copy (mapped, pinned) host memory that the kernel reads/writes
 // directly.
@@ -33,17 +25,16 @@ struct MappedBuffer
    MappedBuffer& operator=(const MappedBuffer&) = delete;
    ~MappedBuffer()
    {
-      if(data != nullptr) cudaFreeHost(data);
+      if(data != nullptr) CUDA_CHECK(cudaFreeHost(data));
    }
 
    void create(size_t n_bytes) // no-op if already large enough
    {
       if(n_bytes <= size) return;
-      if(data != nullptr) cudaFreeHost(data);
+      if(data != nullptr) CUDA_CHECK(cudaFreeHost(data));
       data = nullptr;
       size = 0;
-      check_cuda(cudaHostAlloc(&data, n_bytes, cudaHostAllocMapped),
-                 "cudaHostAlloc");
+      CUDA_CHECK(cudaHostAlloc(&data, n_bytes, cudaHostAllocMapped));
       size = n_bytes;
    }
 };
@@ -59,12 +50,9 @@ struct ARGBToLABConversion::Pimpl
    ~Pimpl();
 };
 
-ARGBToLABConversion::Pimpl::Pimpl()
-{
-   check_cuda(cudaStreamCreate(&stream), "cudaStreamCreate");
-}
+ARGBToLABConversion::Pimpl::Pimpl() { CUDA_CHECK(cudaStreamCreate(&stream)); }
 
-ARGBToLABConversion::Pimpl::~Pimpl() { cudaStreamDestroy(stream); }
+ARGBToLABConversion::Pimpl::~Pimpl() { CUDA_CHECK(cudaStreamDestroy(stream)); }
 
 ARGBToLABConversion::ARGBToLABConversion()
 {
@@ -107,7 +95,7 @@ Vec3fImage ARGBToLABConversion::convert(const ARGBImage& argb) const
                            sizeof(Vector3f),
                            P.stream);
 
-   check_cuda(cudaStreamSynchronize(P.stream), "cudaStreamSynchronize");
+   CUDA_CHECK(cudaStreamSynchronize(P.stream));
 
    Vec3fImage result{lab_shared};
    return result;

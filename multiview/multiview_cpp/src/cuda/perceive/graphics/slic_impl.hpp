@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "cuda-check.hpp"
+#include "image-layout.hpp"
+
 #include <cstring>
 #include <cuda_runtime.h>
 #include <exception>
@@ -9,28 +12,12 @@
 #include <string>
 #include <type_traits>
 
-#define CUDA_CHECK(expr) \
-   perceive::cuda::slic::cuda_check_impl(expr, #expr, __FILE__, __LINE__)
-
 namespace perceive
 {
 namespace cuda
 {
    namespace slic
    {
-      inline void cuda_check_impl(const cudaError_t err,
-                                  const char* expr,
-                                  const char* file,
-                                  unsigned line)
-      {
-         if(err != cudaSuccess) {
-            std::stringstream ss;
-            ss << "Error " << cudaGetErrorName(err) << " in " << file << ":"
-               << line << " : " << expr;
-            throw std::runtime_error(ss.str());
-         }
-      }
-
       struct Color
       {
          float elements[3];
@@ -50,43 +37,6 @@ namespace cuda
          Color color;
          float x;
          float y;
-      };
-
-      template<typename T> struct ImageLayout
-      {
-       public:
-         unsigned width{0};
-         unsigned height{0};
-         T* pixels{nullptr};
-
-         constexpr static size_t alloc_objects(unsigned width, unsigned height)
-         {
-            return size_t{width} * size_t{height};
-         }
-         constexpr static size_t alloc_bytes(unsigned width, unsigned height)
-         {
-            return sizeof(T) * alloc_objects(width, height);
-         }
-         __device__ __host__ unsigned pix_index(unsigned x, unsigned y) const
-         {
-            return width * y + x;
-         }
-         __device__ __host__ const T& pixel(const unsigned x,
-                                            const unsigned y) const
-         {
-            return pixels[pix_index(x, y)];
-         }
-         __device__ __host__ T& pixel(const unsigned x, const unsigned y)
-         {
-            return pixels[pix_index(x, y)];
-         }
-
-         ImageLayout(const unsigned w, const unsigned h, T* pixels)
-             : width(w)
-             , height(h)
-             , pixels(pixels)
-         {}
-         ImageLayout() = default;
       };
 
       template<typename T> struct DeviceImage

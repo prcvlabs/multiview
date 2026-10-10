@@ -1,4 +1,5 @@
 
+#include "image-layout.hpp"
 #include "strided-loop.cuh"
 
 #include <cstdint>
@@ -13,12 +14,9 @@ namespace cuda
    constexpr int k_inter_bits     = 5;
    constexpr int k_inter_tab_size = 1 << k_inter_bits;
 
-   template<typename T> struct RemapImage
+   template<int n_channels> struct Pixel
    {
-      T* data{nullptr};
-      unsigned width{0};
-      unsigned height{0};
-      unsigned row_bytes{0};
+      uint8_t elements[n_channels];
    };
 
    struct BorderValue
@@ -27,34 +25,36 @@ namespace cuda
    };
 
    template<int n_channels>
-   __device__ static void accumulate(const RemapImage<const uint8_t>& src,
-                                     const int x,
-                                     const int y,
-                                     const float weight,
-                                     const BorderValue& border,
-                                     float* sum)
+   __device__ static void
+   accumulate(const ImageLayout<const Pixel<n_channels>>& src,
+              const int x,
+              const int y,
+              const float weight,
+              const BorderValue& border,
+              float* sum)
    {
       if(x >= 0 && y >= 0 && x < int(src.width) && y < int(src.height)) {
-         const uint8_t* pixel = src.data + y * src.row_bytes + x * n_channels;
-         for(int c = 0; c < n_channels; ++c) sum[c] += weight * pixel[c];
+         const auto& pixel = src.pixel(unsigned(x), unsigned(y));
+         for(int c = 0; c < n_channels; ++c)
+            sum[c] += weight * pixel.elements[c];
       } else {
          for(int c = 0; c < n_channels; ++c) sum[c] += weight * border.value[c];
       }
    }
 
    template<int n_channels>
-   __global__ void kern_remap_bilinear(const RemapImage<const uint8_t> src,
-                                       const float* mapx,
-                                       const float* mapy,
-                                       RemapImage<uint8_t> dst,
-                                       const BorderValue border)
+   __global__ void
+   kern_remap_bilinear(const ImageLayout<const Pixel<n_channels>> src,
+                       const ImageLayout<const float> mapx,
+                       const ImageLayout<const float> mapy,
+                       ImageLayout<Pixel<n_channels>> dst,
+                       const BorderValue border)
    {
       strided_loop_2d(dst.width, dst.height, [&](unsigned x, unsigned y) {
-         const unsigned idx = y * dst.width + x;
-         const int qx       = __float2int_rn(mapx[idx] * k_inter_tab_size);
-         const int qy       = __float2int_rn(mapy[idx] * k_inter_tab_size);
-         const int x0       = qx >> k_inter_bits;
-         const int y0       = qy >> k_inter_bits;
+         const int qx  = __float2int_rn(mapx.pixel(x, y) * k_inter_tab_size);
+         const int qy  = __float2int_rn(mapy.pixel(x, y) * k_inter_tab_size);
+         const int x0  = qx >> k_inter_bits;
+         const int y0  = qy >> k_inter_bits;
          const float a = float(qx & (k_inter_tab_size - 1)) / k_inter_tab_size;
          const float b = float(qy & (k_inter_tab_size - 1)) / k_inter_tab_size;
 
@@ -64,39 +64,39 @@ namespace cuda
          accumulate<n_channels>(src, x0, y0 + 1, (1 - a) * b, border, sum);
          accumulate<n_channels>(src, x0 + 1, y0 + 1, a * b, border, sum);
 
-         uint8_t* out = dst.data + y * dst.row_bytes + x * n_channels;
+         auto& out = dst.pixel(x, y);
          for(int c = 0; c < n_channels; ++c)
-            out[c] = uint8_t(min(max(__float2int_rn(sum[c]), 0), 255));
+            out.elements[c] = uint8_t(min(max(__float2int_rn(sum[c]), 0), 255));
       });
    }
 
    template<int n_channels>
-   __global__ void kern_remap_nearest(const RemapImage<const uint8_t> src,
-                                      const float* mapx,
-                                      const float* mapy,
-                                      RemapImage<uint8_t> dst,
-                                      const BorderValue border)
+   __global__ void
+   kern_remap_nearest(const ImageLayout<const Pixel<n_channels>> src,
+                      const ImageLayout<const float> mapx,
+                      const ImageLayout<const float> mapy,
+                      ImageLayout<Pixel<n_channels>> dst,
+                      const BorderValue border)
    {
       strided_loop_2d(dst.width, dst.height, [&](unsigned x, unsigned y) {
-         const unsigned idx    = y * dst.width + x;
          float sum[n_channels] = {};
          accumulate<n_channels>(src,
-                                __float2int_rn(mapx[idx]),
-                                __float2int_rn(mapy[idx]),
+                                __float2int_rn(mapx.pixel(x, y)),
+                                __float2int_rn(mapy.pixel(x, y)),
                                 1.0f,
                                 border,
                                 sum);
 
-         uint8_t* out = dst.data + y * dst.row_bytes + x * n_channels;
-         for(int c = 0; c < n_channels; ++c) out[c] = uint8_t(sum[c]);
+         auto& out = dst.pixel(x, y);
+         for(int c = 0; c < n_channels; ++c) out.elements[c] = uint8_t(sum[c]);
       });
    }
 
    template<int n_channels>
-   static void launch_remap(const RemapImage<const uint8_t>& src,
-                            const float* mapx,
-                            const float* mapy,
-                            const RemapImage<uint8_t>& dst,
+   static void launch_remap(const ImageLayout<const Pixel<n_channels>>& src,
+                            const ImageLayout<const float>& mapx,
+                            const ImageLayout<const float>& mapy,
+                            const ImageLayout<Pixel<n_channels>>& dst,
                             const bool bilinear,
                             const BorderValue& border,
                             cudaStream_t stream)
@@ -115,38 +115,40 @@ namespace cuda
    void cuda_remap(const uint8_t* src,
                    unsigned src_width,
                    unsigned src_height,
-                   unsigned src_row_bytes,
                    const float* mapx,
                    const float* mapy,
                    uint8_t* dst,
                    unsigned dst_width,
                    unsigned dst_height,
-                   unsigned dst_row_bytes,
                    int n_channels,
                    bool bilinear,
                    const float border_value[4],
                    cudaStream_t stream)
    {
-      const RemapImage<const uint8_t> src_im{
-          src, src_width, src_height, src_row_bytes};
-      const RemapImage<uint8_t> dst_im{
-          dst, dst_width, dst_height, dst_row_bytes};
+      const ImageLayout<const float> mapx_layout{dst_width, dst_height, mapx};
+      const ImageLayout<const float> mapy_layout{dst_width, dst_height, mapy};
       const BorderValue border{
           {border_value[0], border_value[1], border_value[2], border_value[3]}};
 
+      auto launch = [&](auto pixel) {
+         using Pix = decltype(pixel);
+         launch_remap(ImageLayout<const Pix>{src_width,
+                                             src_height,
+                                             reinterpret_cast<const Pix*>(src)},
+                      mapx_layout,
+                      mapy_layout,
+                      ImageLayout<Pix>{
+                          dst_width, dst_height, reinterpret_cast<Pix*>(dst)},
+                      bilinear,
+                      border,
+                      stream);
+      };
+
       switch(n_channels) {
-      case 1:
-         launch_remap<1>(src_im, mapx, mapy, dst_im, bilinear, border, stream);
-         break;
-      case 2:
-         launch_remap<2>(src_im, mapx, mapy, dst_im, bilinear, border, stream);
-         break;
-      case 3:
-         launch_remap<3>(src_im, mapx, mapy, dst_im, bilinear, border, stream);
-         break;
-      case 4:
-         launch_remap<4>(src_im, mapx, mapy, dst_im, bilinear, border, stream);
-         break;
+      case 1: launch(Pixel<1>{}); break;
+      case 2: launch(Pixel<2>{}); break;
+      case 3: launch(Pixel<3>{}); break;
+      case 4: launch(Pixel<4>{}); break;
       }
    }
 

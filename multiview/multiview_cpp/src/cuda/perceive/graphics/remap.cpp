@@ -1,36 +1,26 @@
 
 #include "remap.hpp"
 
+#include "cuda-check.hpp"
+#include "device-buffer.hpp"
 #include "perceive/utils/cuda-spec.hpp"
 
-#include <cuda_runtime.h>
 #include <opencv2/imgproc.hpp>
-#include <stdexcept>
 
 namespace perceive::cuda
 {
 void cuda_remap(const uint8_t* src,
                 unsigned src_width,
                 unsigned src_height,
-                unsigned src_row_bytes,
                 const float* mapx,
                 const float* mapy,
                 uint8_t* dst,
                 unsigned dst_width,
                 unsigned dst_height,
-                unsigned dst_row_bytes,
                 int n_channels,
                 bool bilinear,
                 const float border_value[4],
                 cudaStream_t stream);
-
-// ------------------------------------------------------------------ check-cuda
-
-static void check_cuda(cudaError_t err, const char* what)
-{
-   if(err != cudaSuccess)
-      throw std::runtime_error(format("{}: {}", what, cudaGetErrorString(err)));
-}
 
 // ------------------------------------------------------ RemapMaps construction
 
@@ -49,10 +39,10 @@ RemapMaps& RemapMaps::operator=(RemapMaps&& o) noexcept
 
 // ---------------------------------------------------------- RemapMaps::release
 
-void RemapMaps::release_() noexcept
+void RemapMaps::release_()
 {
-   cudaFree(mapx_);
-   cudaFree(mapy_);
+   if(mapx_ != nullptr) CUDA_CHECK(cudaFree(mapx_));
+   if(mapy_ != nullptr) CUDA_CHECK(cudaFree(mapy_));
    mapx_   = nullptr;
    mapy_   = nullptr;
    width_  = 0;
@@ -71,44 +61,20 @@ void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
    const size_t n_bytes   = row_bytes * size_t(mapx.rows);
 
    auto upload_one = [&](const cv::Mat& map, float*& dst) {
-      check_cuda(cudaMalloc(reinterpret_cast<void**>(&dst), n_bytes),
-                 "cudaMalloc");
-      check_cuda(cudaMemcpy2D(dst,
+      CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dst), n_bytes));
+      CUDA_CHECK(cudaMemcpy2D(dst,
                               row_bytes,
                               map.data,
                               map.step,
                               row_bytes,
                               size_t(map.rows),
-                              cudaMemcpyHostToDevice),
-                 "cudaMemcpy2D");
+                              cudaMemcpyHostToDevice));
    };
    upload_one(mapx, mapx_);
    upload_one(mapy, mapy_);
    width_  = unsigned(mapx.cols);
    height_ = unsigned(mapx.rows);
 }
-
-// ---------------------------------------------------------------- DeviceBuffer
-
-struct DeviceBuffer
-{
-   void* data{nullptr};
-   size_t size{0};
-   DeviceBuffer()                               = default;
-   DeviceBuffer(const DeviceBuffer&)            = delete;
-   DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-   ~DeviceBuffer() { cudaFree(data); }
-
-   void create(size_t n_bytes) // no-op if already large enough
-   {
-      if(n_bytes <= size) return;
-      cudaFree(data);
-      data = nullptr;
-      size = 0;
-      check_cuda(cudaMalloc(&data, n_bytes), "cudaMalloc");
-      size = n_bytes;
-   }
-};
 
 // ------------------------------------------------------------- Remapper::Pimpl
 
@@ -123,12 +89,9 @@ struct Remapper::Pimpl
    ~Pimpl();
 };
 
-Remapper::Pimpl::Pimpl()
-{
-   check_cuda(cudaStreamCreate(&stream), "cudaStreamCreate");
-}
+Remapper::Pimpl::Pimpl() { CUDA_CHECK(cudaStreamCreate(&stream)); }
 
-Remapper::Pimpl::~Pimpl() { cudaStreamDestroy(stream); }
+Remapper::Pimpl::~Pimpl() { CUDA_CHECK(cudaStreamDestroy(stream)); }
 
 // ------------------------------------------------------- Remapper construction
 
@@ -169,43 +132,39 @@ cv::Mat Remapper::remap(const cv::Mat& src,
    P.src_buffer.create(src_row_bytes * size_t(src.rows));
    P.dst_buffer.create(dst_row_bytes * size_t(dst.rows));
 
-   check_cuda(cudaMemcpy2DAsync(P.src_buffer.data,
+   CUDA_CHECK(cudaMemcpy2DAsync(P.src_buffer.data(),
                                 src_row_bytes,
                                 src.data,
                                 src.step,
                                 src_row_bytes,
                                 size_t(src.rows),
                                 cudaMemcpyHostToDevice,
-                                P.stream),
-              "cudaMemcpy2DAsync");
+                                P.stream));
 
    const float border[4] = {float(border_value[0]),
                             float(border_value[1]),
                             float(border_value[2]),
                             float(border_value[3])};
-   cuda_remap(static_cast<const uint8_t*>(P.src_buffer.data),
+   cuda_remap(static_cast<const uint8_t*>(P.src_buffer.data()),
               unsigned(src.cols),
               unsigned(src.rows),
-              unsigned(src_row_bytes),
               maps.mapx(),
               maps.mapy(),
-              static_cast<uint8_t*>(P.dst_buffer.data),
+              static_cast<uint8_t*>(P.dst_buffer.data()),
               unsigned(dst.cols),
               unsigned(dst.rows),
-              unsigned(dst_row_bytes),
               src.channels(),
               interpolation == cv::INTER_LINEAR,
               border,
               P.stream);
-   check_cuda(cudaGetLastError(), "remap kernel");
+   CUDA_CHECK(cudaGetLastError());
 
-   check_cuda(cudaMemcpyAsync(dst.data,
-                              P.dst_buffer.data,
+   CUDA_CHECK(cudaMemcpyAsync(dst.data,
+                              P.dst_buffer.data(),
                               dst_row_bytes * size_t(dst.rows),
                               cudaMemcpyDeviceToHost,
-                              P.stream),
-              "cudaMemcpyAsync");
-   check_cuda(cudaStreamSynchronize(P.stream), "cudaStreamSynchronize");
+                              P.stream));
+   CUDA_CHECK(cudaStreamSynchronize(P.stream));
 
    return dst;
 }

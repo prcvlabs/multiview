@@ -18,7 +18,7 @@ class RemapMaps
    unsigned width_  = 0;
    unsigned height_ = 0;
 
-   void release_() noexcept;
+   void release_();
 
  public:
    RemapMaps()                 = default;
