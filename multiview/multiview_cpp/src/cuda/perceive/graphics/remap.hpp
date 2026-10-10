@@ -1,7 +1,8 @@
 #pragma once
 
-#include <mutex>
+#include <memory>
 #include <opencv2/core.hpp>
+#include <stdexcept>
 
 namespace perceive::cuda
 {
@@ -41,24 +42,11 @@ class RemapMaps
 class Remapper
 {
  private:
-   struct DeviceBuffer
-   {
-      void* data{nullptr};
-      size_t size{0};
-      DeviceBuffer()                               = default;
-      DeviceBuffer(const DeviceBuffer&)            = delete;
-      DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-      ~DeviceBuffer();
-      void create(size_t n_bytes); // no-op if already large enough
-   };
-
-   mutable DeviceBuffer src_buffer_;
-   mutable DeviceBuffer dst_buffer_;
-   mutable void* stream_{nullptr}; // cudaStream_t, created lazily
-   mutable std::mutex padlock_;
+   struct Pimpl;
+   mutable std::unique_ptr<Pimpl> pimpl_;
 
  public:
-   Remapper()                           = default;
+   Remapper();
    Remapper(const Remapper&)            = delete;
    Remapper& operator=(const Remapper&) = delete;
    ~Remapper();
@@ -77,7 +65,15 @@ class RemapMaps
 {
  public:
    bool empty() const noexcept { return true; }
-   void upload(const cv::Mat& mapx, const cv::Mat& mapy) {}
+   unsigned width() const noexcept { return 0; }
+   unsigned height() const noexcept { return 0; }
+   const float* mapx() const noexcept { return nullptr; }
+   const float* mapy() const noexcept { return nullptr; }
+
+   void upload(const cv::Mat& mapx, const cv::Mat& mapy)
+   {
+      throw std::runtime_error("CUDA is required");
+   }
 };
 
 class Remapper
@@ -93,8 +89,7 @@ class Remapper
                  int interpolation,
                  const cv::Scalar& border_value) const
    {
-      FATAL("Cuda is not available!");
-      return cv::Mat{};
+      throw std::runtime_error("CUDA is required");
    }
 };
 

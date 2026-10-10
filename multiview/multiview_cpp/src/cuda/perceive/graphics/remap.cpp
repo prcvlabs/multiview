@@ -1,6 +1,8 @@
 
 #include "remap.hpp"
 
+#include "perceive/utils/cuda-spec.hpp"
+
 #include <cuda_runtime.h>
 #include <opencv2/imgproc.hpp>
 #include <stdexcept>
@@ -86,26 +88,56 @@ void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
    height_ = unsigned(mapx.rows);
 }
 
-// ------------------------------------------------------ Remapper::DeviceBuffer
+// ---------------------------------------------------------------- DeviceBuffer
 
-Remapper::DeviceBuffer::~DeviceBuffer() { cudaFree(data); }
-
-void Remapper::DeviceBuffer::create(size_t n_bytes)
+struct DeviceBuffer
 {
-   if(n_bytes <= size) return;
-   cudaFree(data);
-   data = nullptr;
-   size = 0;
-   check_cuda(cudaMalloc(&data, n_bytes), "cudaMalloc");
-   size = n_bytes;
+   void* data{nullptr};
+   size_t size{0};
+   DeviceBuffer()                               = default;
+   DeviceBuffer(const DeviceBuffer&)            = delete;
+   DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+   ~DeviceBuffer() { cudaFree(data); }
+
+   void create(size_t n_bytes) // no-op if already large enough
+   {
+      if(n_bytes <= size) return;
+      cudaFree(data);
+      data = nullptr;
+      size = 0;
+      check_cuda(cudaMalloc(&data, n_bytes), "cudaMalloc");
+      size = n_bytes;
+   }
+};
+
+// ------------------------------------------------------------- Remapper::Pimpl
+
+struct Remapper::Pimpl
+{
+   DeviceBuffer src_buffer;
+   DeviceBuffer dst_buffer;
+   cudaStream_t stream{nullptr};
+   std::mutex lock;
+
+   Pimpl();
+   ~Pimpl();
+};
+
+Remapper::Pimpl::Pimpl()
+{
+   check_cuda(cudaStreamCreate(&stream), "cudaStreamCreate");
 }
+
+Remapper::Pimpl::~Pimpl() { cudaStreamDestroy(stream); }
 
 // ------------------------------------------------------- Remapper construction
 
-Remapper::~Remapper()
+Remapper::Remapper()
 {
-   if(stream_ != nullptr) cudaStreamDestroy(cudaStream_t(stream_));
+   if(cuda_is_available()) pimpl_ = std::make_unique<Pimpl>();
 }
+
+Remapper::~Remapper() = default;
 
 // ---------------------------------------------------------- Remapper::supports
 
@@ -126,59 +158,54 @@ cv::Mat Remapper::remap(const cv::Mat& src,
    Expects(!src.empty());
    Expects(!maps.empty());
    Expects(supports(src, interpolation));
+   Expects(pimpl_ != nullptr);
 
-   lock_guard<std::mutex> lock(padlock_);
-
-   if(stream_ == nullptr) {
-      cudaStream_t s = nullptr;
-      check_cuda(cudaStreamCreate(&s), "cudaStreamCreate");
-      stream_ = s;
-   }
-   const auto stream = cudaStream_t(stream_);
+   auto& P = *pimpl_;
+   lock_guard<std::mutex> padlock(P.lock);
 
    cv::Mat dst(int(maps.height()), int(maps.width()), src.type());
    const size_t src_row_bytes = src.elemSize() * size_t(src.cols);
    const size_t dst_row_bytes = dst.elemSize() * size_t(dst.cols);
-   src_buffer_.create(src_row_bytes * size_t(src.rows));
-   dst_buffer_.create(dst_row_bytes * size_t(dst.rows));
+   P.src_buffer.create(src_row_bytes * size_t(src.rows));
+   P.dst_buffer.create(dst_row_bytes * size_t(dst.rows));
 
-   check_cuda(cudaMemcpy2DAsync(src_buffer_.data,
+   check_cuda(cudaMemcpy2DAsync(P.src_buffer.data,
                                 src_row_bytes,
                                 src.data,
                                 src.step,
                                 src_row_bytes,
                                 size_t(src.rows),
                                 cudaMemcpyHostToDevice,
-                                stream),
+                                P.stream),
               "cudaMemcpy2DAsync");
 
    const float border[4] = {float(border_value[0]),
                             float(border_value[1]),
                             float(border_value[2]),
                             float(border_value[3])};
-   cuda_remap(static_cast<const uint8_t*>(src_buffer_.data),
+   cuda_remap(static_cast<const uint8_t*>(P.src_buffer.data),
               unsigned(src.cols),
               unsigned(src.rows),
               unsigned(src_row_bytes),
               maps.mapx(),
               maps.mapy(),
-              static_cast<uint8_t*>(dst_buffer_.data),
+              static_cast<uint8_t*>(P.dst_buffer.data),
               unsigned(dst.cols),
               unsigned(dst.rows),
               unsigned(dst_row_bytes),
               src.channels(),
               interpolation == cv::INTER_LINEAR,
               border,
-              stream);
+              P.stream);
    check_cuda(cudaGetLastError(), "remap kernel");
 
    check_cuda(cudaMemcpyAsync(dst.data,
-                              dst_buffer_.data,
+                              P.dst_buffer.data,
                               dst_row_bytes * size_t(dst.rows),
                               cudaMemcpyDeviceToHost,
-                              stream),
+                              P.stream),
               "cudaMemcpyAsync");
-   check_cuda(cudaStreamSynchronize(stream), "cudaStreamSynchronize");
+   check_cuda(cudaStreamSynchronize(P.stream), "cudaStreamSynchronize");
 
    return dst;
 }
