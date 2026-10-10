@@ -167,12 +167,7 @@ unpack_poses(const DistortedCamera* dcam_ptr,
       return p2d_ptr;
    };
 
-   // Execute in parallel
-   static thread_local ParallelJobSet pjobs;
-   for(size_t i = 0; i < data.size(); ++i)
-      pjobs.schedule(
-          [i, &out, &data, &make_p2d]() { out.at(i) = make_p2d(data.at(i)); });
-   pjobs.execute();
+   for(size_t i = 0; i < data.size(); ++i) out.at(i) = make_p2d(data.at(i));
 
    // Return
    return out;
