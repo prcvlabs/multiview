@@ -59,6 +59,59 @@ static int disparity_size(const This::Params& p) noexcept
 }
 
 #ifdef SGM_IS_AVAILABLE
+// ---------------------------------------------------------------- sgm-registry
+//
+// libSGM allocates its cost volumes up front (hundreds of megabytes), so one
+// instance per configuration is shared by all threads. The GPU serializes
+// the calls anyway.
+struct SGMRegistry
+{
+ private:
+   SGMRegistry()
+   {
+      register_exit_function([this]() { reset(); });
+   }
+
+   using Key = std::tuple<int, int, int, int>; // w, h, disp-size, in-depth
+
+   std::mutex padlock_;
+   std::map<Key, unique_ptr<sgm::StereoSGM>> registry_ = {};
+
+ public:
+   static SGMRegistry& instance() noexcept
+   {
+      static SGMRegistry registry;
+      return registry;
+   }
+
+   void reset() noexcept
+   {
+      lock_guard lock(padlock_);
+      registry_.clear();
+   }
+
+   /// @precondition: `in0` and `in1` are continuous, and the same size.
+   void execute(const cv::Mat& in0,
+                const cv::Mat& in1,
+                const int disp_size,
+                const int in_depth,
+                cv::Mat& disparity)
+   {
+      const int w = in0.cols;
+      const int h = in0.rows;
+
+      lock_guard lock(padlock_);
+      auto& engine = registry_[Key{w, h, disp_size, in_depth}];
+      if(engine == nullptr)
+         engine = make_unique<sgm::StereoSGM>(
+             w, h, disp_size, in_depth, 16, sgm::EXECUTE_INOUT_HOST2HOST);
+
+      disparity.create(h, w, CV_16UC1);
+      void* dst = disparity.data;
+      engine->execute(in0.data, in1.data, &dst);
+   }
+};
+
 // -------------------------------------------------------------- calculate CUDA
 //
 // libSGM needs the width and height to be multiples of 32, and the width to
@@ -96,38 +149,17 @@ static void calculate_(const This::Params& p,
    const int pw        = round_up(std::max(w, disp_size), 32);
    const int ph        = round_up(h, 32);
 
-   struct TLParams
-   {
-      std::unique_ptr<sgm::StereoSGM> sgm;
-      int w = 0, h = 0, disp_size = 0, in_depth = 0;
-      cv::Mat pad0, pad1, disparity;
+   auto pad = [&](const cv::Mat& src) -> cv::Mat {
+      if(pw == w and ph == h and src.isContinuous()) return src;
+      cv::Mat dst;
+      cv::copyMakeBorder(src, dst, 0, ph - h, 0, pw - w, cv::BORDER_REPLICATE);
+      return dst;
    };
-   static thread_local TLParams tl;
 
+   cv::Mat disparity;
    try {
-      if(!tl.sgm || tl.w != pw || tl.h != ph || tl.disp_size != disp_size
-         || tl.in_depth != in_depth) {
-         tl.sgm.reset(); // free GPU memory before reallocating
-         tl.sgm = std::make_unique<sgm::StereoSGM>(
-             pw, ph, disp_size, in_depth, 16, sgm::EXECUTE_INOUT_HOST2HOST);
-         tl.w         = pw;
-         tl.h         = ph;
-         tl.disp_size = disp_size;
-         tl.in_depth  = in_depth;
-      }
-
-      auto pad = [&](const cv::Mat& src, cv::Mat& dst) -> const cv::Mat& {
-         if(pw == w && ph == h && src.isContinuous()) return src;
-         cv::copyMakeBorder(
-             src, dst, 0, ph - h, 0, pw - w, cv::BORDER_REPLICATE);
-         return dst;
-      };
-      const cv::Mat& in0 = pad(image0, tl.pad0);
-      const cv::Mat& in1 = pad(image1, tl.pad1);
-
-      tl.disparity.create(ph, pw, CV_16UC1);
-      void* dst = tl.disparity.data;
-      tl.sgm->execute(in0.data, in1.data, &dst);
+      SGMRegistry::instance().execute(
+          pad(image0), pad(image1), disp_size, in_depth, disparity);
    } catch(std::exception& e) {
       LOG_ERR(format("libSGM failed: {}", e.what()));
       return;
@@ -136,7 +168,7 @@ static void calculate_(const This::Params& p,
    // libSGM reports (disparity + 1), with 0 meaning invalid
    out_left.create(h, w, CV_32FC1);
    for(auto y = 0; y < h; ++y) {
-      const uint16_t* src = tl.disparity.ptr<uint16_t>(y);
+      const uint16_t* src = disparity.ptr<uint16_t>(y);
       float* dst          = out_left.ptr<float>(y);
       for(auto x = 0; x < w; ++x)
          dst[x] = (src[x] == 0) ? 0.0f : float(src[x] - 1);

@@ -56,7 +56,6 @@ void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
    Expects(mapx.type() == CV_32FC1 and mapy.type() == CV_32FC1);
    Expects(mapx.size() == mapy.size());
 
-   release_();
    const size_t row_bytes = sizeof(float) * size_t(mapx.cols);
    const size_t n_bytes   = row_bytes * size_t(mapx.rows);
 
@@ -70,10 +69,13 @@ void RemapMaps::upload(const cv::Mat& mapx, const cv::Mat& mapy)
                               size_t(map.rows),
                               cudaMemcpyHostToDevice));
    };
-   upload_one(mapx, mapx_);
-   upload_one(mapy, mapy_);
-   width_  = unsigned(mapx.cols);
-   height_ = unsigned(mapx.rows);
+   RemapMaps maps; // `*this` is unchanged if the upload fails
+   upload_one(mapx, maps.mapx_);
+   upload_one(mapy, maps.mapy_);
+   maps.width_  = unsigned(mapx.cols);
+   maps.height_ = unsigned(mapx.rows);
+
+   *this = std::move(maps);
 }
 
 // ------------------------------------------------------------- Remapper::Pimpl
