@@ -192,6 +192,7 @@ struct This::Pimpl
 
    std::once_flag floor_grid_flag;
    shared_ptr<const vector<ARGBImage>> floor_grids_ptr = nullptr;
+   std::atomic<bool> floor_grids_pending               = false;
 
    void accumulate_sensor(const cv::Mat& im, int frame_no, int sensor_no) const
    {
@@ -279,7 +280,13 @@ struct This::Pimpl
 This::This()
     : pimpl_(make_unique<Pimpl>())
 {}
-This::~This() = default;
+This::~This()
+{
+   // The floor grids are calculated by a scheduled job that uses `this`
+   if(pimpl_ != nullptr)
+      while(pimpl_->floor_grids_pending)
+         if(!try_one_scheduled_job()) std::this_thread::yield();
+}
 
 Timestamp This::current_timestamp() const noexcept
 {
@@ -1223,7 +1230,11 @@ void This::init(const SceneManifest& SM,
    }
 
    { // ---- Asychronously calculate the floor grids
-      schedule([this]() { pimpl_->calc_floor_grids_(this); });
+      P.floor_grids_pending = true;
+      schedule([this]() {
+         pimpl_->calc_floor_grids_(this);
+         pimpl_->floor_grids_pending = false;
+      });
    }
 
    { // ---- sanity checks ----
