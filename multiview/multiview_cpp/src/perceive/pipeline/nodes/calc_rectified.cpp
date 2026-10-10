@@ -96,13 +96,18 @@ Task::execute(const RunData& data,
 
    if(!in.empty()) {
       const auto interpolation = int(params.interpolation_method);
+      const auto& maps         = ret->mapping_result->mapxy_gpu;
       if(params.use_cuda_if_available and cuda::cuda_is_available()
-         and cuda::Remapper::supports(in, interpolation)) {
-         ret->rectified = cuda_remapper.remap(in,
-                                              ret->mapping_result->mapxy_gpu,
-                                              interpolation,
-                                              cv::Scalar(255, 255, 255));
-      } else {
+         and !maps.empty() and cuda::Remapper::supports(in, interpolation)) {
+         try {
+            ret->rectified = cuda_remapper.remap(
+                in, maps, interpolation, cv::Scalar(255, 255, 255));
+         } catch(std::exception& e) {
+            LOG_ERR(format("GPU remap failed, falling back to the CPU: {}",
+                           e.what()));
+         }
+      }
+      if(ret->rectified.empty()) {
          cv::remap(in,
                    ret->rectified,
                    ret->mapping_result->mapx,

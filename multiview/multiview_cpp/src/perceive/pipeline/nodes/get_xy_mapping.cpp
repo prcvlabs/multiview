@@ -58,7 +58,13 @@ Task::execute(const RunData& data,
    auto s{time_thunk([&] {
       if(is_cancelled()) return;
       bino_cam.get_sensor_mapxy(unsigned(bcam_sensor), ret->mapx, ret->mapy);
-      if(cuda::cuda_is_available()) ret->mapxy_gpu.upload(ret->mapx, ret->mapy);
+      if(cuda::cuda_is_available()) {
+         try {
+            ret->mapxy_gpu.upload(ret->mapx, ret->mapy);
+         } catch(std::exception& e) {
+            LOG_ERR(format("failed to upload mapxy to the GPU: {}", e.what()));
+         }
+      }
    })};
 
    if(params.feedback) {
