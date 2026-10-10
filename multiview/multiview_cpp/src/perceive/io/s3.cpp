@@ -247,8 +247,8 @@ void s3_load(const string_view s3_path, std::string&) noexcept(false)
 {
    no_aws(s3_path);
 }
-void s3_store(const string_view s3_path, const std::vector<char>&) noexcept(
-    false)
+void s3_store(const string_view s3_path,
+              const std::vector<char>&) noexcept(false)
 {
    no_aws(s3_path);
 }
@@ -260,7 +260,6 @@ bool s3_exists(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
 void s3_remove(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
 
 #endif // MULTIVIEW_NO_AWS
-
 
 // ------------------------------------------------------------------- is s3 uri
 

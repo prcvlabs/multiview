@@ -26,8 +26,8 @@ CATCH_TEST_CASE("CudaSLIC", "[cuda_slic]")
       for(unsigned y = 0; y < h; ++y)
          for(unsigned x = 0; x < w; ++x) {
             const unsigned k = (y / block) * 4 + (x / block);
-            argb(x, y) = make_colour((k * 53) % 256, (k * 97) % 256,
-                                     (k * 151) % 256);
+            argb(x, y)
+                = make_colour((k * 53) % 256, (k * 97) % 256, (k * 151) % 256);
          }
 
       const Vec3fImage lab = cuda::ARGBToLABConversion{}.convert(argb);

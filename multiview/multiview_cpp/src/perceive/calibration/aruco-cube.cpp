@@ -971,7 +971,8 @@ ArucoCube This::make_aruco_cube_a() noexcept
 
    auto dictionary = get_marker_dictionary();
    for(size_t i = 0; i < ac.markers.size(); ++i) {
-      draw_marker(dictionary, ac.index_to_cv_dict_ind(int(i)), 7, ac.markers[i]);
+      draw_marker(
+          dictionary, ac.index_to_cv_dict_ind(int(i)), 7, ac.markers[i]);
       // cv::imwrite(format("/tmp/zappy_{:2d}.png", i), ac.markers[i]);
    }
 

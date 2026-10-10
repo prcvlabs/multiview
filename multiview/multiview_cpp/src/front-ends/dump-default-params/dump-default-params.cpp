@@ -117,8 +117,7 @@ int run_main(int argc, char** argv)
    SceneDescription::InitOptions opts;
    opts.optional_search_path = dirname(config.manifest_fname);
    opts.on_the_fly_still     = true;
-   // Note: passing the filename directly would implicitly convert it to a
-   // JSON *string* value, so read and parse the file first.
+   // A filename would implicitly convert to a JSON *string*, so parse the file
    shared_ptr<SceneDescription> scene_desc = nullptr;
    try {
       scene_desc = load_scene_from_manifest(

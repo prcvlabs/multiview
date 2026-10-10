@@ -52,9 +52,8 @@ DeviceInfo get_device_info(int device_id) noexcept
    di.name          = prop.name;
    di.major_version = prop.major;
    di.minor_version = prop.minor;
-   // Compatible if the kernels can run on this device (cudaFuncGetAttributes
-   // would be exact; checking for a usable device is close enough here)
-   di.is_compatible = (prop.major > 0) and (prop.computeMode != cudaComputeModeProhibited);
+   di.is_compatible
+       = (prop.major > 0) and (prop.computeMode != cudaComputeModeProhibited);
    return di;
 }
 

@@ -225,12 +225,12 @@ void This::init(const Params& params,
 {
    Expects(keypoints.size() > 0);
 
-   model_      = model;
-   frame_no_   = frame_no;
-   sensor_no_  = sensor_no;
+   model_     = model;
+   frame_no_  = frame_no;
+   sensor_no_ = sensor_no;
    cam_centre_
        = (dcam_ptr == nullptr) ? Vector3f::nan() : to_vec3f(dcam_ptr->C);
-   score_      = 0.0;
+   score_ = 0.0;
 
    { // copy in the keypoints
       std::fill(begin(keypoints_), end(keypoints_), Keypoint{});

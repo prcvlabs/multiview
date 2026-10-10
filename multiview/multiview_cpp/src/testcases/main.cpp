@@ -30,6 +30,6 @@ int main(int argc, char** argv)
    std::cout << perceive::environment_info() << std::endl;
 
    const auto ret = session.run();
-   perceive::run_exit_functions(); // e.g., free TensorRT engines before CUDA shuts down
+   perceive::run_exit_functions();
    return ret;
 }

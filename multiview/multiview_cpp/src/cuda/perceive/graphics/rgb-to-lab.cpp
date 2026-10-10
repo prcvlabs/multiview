@@ -17,8 +17,7 @@ void cuda_convert_rgb_to_lab(
 static void check_cuda(cudaError_t err, const char* what)
 {
    if(err != cudaSuccess)
-      throw std::runtime_error(
-          format("{}: {}", what, cudaGetErrorString(err)));
+      throw std::runtime_error(format("{}: {}", what, cudaGetErrorString(err)));
 }
 
 ARGBToLABConversion::MappedBuffer::~MappedBuffer()

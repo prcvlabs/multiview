@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <cuda_runtime.h>
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 namespace perceive
 {
