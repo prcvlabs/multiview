@@ -186,9 +186,9 @@ static Json::Value read_env()
       return ret;
    };
 
-   get_w_default("MULTIVIEW_ASSET_STORE", "LAZY_S3");
+   get_w_default("MULTIVIEW_ASSET_STORE", "MULTIVIEW_ASSET_DIR");
    get_w_default("MULTIVIEW_ASSET_S3_BUCKET", "s3://perceive-multiview");
-   get_w_default("MULTIVIEW_ASSET_DIR", ""s);
+   get_w_default("MULTIVIEW_ASSET_DIR", k_multiview_data_dir);
    get_w_default("MULTIVIEW_CACHE_DIR", ""s);
    get_w_default("MULTIVIEW_LAZY_S3_DIR", ""s);
    get_w_default("MULTIVIEW_HYPERPOSE_DIR", ""s);

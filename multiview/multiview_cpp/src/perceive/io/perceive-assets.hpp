@@ -26,7 +26,7 @@ namespace calibration
 // ----------------------------------------------------------------- Data Source
 
 enum class DataSource : int {
-   DEFAULT             = 0, // Use system default (LAZY_S3)
+   DEFAULT             = 0, // Use system default (MULTIVIEW_ASSET_STORE)
    S3                  = 1, // load/save to correct location in S3
    LAZY_S3             = 2, // Looks in a local cache, and then in S3
    MULTIVIEW_ASSET_DIR = 3  // load/save to correct location in $PERCEIVE_DATA

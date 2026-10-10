@@ -23,6 +23,7 @@ opencv_link = $local_lib -lopencv_imgproc -lopencv_ximgproc -lopencv_core -lopen
 sgm_link =  ${SGM_LINK}
 
 version_inc = -DMULTIVIEW_VERSION="\"${MULTIVIEW_VERSION}\""
+data_dir_inc = -DMULTIVIEW_DATA_DIR="\"${MULTIVIEW_DATA_DIR}\""
 
 ranges_inc = -isystemsrc/perceive/contrib/range-v3/include
 
@@ -43,7 +44,7 @@ w_user_gui  = -Wno-old-style-cast -Wno-deprecated-declarations -Wno-unused-local
 # Warnings use when compiling non-GUI code
 w_user = -Werror -Wno-unused-function 
 
-user_flags = -pthread -DINSTALLATION_ROOT="\"${PREFIX}\"" $python_flags $opengl_flags ${QT_FLAG} ${EGL_FLAG} ${SGM_FLAG} $triclops_flags $cuda_flags $version_inc -DUSE_CPU_FLOAT_PACKING -DBOOST_ERROR_CODE_HEADER_ONLY $prof_mem_flags $pcl_flags ${OPENPOSE_FLAGS} ${HYPERPOSE_FLAGS}
+user_flags = -pthread -DINSTALLATION_ROOT="\"${PREFIX}\"" $python_flags $opengl_flags ${QT_FLAG} ${EGL_FLAG} ${SGM_FLAG} $triclops_flags $cuda_flags $version_inc $data_dir_inc -DUSE_CPU_FLOAT_PACKING -DBOOST_ERROR_CODE_HEADER_ONLY $prof_mem_flags $pcl_flags ${OPENPOSE_FLAGS} ${HYPERPOSE_FLAGS}
 
 user_link = -lutil -lm -ldl -pthread -lpthread -lncurses $cuda_link $opencv_link $python_link $boost_link $assimp_link $aws_link $opengl_link $triclops_link ${QT_LINK} ${EGL_LINK} ${SGM_LINK} $pcl_link $sgm_link ${OPENPOSE_LINK} -lsvm ${HYPERPOSE_LINK} ${IMGUI_LINK}
 

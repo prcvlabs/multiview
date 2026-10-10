@@ -144,6 +144,7 @@ UNIQUE_DIR="${TOOLCHAIN}-${CONFIG}"
 # -------------------------------------------------------------- Build Variables  
 
 export MULTIVIEW_VERSION="$($PPWD/../../bin/multiview-version.sh)"
+export MULTIVIEW_DATA_DIR="$(cd "$PPWD/../../data" ; pwd)"
 
 if [ "$TRICLOPS" = "1" ] && [ -f "/usr/include/triclops/triclops.h" ] ; then
     export TRICLOPS_FLAGS="-DUSE_TRICLOPS -isystem/usr/include/flycapture -isystem/usr/include/triclops"

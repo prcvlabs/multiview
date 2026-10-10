@@ -51,15 +51,6 @@ static void run_once_init_perceive_files()
                     "this directory was not found.",
                     mv_data_dir_));
          has_error = true;
-      } else {
-         for(auto ftype : k_filetypes) {
-            auto path
-                = format("{}/{}", mv_data_dir_, file_type_relative_path(ftype));
-            if(!is_directory(path)) {
-               INFO(format("creating MULTIVIEW_ASSET_DIR '{}'", path));
-               mkdir_p(path);
-            }
-         }
       }
    } else if(value == "LAZY_S3"s) {
       source_ = DataSource::LAZY_S3;
@@ -173,6 +164,8 @@ resolve_key_(AssetType type, const string& key, DataSource source) noexcept
    case DataSource::LAZY_S3:
    case DataSource::S3: return format("{}/{}/{}{}", s3_bucket_, path, key, ext);
    case DataSource::MULTIVIEW_ASSET_DIR:
+      if(type == AssetType::CACHE_FILE)
+         return format("{}/{}{}", multiview_cache_dir(), key, ext);
       return format("{}/{}/{}{}", mv_data_dir_, path, key, ext);
    }
 
@@ -293,6 +286,8 @@ static void data_source_storeT_(const T& data,
       return;
    }
 
+   const auto dname = dirname(path);
+   if(!is_directory(dname)) mkdir_p(dname);
    file_put_contents(path, data);
 }
 

@@ -87,6 +87,8 @@ constexpr bool k_has_openpose = false;
 
 constexpr const char* k_installation_root = INSTALLATION_ROOT;
 
+constexpr const char* k_multiview_data_dir = MULTIVIEW_DATA_DIR;
+
 constexpr const char* k_version = MULTIVIEW_VERSION;
 
 // Must be called before any of the functions below

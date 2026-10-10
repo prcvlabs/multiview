@@ -54,6 +54,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(MV_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(MV_CONTRIB ${CMAKE_CURRENT_SOURCE_DIR}/../contrib)
+get_filename_component(MV_DATA ${CMAKE_CURRENT_SOURCE_DIR}/../../data ABSOLUTE)
 
 # ------------------------------------------------------------------ Packages
 
@@ -215,6 +216,7 @@ target_include_directories(mv-common SYSTEM INTERFACE
 target_compile_definitions(mv-common INTERFACE ${MV_DEFS}
   MULTIVIEW_VERSION="${MV_VERSION}"
   INSTALLATION_ROOT="${CMAKE_INSTALL_PREFIX}"
+  MULTIVIEW_DATA_DIR="${MV_DATA}"
   $<$<BOOL:${MULTIVIEW_PROFILE_MEMORY}>:PERCEIVE_PROFILE_MEMORY>)
 target_compile_options(mv-common INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>
