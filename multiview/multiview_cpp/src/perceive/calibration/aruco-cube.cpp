@@ -54,9 +54,33 @@ calc_detect_Ws(const ArucoCube& ac,
 
 // ------------------------------------------------------- get marker dictionary
 
+// OpenCV 4.7 moved aruco into objdetect and changed the API: dictionaries
+// are returned by value, DetectorParameters has no ::create(), and
+// Dictionary::drawMarker became generateImageMarker.
+#if CV_VERSION_MAJOR > 4 || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 7)
+#define PERCEIVE_ARUCO_NEW_API 1
+#endif
+
 static cv::Ptr<cv::aruco::Dictionary> get_marker_dictionary()
 {
+#ifdef PERCEIVE_ARUCO_NEW_API
+   return cv::makePtr<cv::aruco::Dictionary>(
+       cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50));
+#else
    return cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
+#endif
+}
+
+static void draw_marker(const cv::Ptr<cv::aruco::Dictionary>& dictionary,
+                        int id,
+                        int side_pixels,
+                        cv::Mat& img)
+{
+#ifdef PERCEIVE_ARUCO_NEW_API
+   cv::aruco::generateImageMarker(*dictionary, id, side_pixels, img);
+#else
+   dictionary->drawMarker(id, side_pixels, img);
+#endif
 }
 
 // ------------------------------------------------------------------ marker pos
@@ -600,7 +624,7 @@ This::detect_markers(const cv::Mat& im,
                      const string_view out_filename) const
 {
    // https://docs.opencv.org/3.4/d1/dcd/structcv_1_1aruco_1_1DetectorParameters.html
-   auto parameters = cv::aruco::DetectorParameters::create();
+   auto parameters = cv::makePtr<cv::aruco::DetectorParameters>();
    auto dictionary = get_marker_dictionary();
    std::vector<int> marker_ids;
    std::vector<std::vector<cv::Point2f>> marker_corners, rejected_candidates;
@@ -729,7 +753,7 @@ This::detect_markers(const cv::Mat& im,
                      const string_view out_filename) const
 {
    // https://docs.opencv.org/3.4/d1/dcd/structcv_1_1aruco_1_1DetectorParameters.html
-   auto parameters = cv::aruco::DetectorParameters::create();
+   auto parameters = cv::makePtr<cv::aruco::DetectorParameters>();
    auto dictionary = get_marker_dictionary();
    std::vector<int> marker_ids;
    std::vector<std::vector<cv::Point2f>> marker_corners, rejected_candidates;
@@ -758,7 +782,7 @@ This::detect_markers(const cv::Mat& im,
 
       const auto axis_len = marker_size * 0.4;
       for(auto i = 0u; i < rvecs.size(); ++i)
-         cv::aruco::drawAxis(
+         cv::drawFrameAxes(
              z, cvK, dist_coeffs, rvecs[i], tvecs[i], float(axis_len));
 
       cv::imwrite(out_filename.data(), z);
@@ -947,7 +971,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
 
    auto dictionary = get_marker_dictionary();
    for(size_t i = 0; i < ac.markers.size(); ++i) {
-      dictionary->drawMarker(ac.index_to_cv_dict_ind(int(i)), 7, ac.markers[i]);
+      draw_marker(dictionary, ac.index_to_cv_dict_ind(int(i)), 7, ac.markers[i]);
       // cv::imwrite(format("/tmp/zappy_{:2d}.png", i), ac.markers[i]);
    }
 
@@ -1296,7 +1320,7 @@ static ArucoCube init_from_json_(const Json::Value& root) noexcept(false)
       auto dictionary = get_marker_dictionary();
       for(size_t i = 0; i < acube.markers.size(); ++i) {
          const auto ind = acube.index_to_cv_dict_ind(int(i));
-         if(ind >= 0) dictionary->drawMarker(ind, 7, acube.markers[i]);
+         if(ind >= 0) draw_marker(dictionary, ind, 7, acube.markers[i]);
       }
 
       { // Sanity check
