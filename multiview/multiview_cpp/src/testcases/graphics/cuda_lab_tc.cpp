@@ -5,6 +5,7 @@
 #include "cuda/perceive/graphics/rgb-to-lab.hpp"
 #include "perceive/graphics/colour-set.hpp"
 #include "perceive/graphics/image-container.hpp"
+#include "perceive/utils/cuda-spec.hpp"
 #define CATCH_CONFIG_PREFIX_ALL
 #include "perceive/contrib/catch.hpp"
 
@@ -17,6 +18,11 @@ CATCH_TEST_CASE("CudaARGBToLAB", "[cuda_argb_to_lab]")
 {
    CATCH_SECTION("rgb2lab")
    {
+      if(!cuda::cuda_is_available()) {
+         WARN("no CUDA device found, skipping CudaARGBToLAB");
+         return;
+      }
+
       // Create a giant input image containing every RGB value
       ARGBImage input{256, 256 * 256};
       for(unsigned r{0}; r < 256; ++r) {
