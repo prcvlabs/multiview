@@ -19,7 +19,7 @@ project(multiview LANGUAGES C CXX)
 
 option(MULTIVIEW_WITH_CUDA "Build the CUDA kernels in src/cuda (-DWITH_CUDA)" ON)
 option(MULTIVIEW_WITH_AWS "Link the AWS S3 SDK (s3:// paths)" ON)
-option(MULTIVIEW_PROFILE_MEMORY "Define PERCEIVE_PROFILE_MEMORY for testcases" ON)
+option(MULTIVIEW_PROFILE_MEMORY "Track allocations (-DPERCEIVE_PROFILE_MEMORY)" OFF)
 include(CMakeDependentOption)
 cmake_dependent_option(MULTIVIEW_WITH_LIBSGM
   "Build contrib/libSGM and enable the GPU SGM disparity strategy (-DUSE_SGM)"
@@ -162,6 +162,14 @@ add_library(mv-alglib STATIC ${ALGLIB_SRCS})
 target_compile_options(mv-alglib PRIVATE -w)
 
 # ------------------------------------------------------------------ targets
+#
+# src/perceive (+ src/cuda) is compiled once, into an OBJECT library shared by
+# both executables. The sources that depend on the per-executable
+# TESTCASE_BUILD define (k_is_testcase_build) are compiled into each one.
+
+set(MV_PER_TARGET_SRCS
+  ${MV_SRC}/perceive/config.cpp
+  ${MV_SRC}/perceive/io/struct-meta.cpp)
 
 function(mv_glob out)
   set(files)
@@ -178,34 +186,42 @@ function(mv_glob out)
   set(${out} ${files} PARENT_SCOPE)
 endfunction()
 
-function(mv_executable name)
-  set(dirs perceive ${ARGN})
-  if(MULTIVIEW_WITH_CUDA)
-    list(APPEND dirs cuda)
-  endif()
-  mv_glob(srcs ${dirs})
-  add_executable(${name} ${srcs})
-  target_include_directories(${name} PRIVATE ${MV_SRC})
-  target_include_directories(${name} SYSTEM PRIVATE
-    ${MV_SRC}/perceive/contrib
-    ${MV_SRC}/perceive/contrib/fmt/include
-    ${MV_SRC}/perceive/contrib/range-v3/include
-    ${MV_CONTRIB}
-    ${MV_CONTRIB}/alglib/include
-    ${MV_CONTRIB}/static-math_20180201/include
-    ${SVM_INCLUDE_DIR})
-  target_compile_definitions(${name} PRIVATE ${MV_DEFS}
-    TARGET="${name}"
-    MULTIVIEW_VERSION="${MV_VERSION}"
-    INSTALLATION_ROOT="${CMAKE_INSTALL_PREFIX}")
-  target_compile_options(${name} PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>
-    $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
-  # The perceive sources assume "stdinc.hpp" is pre-included (see rules.ninja,
-  # cpp_pch). Third-party code under contrib/ is compiled without it.
+# Usage requirements common to every multiview target
+add_library(mv-common INTERFACE)
+target_include_directories(mv-common INTERFACE ${MV_SRC})
+target_include_directories(mv-common SYSTEM INTERFACE
+  ${MV_SRC}/perceive/contrib
+  ${MV_SRC}/perceive/contrib/fmt/include
+  ${MV_SRC}/perceive/contrib/range-v3/include
+  ${MV_CONTRIB}
+  ${MV_CONTRIB}/alglib/include
+  ${MV_CONTRIB}/static-math_20180201/include
+  ${SVM_INCLUDE_DIR})
+target_compile_definitions(mv-common INTERFACE ${MV_DEFS}
+  MULTIVIEW_VERSION="${MV_VERSION}"
+  INSTALLATION_ROOT="${CMAKE_INSTALL_PREFIX}"
+  $<$<BOOL:${MULTIVIEW_PROFILE_MEMORY}>:PERCEIVE_PROFILE_MEMORY>)
+target_compile_options(mv-common INTERFACE
+  $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>
+  $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+target_link_libraries(mv-common INTERFACE
+  mv-alglib
+  ${OpenCV_LIBS}
+  Boost::filesystem Boost::headers
+  Eigen3::Eigen
+  assimp::assimp
+  PkgConfig::TIRPC
+  ${SVM_LIBRARY} ${NCURSES_LIBRARY}
+  ${MV_LIBS}
+  Threads::Threads ${CMAKE_DL_LIBS} util m)
+
+# The perceive sources assume "stdinc.hpp" is pre-included (see rules.ninja,
+# cpp_pch). Third-party code under contrib/ is compiled without it.
+function(mv_add_sources name)
+  target_sources(${name} PRIVATE ${ARGN})
   target_precompile_headers(${name} PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${MV_SRC}/stdinc.hpp>)
-  foreach(s ${srcs})
+  foreach(s ${ARGN})
     if(s MATCHES "/contrib/" OR NOT s MATCHES "\\.cpp$")
       set_source_files_properties(${s} TARGET_DIRECTORY ${name}
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
@@ -215,20 +231,27 @@ function(mv_executable name)
         PROPERTIES COMPILE_OPTIONS "-w")
     endif()
   endforeach()
-  target_link_libraries(${name} PRIVATE
-    mv-alglib
-    ${OpenCV_LIBS}
-    Boost::filesystem Boost::headers
-    Eigen3::Eigen
-    assimp::assimp
-    PkgConfig::TIRPC
-    ${SVM_LIBRARY} ${NCURSES_LIBRARY}
-    ${MV_LIBS}
-    Threads::Threads ${CMAKE_DL_LIBS} util m)
+endfunction()
+
+set(MV_LIB_DIRS perceive)
+if(MULTIVIEW_WITH_CUDA)
+  list(APPEND MV_LIB_DIRS cuda)
+endif()
+mv_glob(MV_LIB_SRCS ${MV_LIB_DIRS})
+list(REMOVE_ITEM MV_LIB_SRCS ${MV_PER_TARGET_SRCS})
+add_library(mv-perceive OBJECT)
+target_link_libraries(mv-perceive PUBLIC mv-common)
+mv_add_sources(mv-perceive ${MV_LIB_SRCS})
+
+function(mv_executable name)
+  mv_glob(srcs ${ARGN})
+  add_executable(${name})
+  mv_add_sources(${name} ${srcs} ${MV_PER_TARGET_SRCS})
+  target_compile_definitions(${name} PRIVATE TARGET="${name}")
+  target_link_libraries(${name} PRIVATE mv-perceive)
 endfunction()
 
 mv_executable(multiview-cli front-ends)
 
 mv_executable(multiview-testcases testcases)
-target_compile_definitions(multiview-testcases PRIVATE TESTCASE_BUILD
-  $<$<BOOL:${MULTIVIEW_PROFILE_MEMORY}>:PERCEIVE_PROFILE_MEMORY>)
+target_compile_definitions(multiview-testcases PRIVATE TESTCASE_BUILD)
