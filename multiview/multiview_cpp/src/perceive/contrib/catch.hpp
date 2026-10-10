@@ -5262,7 +5262,7 @@ struct FatalConditionHandler
    static bool isSet;
    static struct sigaction oldSigActions[];
    static stack_t oldSigStack;
-   static char altStackMem[];
+   static char altStackMem[32768];
 
    static void handleSignal(int sig);
 
@@ -8177,7 +8177,7 @@ FatalConditionHandler::FatalConditionHandler()
    isSet = true;
    stack_t sigStack;
    sigStack.ss_sp = altStackMem;
-   sigStack.ss_size = SIGSTKSZ;
+   sigStack.ss_size = sizeof(altStackMem);
    sigStack.ss_flags = 0;
    sigaltstack(&sigStack, &oldSigStack);
    struct sigaction sa = {};
@@ -8210,7 +8210,8 @@ struct sigaction FatalConditionHandler::oldSigActions[sizeof(signalDefs)
                                                       / sizeof(SignalDefs)]
     = {};
 stack_t FatalConditionHandler::oldSigStack = {};
-char FatalConditionHandler::altStackMem[SIGSTKSZ] = {};
+// SIGSTKSZ is not a constant expression since glibc 2.34 (Catch2 #2178)
+char FatalConditionHandler::altStackMem[32768] = {};
 
 } // namespace Catch
 

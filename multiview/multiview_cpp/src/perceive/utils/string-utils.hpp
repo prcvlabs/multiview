@@ -36,7 +36,7 @@ using std::string_view;
 
 // ---------------------------------------------------------------- lexical-cast
 //
-template<std::arithmetic I>
+template<perceive::arithmetic I>
 std::error_code
 lexical_cast(std::string_view s, I& value, int base = 10) noexcept
 {
