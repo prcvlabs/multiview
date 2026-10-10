@@ -20,6 +20,7 @@ project(multiview LANGUAGES C CXX)
 option(MULTIVIEW_WITH_CUDA "Build the CUDA kernels in src/cuda (-DWITH_CUDA)" ON)
 option(MULTIVIEW_WITH_AWS "Link the AWS S3 SDK (s3:// paths)" ON)
 option(MULTIVIEW_PROFILE_MEMORY "Track allocations (-DPERCEIVE_PROFILE_MEMORY)" OFF)
+option(MULTIVIEW_WITH_CCACHE "Use ccache, if found, to cache compilations" ON)
 include(CMakeDependentOption)
 cmake_dependent_option(MULTIVIEW_WITH_LIBSGM
   "Build contrib/libSGM and enable the GPU SGM disparity strategy (-DUSE_SGM)"
@@ -30,6 +31,20 @@ cmake_dependent_option(MULTIVIEW_WITH_HYPERPOSE
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+if(MULTIVIEW_WITH_CCACHE)
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    # The sloppiness lets ccache cache sources compiled with the PCH
+    set(MV_LAUNCHER ${CMAKE_COMMAND} -E env
+      CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+      ${CCACHE_PROGRAM})
+    set(CMAKE_C_COMPILER_LAUNCHER ${MV_LAUNCHER})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${MV_LAUNCHER})
+    set(CMAKE_CUDA_COMPILER_LAUNCHER ${MV_LAUNCHER})
+    message(STATUS "multiview: using ccache (${CCACHE_PROGRAM})")
+  endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 20)

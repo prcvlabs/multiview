@@ -18,6 +18,7 @@ dependencies:
   - gxx_linux-64=13
   - cmake>=3.24
   - ninja
+  - ccache           # optional: cached rebuilds (auto-detected by CMake)
   - pkg-config
   # CUDA (12.8 supports sm_50..sm_120 and gcc <= 14)
   - cuda-version=12.8
