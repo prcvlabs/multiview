@@ -41,29 +41,29 @@ show_help()
 
    Testcases:
 
-   * 001_B7-short                     Two people walking through envista.
-   * 002_glenbrook-gaze               Track 1 person, but gaze is over the shoulder.
-   * 003_glenbrook-cluster            People are tightly clustered together.
-   * 004_envistalab-clutter           Lots of tracks in a small space. Frames [1000-1500).
-   * 005_envistalab-sitting           More envista, with someone sitting. Frames [0-1000).
-   * 006_inspired-tracks              Three people, some moving fast. Frames [6500-6900).
-   * 007_inspired-sparse-tracks       Two tracks across many cameras. Frames [0-500).
-   * 008_cal-closets-standing         Tracks subject to reprojection error issues.
-   * 009_cal-closets-stitching        A track that traces through three camera views. Frames [4400-4700).
-   * 010_monterey                     Crowds of people, steep angle, far away. Frames [1100-1900).
-   * 011_cc-cincinnati-standing       A bunch of people standing around. Frames [700-850).
-   * 012_cc-cincinnati-walking        A group of people walking through store. Frames [1200-1600).
-   * 013_cc-cincinnati-occlude        Three people in a tight space, with occlusion. Frames [1900-2100).
-   * 014_cc-cincinnati-sitting        A group walking to a table, and some sitting. Frames [5300-5650).   
-   * 072_cc_carmel_vonnegut_lay_1     .
-   * 073_office_bridget_measuring_1   .
-   * 074_office_mark_measuring_1      .
-   * 075_office_sam_measuring_1       .
-   * 076_office_front_lobby_back_1    .
-   * 077_office_front_lobby_back_2    .
-   * 078_office_next_to_fern_1        .
-   * 079_office_side_door_1           .
-   * 080_office_front_lobby_front_1   .
+   * 001_site01_short                 Two people walking through site01.
+   * 002_site02_gaze                  Track 1 person, but gaze is over the shoulder.
+   * 003_site02_cluster               People are tightly clustered together.
+   * 004_site01_clutter               Lots of tracks in a small space. Frames [1000-1500).
+   * 005_site01_sitting               More site01, with someone sitting. Frames [0-1000).
+   * 006_site03_tracks                Three people, some moving fast. Frames [6500-6900).
+   * 007_site03_sparse_tracks         Two tracks across many cameras. Frames [0-500).
+   * 008_site04_standing              Tracks subject to reprojection error issues.
+   * 009_site04_stitching             A track that traces through three camera views. Frames [4400-4700).
+   * 010_site05                       Crowds of people, steep angle, far away. Frames [1100-1900).
+   * 011_site06_standing              A bunch of people standing around. Frames [700-850).
+   * 012_site06_walking               A group of people walking through store. Frames [1200-1600).
+   * 013_site06_occlude               Three people in a tight space, with occlusion. Frames [1900-2100).
+   * 014_site06_sitting               A group walking to a table, and some sitting. Frames [5300-5650).   
+   * 072_site04_lay_1                 .
+   * 073_site07_measuring_1           .
+   * 074_site07_measuring_1           .
+   * 075_site07_measuring_1           .
+   * 076_site07_front_lobby_back_1    .
+   * 077_site07_front_lobby_back_2    .
+   * 078_site07_1                     .
+   * 079_site07_side_door_1           .
+   * 080_site07_front_lobby_front_1   .
 
 EOF
 }

@@ -43,7 +43,7 @@ Usage: {0} [Options...] <manifest-file>
     <manifest-file>       A JSON file that looks like the following:
 
         {{
-            "scene-key":  "anvil_acuco-tests_v1.json",
+            "scene-key":  "site08_acuco-tests_v1.json",
             "videos":     ["video-path-1.mp4",         
                            "video-path-2.mp4"        ],
             "timestamps": ["20180410t13-23-49.546531", 

@@ -2,7 +2,7 @@
 Scene Creation Notes           {#scene_creation_notes}
 ====================
 
-We're using the calibration files in: `$PERCEIVE_DATA/computer-vision/experiments/multi-camera-positioning/fischer-1/`
+We're using the calibration files in: `$PERCEIVE_DATA/computer-vision/experiments/multi-camera-positioning/site07-1/`
 
 # Steps to create a new scene
 

@@ -16,7 +16,7 @@ Usage: python3 plot_metrics.py <scene_name>
 
 Examples:
 	
-	python3 plot_metrics.py -d /tmp california-closets_2019-10-16
+	python3 plot_metrics.py -d /tmp site04_scene05
 
 	""")
 

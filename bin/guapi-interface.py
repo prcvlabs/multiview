@@ -156,7 +156,7 @@ Usage: {0} command <OPTIONS>
       > {0} --query -t scene --store-id 1
 
       # Query a scene with a specific key (returns if scene is "in use")
-      > {0} --query -t scene --scene-name entrance_office
+      > {0} --query -t scene --scene-name site08_scene10
 
       # Create a new scene with values, including cameras
 

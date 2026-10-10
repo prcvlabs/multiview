@@ -653,10 +653,10 @@ CATCH_TEST_CASE("PlanePhase", "[plane_phase]")
    };
 
    const string manifest_filename1
-       = format("{:s}/computer-vision/test-data/museum_videos/manifest.json",
+       = format("{:s}/computer-vision/test-data/site10_videos/manifest.json",
                 perceive_data_dir());
    const string manifest_filename
-       = format("{:s}/computer-vision/test-data/museum_videos/D2/manifest.json",
+       = format("{:s}/computer-vision/test-data/site10_videos/D2/manifest.json",
                 perceive_data_dir());
 
    shared_ptr<SceneDescription> scene_desc_;

@@ -29,7 +29,7 @@ row1 = [
     'P=1 + R=1 + F1=1',
     1,
     'Note about running test',
-    'https://s3.console.aws.amazon.com/s3/buckets/perceive-multiview/testcases/008_cal-closets-standing/',
+    'https://s3.console.aws.amazon.com/s3/buckets/perceive-multiview/testcases/008_site04_standing/',
     'Tracks subject to reprojection error issues.',
 ]
 
@@ -42,7 +42,7 @@ row2 = [
     'P=1 + R=1 + F1=1',
     1,
     'Note about running test',
-    'https://s3.console.aws.amazon.com/s3/buckets/perceive-multiview/testcases/008_cal-closets-standing/',
+    'https://s3.console.aws.amazon.com/s3/buckets/perceive-multiview/testcases/008_site04_standing/',
     'Tracks subject to reprojection error issues.',
 ]
 

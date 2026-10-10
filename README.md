@@ -108,20 +108,20 @@ the only way to build the pose detection and GUI targets.
 ## Running testcases
 
 The following scenarios are available to test:  
-   * 001_B7-short                     -- Two people walking through envista.
-   * 002_jewelry-gaze               -- Track 1 person, but gaze is over the shoulder.
-   * 003_jewelry-cluster            -- People are tightly clustered together.
-   * 004_lobby-clutter           -- Lots of tracks in a small space. Frames [1000-1500).
-   * 005_lobby-sitting           -- More lobby, with someone sitting. Frames [0-1000).
-   * 006_retail-tracks           -- Three people, some moving fast. Frames [6500-6900).
-   * 007_retail-sparse-tracks       -- Two tracks across many cameras. Frames [0-500).
-   * 008_showroom1-standing         -- Tracks subject to reprojection error issues.
-   * 009_showroom1-stitching        -- A track that traces through three camera views. Frame  [4400-4700).
-   * 010_acquarium                     -- Crowds of people, steep angle, far away. Frames [1100-1900).
-   * 011_showroom2-standing       -- A bunch of people standing around. Frames [700-850).
-   * 012_showroom2-walking        -- A group of people walking through store. Frames [1200-1600).
-   * 013_showroom2-occlude        -- Three people in a tight space, with occlusion. Frames [1900-2100).
-   * 014_showroom2-sitting        -- A group walking to a table, and some sitting. Frames [5300-5650). 
+   * 001_site01_short          -- Two people walking through site01.
+   * 002_site02_gaze           -- Track 1 person, but gaze is over the shoulder.
+   * 003_site02_cluster        -- People are tightly clustered together.
+   * 004_site01_clutter        -- Lots of tracks in a small space. Frames [1000-1500).
+   * 005_site01_sitting        -- More site01, with someone sitting. Frames [0-1000).
+   * 006_site03_tracks         -- Three people, some moving fast. Frames [6500-6900).
+   * 007_site03_sparse_tracks  -- Two tracks across many cameras. Frames [0-500).
+   * 008_site04_standing       -- Tracks subject to reprojection error issues.
+   * 009_site04_stitching      -- A track that traces through three camera views. Frames [4400-4700).
+   * 010_site05                -- Crowds of people, steep angle, far away. Frames [1100-1900).
+   * 011_site06_standing       -- A bunch of people standing around. Frames [700-850).
+   * 012_site06_walking        -- A group of people walking through store. Frames [1200-1600).
+   * 013_site06_occlude        -- Three people in a tight space, with occlusion. Frames [1900-2100).
+   * 014_site06_sitting        -- A group walking to a table, and some sitting. Frames [5300-5650).
 
 Testcases can be run via `./bin/testcase.sh`. One test case has data available today which can be downloaded [here](https://www.dropbox.com/sh/btpqu9p9nv68txj/AACajIaTwKjXO7vSe4CrJiROa?dl=0). Like the build scripts we need to reorganize the data to make them all available.
 

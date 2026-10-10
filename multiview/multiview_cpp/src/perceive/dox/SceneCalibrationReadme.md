@@ -219,10 +219,10 @@ Now download an epoch from `s3`. Multiview has a script just for this purpose:
    Examples:
 
       # Print out the manifest for this scene+epoch
-      > multiview-manifest.py glenbrook_2018-11-02_v1 2018-11-02T15:00:00
+      > multiview-manifest.py site02_scene01_v1 2000-01-01T15:00:00
 
       # Set up directory 'data' with a manifest and videos, ready for pipeline
-      > multiview-manifest.py -d data glenbrook_2018-11-02_v1 2018-11-02T15:00:00
+      > multiview-manifest.py -d data site02_scene01_v1 2000-01-01T15:00:00
 ```
 
 (You must install GUAPI for this to work.)
@@ -323,7 +323,7 @@ There are obviously a lot of rough edges here. Here are some possible improvemen
  * The scene-maker is currently unaware of the store-id, and sets it to '0' in the scene.json file.
  * The scene-maker annoyingly adds version numbers to the scene. (i.e., like `_v1`.)
  * The scene-maker should be able to figure out if the pipeline has calculated any results on the epoch. If it has, it should _then_ add or increment the version number. The scene-maker could then automagically upload and modify scenes on s3/perceive-data, so long as GUAPI says that no results exist.
- * Data input to the scene-maker is awkward... although pretty simple with the right bash script setup. (For hints see: `$PERCEIVE_DATA/multiview/calibration-data/scenes/california-closets_2019-09-27/run-calibration.sh`.)
+ * Data input to the scene-maker is awkward... although pretty simple with the right bash script setup. (For hints see: `$PERCEIVE_DATA/multiview/calibration-data/scenes/site04_scene01/run-calibration.sh`.)
  * Data input could be made simpler by codifying file positions. We could then have a process that automagically detects and updates `phase_camera_extrinsic` outputs. The scene-maker, in turn, could have a ncurses interface that lists the possible aruco-position files, and lets you select which ones to use. This could be run live during installation.
  * If we apply the clustering solution above for the `hist-aabb`, then the above ncurses interface could live upload a completed scene within minutes. _It would still need checking visually_, but this would be aided by everything being on `s3`. We only need a way for the multiview gui to be able to list and select _scenes_ and _epoches_ for a given scene. That way a technician can just have the GUI open, and when the scene is available, and an epochs' worth of data is uploaded, then can then click on the epoch, and view it directly.
 

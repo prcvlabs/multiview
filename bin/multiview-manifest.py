@@ -120,10 +120,10 @@ Usage: {0} [-d <outdir>] <scene> <epoch>
    Examples:
 
       # Print out the manifest for this scene+epoch
-      > {0} glenbrook_2018-11-02_v1 2018-11-02T15:00:00
+      > {0} site02_scene01_v1 2000-01-01T15:00:00
 
       # Set up directory 'data' with a manifest and videos, ready for pipeline
-      > {0} -d data glenbrook_2018-11-02_v1 2018-11-02T15:00:00
+      > {0} -d data site02_scene01_v1 2000-01-01T15:00:00
 
 """.format(os.path.basename(sys.argv[0])))
     

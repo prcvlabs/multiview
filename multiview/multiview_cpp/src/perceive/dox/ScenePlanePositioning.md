@@ -12,16 +12,16 @@ mkdir z
 cd z
 
 # We're resizing 'cause the optimization procedure gets real slow on those massive images.
-convert $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/fisher-pos2.jpg -resize 2048x768 001.png
+convert $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/site07-pos2.jpg -resize 2048x768 001.png
 
 # Create 119 more images
 I=2 ; while (( $I < 120 )) ; do cp 001.png $(printf %03d.png $I) ; ((I++)) ; done
 
 # Create a video from those images
-ffmpeg -i %03d.png -c:v libx264 -crf 20 fisher-1_c42.mp4
+ffmpeg -i %03d.png -c:v libx264 -crf 20 site07-1_c42.mp4
 
 # Move the video back in place.
-mv fisher-1_c42.mp4 $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/
+mv site07-1_c42.mp4 $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/
 
 # Clean up, like a good citizen
 cd /tmp
@@ -33,17 +33,17 @@ rm -rf /tmp/z
 The new version should need a manifest file. But this is for loading tweaker.
 
 ```
-cd $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/
+cd $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/
 cat > manifest.json <<EOF
 {
    "store": 0,
-   "scene-key": "fischer_1_2019-02-12_v2",
-   "epoch": "2018-11-02T15:00:00",
+   "scene-key": "site07_scene01_v2",
+   "epoch": "2000-01-01T15:00:00",
    "videos": [
       {
          "camera": "c42_v13",
-         "file": "fisher-1_c42.mp4",
-         "timestamp": "2018-11-02T15:00:00.000000+0000",
+         "file": "site07-1_c42.mp4",
+         "timestamp": "2000-01-01T15:00:00.000000+0000",
          "duration": 599.937
       }
    ]
@@ -54,15 +54,15 @@ Note a few things. (1), a few things in this file must be there, but they're irr
 
 # (*) Set up the scene file (*)
 
-The scene file describes the cameras in the room and where they are. They are stored on `s3`, and also in `$PERCEIVE_DATA/multiview/calibration/scenes/`. The point of the external calibration is to create a new scene file. Currently we need a scene file as input, but we really only need TWO input values: (1) the scene key (i.e., `fischer_1_2019-02-12_v1`), and the array of bcams (i.e., `["c42_v13"]`). Thus, the new version should not require a scene file as _input_... just the scene's key, and the list of cameras. It still produces a scene as _output_.
+The scene file describes the cameras in the room and where they are. They are stored on `s3`, and also in `$PERCEIVE_DATA/multiview/calibration/scenes/`. The point of the external calibration is to create a new scene file. Currently we need a scene file as input, but we really only need TWO input values: (1) the scene key (i.e., `site07_scene01_v1`), and the array of bcams (i.e., `["c42_v13"]`). Thus, the new version should not require a scene file as _input_... just the scene's key, and the list of cameras. It still produces a scene as _output_.
 
 ```
 cd $PERCEIVE_DATA/multiview/calibration/scenes/
-cat > fischer_1_2019-02-12_v1.json <<EOF
+cat > site07_scene01_v1.json <<EOF
 {
     "type":             "SceneDescriptionInfo",
     "store-id":         0,
-    "scene-key":        "fischer_1_2019-02-12_v1",
+    "scene-key":        "site07_scene01_v1",
     "bcam-keys":        ["c42_v13"],
     "bcam-transforms":
     [
@@ -75,7 +75,7 @@ cat > fischer_1_2019-02-12_v1.json <<EOF
 }
 EOF
 
-aws s3 cp fischer_1_2019-02-12_v1.json s3://perceive-multiview/calibration/scenes/fischer_1_2019-02-12_v1.json
+aws s3 cp site07_scene01_v1.json s3://perceive-multiview/calibration/scenes/site07_scene01_v1.json
 ```
 
 # (*) About those Cameras (*)
@@ -90,12 +90,12 @@ We need to find an approximate calibration that positions the aruco cube. In par
 
 ```
 # Create the folder for the point-picking GUI files
-cd $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/
-mkdir fischer_experiment_1_cam-position-files
-cd fischer_experiment_1_cam-position-files
+cd $PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/
+mkdir site07_experiment_1_cam-position-files
+cd site07_experiment_1_cam-position-files
 
 # Split the input image for the point-picking GUI
-FILE="../fisher-pos2.jpg"
+FILE="../site07-pos2.jpg"
 
 # Get image files width and height
 WH=$(convert "$FILE" -print "%w %h" /dev/null 2>/dev/null)
@@ -107,10 +107,10 @@ convert "$FILE" -crop ${W}x${H}+0+0 "STR00042.png"
 convert "$FILE" -crop ${W}x${H}+${W}+0 "STR00041.png"
 
 # Set up the initial calibration file
-cat > fischer_experiment_1_cam-pos-measurements.json <<EOF
+cat > site07_experiment_1_cam-pos-measurements.json <<EOF
 {
     "type": "EstimateCamExtrinsicInfo",
-    "scene-key": "fischer_1_2019-02-12_v1",
+    "scene-key": "site07_scene01_v1",
     "ref-index": 0,
 
     "global-world-coords": {
@@ -154,47 +154,47 @@ cat > fischer_experiment_1_cam-pos-measurements.json <<EOF
          "world-coords":[],
          "image-coords":[],
          "estimated-center":[4,1.5,2],
-         "image-file":"$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/fischer_experiment_1_cam-position-files/STR00041.png"},
+         "image-file":"$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/site07_experiment_1_cam-position-files/STR00041.png"},
 
         {"sensor-id":"STR00042",
          "image-format":[2592,1944],         
          "world-coords":[],
          "image-coords":[],
          "estimated-center":[4,1.5,2],
-         "image-file":"$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/fischer_experiment_1_cam-position-files/STR00042.png"}            
+         "image-file":"$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/site07_experiment_1_cam-position-files/STR00042.png"}            
     ]
 }
 EOF
 
 # Upload to s3
-aws s3 cp "STR00041.png" "s3://perceive-images/rotation/fischer_experiment_1/STR00041.png"
-aws s3 cp "STR00042.png" "s3://perceive-images/rotation/fischer_experiment_1/STR00042.png"
-aws s3 cp "fischer_experiment_1_cam-pos-measurements.json" "s3://perceive-images/rotation/fischer_experiment_1/fischer_experiment_1_cam-pos-measurements.json"
+aws s3 cp "STR00041.png" "s3://perceive-images/rotation/site07_experiment_1/STR00041.png"
+aws s3 cp "STR00042.png" "s3://perceive-images/rotation/site07_experiment_1/STR00042.png"
+aws s3 cp "site07_experiment_1_cam-pos-measurements.json" "s3://perceive-images/rotation/site07_experiment_1/site07_experiment_1_cam-pos-measurements.json"
 ```
 
 # Load the pick-picker GUI
 (1) Go to `https://tools.perceiveinc.com/rotation/add-store`
-(2) Add store "fischer_experiment_1"
+(2) Add store "site07_experiment_1"
 (3) Go to `https://tools.perceiveinc.com/rotation/pixel`
-(4) Select some pixels. The Aruco cube has a very particular orientation. See the image "$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/ARUCO-orientation.png".
+(4) Select some pixels. The Aruco cube has a very particular orientation. See the image "$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/ARUCO-orientation.png".
 
 I saved the output to:
 
-$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/fischer_experiment_1_aruco-measurements.json
+$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/site07_experiment_1_aruco-measurements.json
 
 # Run extrinsic camera positioning
 
 ```
 cd $PERCEIVE_CODE/multiview/multiview_cpp
-IN_FILE="$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/fischer_experiment_1_aruco-measurements.json"
+IN_FILE="$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/site07_experiment_1_aruco-measurements.json"
 
-./run.sh release no-cuda stereo_cam_pos_opt -o $PERCEIVE_DATA/multiview/calibration/scenes/fischer_1_2019-02-12_v2.json "$IN_FILE"
+./run.sh release no-cuda stereo_cam_pos_opt -o $PERCEIVE_DATA/multiview/calibration/scenes/site07_scene01_v2.json "$IN_FILE"
 
 # Patch the verion number of the scene
-sed -i 's,fischer_1_2019-02-12_v1,fischer_1_2019-02-12_v2,g' $PERCEIVE_DATA/multiview/calibration/scenes/fischer_1_2019-02-12_v2.json
-sed -i 's,^\s*"aruco-result-key.*$,,' $PERCEIVE_DATA/multiview/calibration/scenes/fischer_1_2019-02-12_v2.json
+sed -i 's,site07_scene01_v1,site07_scene01_v2,g' $PERCEIVE_DATA/multiview/calibration/scenes/site07_scene01_v2.json
+sed -i 's,^\s*"aruco-result-key.*$,,' $PERCEIVE_DATA/multiview/calibration/scenes/site07_scene01_v2.json
 
-aws s3 cp $PERCEIVE_DATA/multiview/calibration/scenes/fischer_1_2019-02-12_v2.json s3://perceive-multiview/calibration/scenes/fischer_1_2019-02-12_v2.json
+aws s3 cp $PERCEIVE_DATA/multiview/calibration/scenes/site07_scene01_v2.json s3://perceive-multiview/calibration/scenes/site07_scene01_v2.json
 ```
 
 You can now review the optimization files to check that this worked. The blue and red crosses should align on the labeled corners of the aruco cube.
@@ -219,7 +219,7 @@ There is some problem with the results... it must be finding a degenerate soluti
 # (*) Load Tweaker (*)
 
 ```
-MANIFEST=$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/fischer_experiment_1/manifest.json
+MANIFEST=$PERCEIVE_DATA/computer-vision/experiments/camera_positioning/site07_experiment_1/manifest.json
 cd $PERCEIVE_CODE
 gui/camera-tweaker.py $MANIFEST
 ```

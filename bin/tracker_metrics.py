@@ -134,7 +134,7 @@ def drawStartEndPoints(paths):
 if __name__=="__main__":
 	parser=argparse.ArgumentParser(description="""Calculate and print benchmarking metrics for a specific version of multiview.""",epilog=r'''Example:
   python3 ./tracker_metrics.py \
-    --scene museum_2019-07-01_v1 \
+    --scene site10_scene01_v1 \
     --source_version  3.7.2:commit:9f92f878977a5679c65c284fa5cad2e30bdeaaa2 \
     --limit 15 \
     --path_map \

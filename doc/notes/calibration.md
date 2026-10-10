@@ -1,7 +1,7 @@
 
 # Products
 
-I think the most sensible thing to do is to ship this all to Fischers. Get Mark working on it. I can be in close 1-1 to ensure that I get the data that I need.
+I think the most sensible thing to do is to ship this all to site07. Get someone there working on it. I can be in close 1-1 to ensure that I get the data that I need.
 
  * Some system for generating accurate 3D color maps. For example this:
    [1] [https://structure.io/](https://structure.io/) costs about $500.

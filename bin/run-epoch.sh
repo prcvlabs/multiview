@@ -35,7 +35,7 @@ show_help()
 
    Example:
 
-      > $(basename $0) glenbrook_2018-11-02_v1 2018-11-02T15:00:00
+      > $(basename $0) site02_scene01_v1 2000-01-01T15:00:00
 
 EOF
 }

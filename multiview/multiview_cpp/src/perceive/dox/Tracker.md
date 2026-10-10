@@ -36,9 +36,9 @@ Tracklets are fickle. They disappear. They skip. Etc.
 
 ## Known Problems to Address (Testcases) ##
 
- * TESTCASE: How do we use 2D patches (Normalized cross-correlation in LAB space) to improve _merge-matching_? We need real-world data where the merging patches get confused, either by occlusion, or because people have weird clothing that doesn't match up when seen from different angles. That is, 2D patches should be a hint, and a soft constraint. See B7-pre-merge-frame7.
+ * TESTCASE: How do we use 2D patches (Normalized cross-correlation in LAB space) to improve _merge-matching_? We need real-world data where the merging patches get confused, either by occlusion, or because people have weird clothing that doesn't match up when seen from different angles. That is, 2D patches should be a hint, and a soft constraint. See site01-pre-merge-frame7.
  * TESTCASE: people standing in a circle our merge-matching may be overly aggressive in matching one person onto another along a degenerate line. (i.e., when they're occluding each other.) This can be fixed by _enforcing height_ smoothing across the tracks, but does this imply moving the merge stage into tracklets themselves?
- * TESTCASE: _implausible detections_. We want to be robust against false positives, including people detected on the floor, etc. We need some sort of "is this a rational detection" that is applied in the tracklets. See B7-frame44. This will allow us to increase the false-positive rate of the pose detector.
+ * TESTCASE: _implausible detections_. We want to be robust against false positives, including people detected on the floor, etc. We need some sort of "is this a rational detection" that is applied in the tracklets. See site01-frame44. This will allow us to increase the false-positive rate of the pose detector.
  * TESTCASE: _plausible false-positives_. A mannequin/statue, poster, TVs. These should be dealt with using "dead-zones", but the dead-zones must be available to multiview.(Part of loading the scene.)
  * TESTCASE: we have data where the pose detections are screwy, and switch front-to-back occasionally, thus flipping gaze detection. We now have to _smooth gaze detection_.
  * TESTCASE: we have detections far from two sensors, at various angles, and the sensor calibration isn't perfect. The _detections should merge naturally_.

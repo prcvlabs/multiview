@@ -406,7 +406,7 @@ This::run(const SceneDescription* scene_desc_ptr,
       }
 
       if(false) {
-         const auto fname = "/tmp/zzz_envista_test_v1_28_2.png"s;
+         const auto fname = "/tmp/zzz_site01_scene03_v1_28_2.png"s;
          images.clear();
          indices.clear();
          images.push_back(cv::imread(fname));

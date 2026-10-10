@@ -8,7 +8,7 @@ If we build a new cube, then we'll need to make minor changes to both the code a
 # Summary #
 
 The point of extrinsic camera positioning is to find the Euclidean Transformations (rotation and translation) for all the cameras in a scene.
-A scene is something like "pandora-gleenbrook". There are 1 or more cameras, and we need the positions for each of them.
+A scene is something like "site02_scene02". There are 1 or more cameras, and we need the positions for each of them.
 
 # Collecting Input Data #
 
@@ -34,8 +34,8 @@ The result is in the file `$OUTDIR/positions.json`.
 # Save the Results #
 
 The results need to be copied into the scene file. 
-If the scene is called "fischer-2019-03-01_v1", then the scene file is at the path: `$PERCEIVE_DATA/multiview/calibration/scenes/fischer-2019-03-01_v1.json`.
-On s3, the path is: `s3://perceive-multiview/calibration/scenes/fischer-2019-03-01_v1.json`.
+If the scene is called "site07_scene01_v1", then the scene file is at the path: `$PERCEIVE_DATA/multiview/calibration/scenes/site07_scene01_v1.json`.
+On s3, the path is: `s3://perceive-multiview/calibration/scenes/site07_scene01_v1.json`.
 
 The cameras and euclidean transforms are stored in two different keys:
 

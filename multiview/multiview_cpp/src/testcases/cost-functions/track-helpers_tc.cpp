@@ -321,21 +321,21 @@ static const bool feedback = false;
 // // {
 // //    // ---------------------------------------------------------
 // track-helpers
-// //    B7 CATCH_SECTION("track-helpers_B7")
+// //    site01 CATCH_SECTION("track-helpers_site01")
 // //    {
 // //       const auto perceive_data_dir =
 
 // //       const auto manifest_fname
 // //           = format("{:s}/computer-vision/experiments/test-runs/"
-// //                    "envista_short_2019-03-14_14-11-04/manifest.json",
+// //                    "site01_short/manifest.json",
 // //                    perceive_data_dir);
 
 // //       const auto th_fname = format(
-// // "%s/computer-vision/test-data/track-helpers_tc/loc-tracklet_B7.data",
+// // "%s/computer-vision/test-data/track-helpers_tc/loc-tracklet_site01.data",
 // //           perceive_data_dir);
 
 // //       if(multiview_trace_mode())
-// //          run_a_test(manifest_fname, th_fname, "/tmp/B7.mp4"s);
+// //          run_a_test(manifest_fname, th_fname, "/tmp/site01.mp4"s);
 // //    }
 // // }
 
