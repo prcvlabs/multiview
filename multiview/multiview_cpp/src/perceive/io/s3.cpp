@@ -11,6 +11,7 @@
 #include <regex>
 #include <stdlib.h>
 
+#ifndef MULTIVIEW_NO_AWS
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
 #include <aws/s3/model/DeleteObjectRequest.h>
@@ -19,6 +20,7 @@
 #include <aws/s3/model/HeadObjectRequest.h>
 #include <aws/s3/model/ListObjectsRequest.h>
 #include <aws/s3/model/PutObjectRequest.h>
+#endif
 
 // export AWS_PROFILE=multiview
 // aws s3 ls s3://perceive-calibration
@@ -27,6 +29,7 @@
 
 namespace perceive
 {
+#ifndef MULTIVIEW_NO_AWS
 static std::once_flag ensure_aws_flag;
 static Aws::SDKOptions options;
 static std::regex s3_path_re;
@@ -225,6 +228,39 @@ void s3_remove(const string_view s3_path) noexcept(false)
       throw std::runtime_error(msg);
    }
 }
+#else // MULTIVIEW_NO_AWS
+
+[[noreturn]] static void no_aws(const string_view s3_path)
+{
+   throw std::runtime_error(
+       format("cannot access '{}': multiview was built without AWS support "
+              "(MULTIVIEW_NO_AWS)",
+              s3_path));
+}
+
+void ensure_aws_is_init() {}
+void s3_load(const string_view s3_path, std::vector<char>&) noexcept(false)
+{
+   no_aws(s3_path);
+}
+void s3_load(const string_view s3_path, std::string&) noexcept(false)
+{
+   no_aws(s3_path);
+}
+void s3_store(const string_view s3_path, const std::vector<char>&) noexcept(
+    false)
+{
+   no_aws(s3_path);
+}
+void s3_store(const string_view s3_path, const string&) noexcept(false)
+{
+   no_aws(s3_path);
+}
+bool s3_exists(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
+void s3_remove(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
+
+#endif // MULTIVIEW_NO_AWS
+
 
 // ------------------------------------------------------------------- is s3 uri
 
