@@ -27,12 +27,12 @@ namespace {
 
 
 	__device__ inline int min_warp(int val) {
-		val = min(val, __shfl_xor(val, 16));
-		val = min(val, __shfl_xor(val, 8));
-		val = min(val, __shfl_xor(val, 4));
-		val = min(val, __shfl_xor(val, 2));
-		val = min(val, __shfl_xor(val, 1));
-		return __shfl(val, 0);
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 16));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 8));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 4));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 2));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 1));
+		return __shfl_sync(0xffffffffu, val, 0);
 	}
 
 	template<int DISP_SIZE>
@@ -78,8 +78,8 @@ namespace {
 
 		// prev, curr, next = { {k-2, k-1}, {k+0, k+1}, {k+2, k+3} }
 		uint32_t lcost_sh_curr = *reinterpret_cast<uint32_t*>(&lcost_sh[shIdx]);
-		uint32_t lcost_sh_prev = __shfl_up((int)lcost_sh_curr, 1, 32);
-		uint32_t lcost_sh_next = __shfl_down((int)lcost_sh_curr, 1, 32);
+		uint32_t lcost_sh_prev = __shfl_up_sync(0xffffffffu, (int)lcost_sh_curr, 1, 32);
+		uint32_t lcost_sh_next = __shfl_down_sync(0xffffffffu, (int)lcost_sh_curr, 1, 32);
 
 		// about __shlf_up / __shlf_down
 		// > The source lane index will not wrap around the value of width,
@@ -155,8 +155,8 @@ namespace {
 		uint32_t lcost_sh_curr_L = *reinterpret_cast<uint32_t*>(&lcost_sh[shIdx + 0]);
 		uint32_t lcost_sh_curr_H = *reinterpret_cast<uint32_t*>(&lcost_sh[shIdx + 2]);
 
-		uint32_t lcost_sh_prev = __shfl_up((int)lcost_sh_curr_H, 1, 32);
-		uint32_t lcost_sh_next = __shfl_down((int)lcost_sh_curr_L, 1, 32);
+		uint32_t lcost_sh_prev = __shfl_up_sync(0xffffffffu, (int)lcost_sh_curr_H, 1, 32);
+		uint32_t lcost_sh_next = __shfl_down_sync(0xffffffffu, (int)lcost_sh_curr_L, 1, 32);
 
 		uint32_t v_cost0_L = lcost_sh_curr_L;
 		uint32_t v_cost0_H = lcost_sh_curr_H;

@@ -21,12 +21,12 @@ static const int WTA_PIXEL_IN_BLOCK = 8;
 namespace {
 
 	__device__ inline int min_warp(int val) {
-		val = min(val, __shfl_xor(val, 16));
-		val = min(val, __shfl_xor(val, 8));
-		val = min(val, __shfl_xor(val, 4));
-		val = min(val, __shfl_xor(val, 2));
-		val = min(val, __shfl_xor(val, 1));
-		return __shfl(val, 0);
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 16));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 8));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 4));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 2));
+		val = min(val, __shfl_xor_sync(0xffffffffu, val, 1));
+		return __shfl_sync(0xffffffffu, val, 0);
 	}
 
 	__global__ void winner_takes_all_kernel64(uint16_t* leftDisp, uint16_t* rightDisp, const uint16_t* __restrict__ d_cost, int width, int height)

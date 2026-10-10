@@ -21,8 +21,8 @@ limitations under the License.
 namespace {
 	__device__ inline uint64_t shfl_u64(uint64_t x, int lane) {
 		int2 a = *reinterpret_cast<int2*>(&x);
-		a.x = __shfl(a.x, lane);
-		a.y = __shfl(a.y, lane);
+		a.x = __shfl_sync(0xffffffffu, a.x, lane);
+		a.y = __shfl_sync(0xffffffffu, a.y, lane);
 		uint64_t* out = reinterpret_cast<uint64_t*>(&a);;
 		return *out;
 	}
@@ -43,6 +43,7 @@ namespace {
 
 			uint64_t left_warp_0 = d_left[y * width + threadIdx.x];
 			uint64_t left_warp_32 = d_left[y * width + threadIdx.x + 32];
+			__syncwarp(); // right_buf is shared between the lanes of a warp
 #pragma unroll
 			for (int x = 0; x < 32; x++) {
 				uint64_t left_val = shfl_u64(left_warp_0, x);
@@ -67,6 +68,7 @@ namespace {
 		for (int x = 64; x < width; x += 32) {
 			uint64_t left_warp = d_left[y * width + (x + threadIdx.x)];
 			right_buf[sh_offset + threadIdx.x + 64] = d_right[y * width + (x + threadIdx.x)];
+			__syncwarp();
 			for (int xoff = 0; xoff < 32; xoff++) {
 				uint64_t left_val = shfl_u64(left_warp, xoff);
 #pragma unroll
@@ -76,6 +78,7 @@ namespace {
 					d_matching_cost[dst_idx] = __popcll(left_val ^ right_val);
 				}
 			}
+			__syncwarp(); // all lanes done reading before the buffer shifts
 			right_buf[sh_offset + threadIdx.x + 0] = right_buf[sh_offset + threadIdx.x + 32];
 			right_buf[sh_offset + threadIdx.x + 32] = right_buf[sh_offset + threadIdx.x + 64];
 		}
@@ -101,6 +104,7 @@ namespace {
 			uint64_t left_warp_32 = d_left[y * width + threadIdx.x + 32];
 			uint64_t left_warp_64 = d_left[y * width + threadIdx.x + 64];
 			uint64_t left_warp_96 = d_left[y * width + threadIdx.x + 96];
+			__syncwarp(); // right_buf is shared between the lanes of a warp
 
 #pragma unroll
 			for (int x = 0; x < 32; x++) {
@@ -152,6 +156,7 @@ namespace {
 		for (int x = 128; x < width; x += 32) {
 			uint64_t left_warp = d_left[y * width + (x + threadIdx.x)];
 			right_buf[sh_offset + threadIdx.x + 128] = d_right[y * width + (x + threadIdx.x)];
+			__syncwarp();
 			for (int xoff = 0; xoff < 32; xoff++) {
 				uint64_t left_val = shfl_u64(left_warp, xoff);
 #pragma unroll
@@ -161,6 +166,7 @@ namespace {
 					d_cost[dst_idx] = __popcll(left_val ^ right_val);
 				}
 			}
+			__syncwarp(); // all lanes done reading before the buffer shifts
 			right_buf[sh_offset + threadIdx.x + 0] = right_buf[sh_offset + threadIdx.x + 32];
 			right_buf[sh_offset + threadIdx.x + 32] = right_buf[sh_offset + threadIdx.x + 64];
 			right_buf[sh_offset + threadIdx.x + 64] = right_buf[sh_offset + threadIdx.x + 96];
