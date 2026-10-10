@@ -9,7 +9,9 @@
 # CMAKE_ARGS, which conda compiler activation overwrites), e.g.
 #   MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_AWS=OFF -DCMAKE_CUDA_ARCHITECTURES=75;86" build/build.sh
 #
-# Output: multiview/multiview_cpp/build/cmake-<config>/<target>
+# Output: multiview/multiview_cpp/build/cmake-<config>/<target>, or set
+# MULTIVIEW_BUILD_DIR to keep builds with different options apart.
+# Builds with nproc-2 jobs; override with CMAKE_BUILD_PARALLEL_LEVEL.
 
 set -euo pipefail
 
@@ -34,7 +36,9 @@ if [ -z "${CONDA_PREFIX:-}" ] || [ "$(basename "$CONDA_PREFIX")" != "$ENV_NAME" 
     set -u
 fi
 
-BUILD_DIR="$SRC_DIR/build/cmake-$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')"
+BUILD_DIR="${MULTIVIEW_BUILD_DIR:-$SRC_DIR/build/cmake-$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')}"
+NPROC="$(nproc)"
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$(( NPROC > 3 ? NPROC - 2 : 1 ))}"
 
 # Default to the GPU(s) in this machine; override with MULTIVIEW_CMAKE_ARGS
 CUDA_ARCH="native"
