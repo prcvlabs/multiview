@@ -5,7 +5,9 @@ over several years at Perceive. It is maintained by PRCV Labs (Everett Berry),
 who open sourced it; the 2026 build modernization was contributed with help
 from Claude.
 
-multiview is a large project which combines several components of a people tracking system. It consists of the following functionality:  
+![multiview tracking two people across two stereo cameras, with a top-down floor map of their tracks and facing directions](doc/media/mission-control.gif)
+
+multiview is a large project which combines several components of a people tracking system. It consists of the following functionality:
 * Camera calibration for stereo and monocular cameras
 * Video I/O and decoding
 * Object detection
@@ -16,96 +18,195 @@ multiview is a large project which combines several components of a people track
 * Command line interface
 * Custom geometry library
 
-Over time we will split this library into components.
+Over time we will split this library into components. For a guided walk
+through the code and the computer vision it implements, see
+[doc/TOUR.md](doc/TOUR.md). For the history of the project, see
+[prcvlabs.org](https://prcvlabs.org).
 
-## Building multiview
+**Contents**
 
-multiview builds entirely in user space: no `sudo`, no `/opt/multiview`
-toolchain, no `/usr/local/cuda`. All dependencies (GCC 13, CUDA 12.8,
-CMake/Ninja, OpenCV 4.12 + contrib, Boost, Eigen, ...) come from conda-forge
-via a [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)
-environment described in [`build/environment.yml`](build/environment.yml).
+1. [Quick start: build and test](#1-quick-start-build-and-test)
+2. [Run it on real data](#2-run-it-on-real-data)
+3. [Customize the build](#3-customize-the-build)
+4. [Using multiview](#4-using-multiview)
+5. [Developing](#5-developing)
 
-Tested with:
-* Ubuntu 24.04 (x86_64)
-* NVIDIA GeForce RTX 3090 (compute capability 8.6), driver 595
-* CUDA 12.8, GCC 13.4, OpenCV 4.12, Boost 1.86
+## 1. Quick start: build and test
 
-### Prerequisites
-
-* Linux x86_64 with `curl`, `bzip2`, `git` and about 6 GB of free disk space.
-* For GPU code: an NVIDIA driver that supports CUDA 12.8 (driver >= 570).
-  Check with `nvidia-smi`. The CUDA toolkit itself is installed into the
-  environment; a system CUDA install is not needed. Without a GPU everything
-  still builds, and the CUDA code paths fall back to the CPU (GPU-only
-  testcases are skipped).
-
-### Build
+Everything installs in user space: no `sudo`, no system CUDA. You need Linux
+x86_64 with `curl`, `bzip2` and `git`, about 6 GB of disk, and, for the GPU
+code, an NVIDIA driver that supports CUDA 12.8 (driver 570 or newer; check
+with `nvidia-smi`). Without a GPU everything still builds and the CUDA code
+falls back to the CPU.
 
 ```
 git clone https://github.com/prcvlabs/multiview.git
 cd multiview
-build/setup-env.sh     # installs micromamba to ~/.local/bin, creates the 'multiview' env
-build/build.sh         # Release build of multiview-cli and multiview-testcases
+build/setup-env.sh                     # micromamba + the 'multiview' environment
+build/build.sh                         # multiview-cli and multiview-testcases
+multiview/multiview_cpp/build/cmake-release/multiview-testcases
 ```
 
-`build/build.sh` compiles the CUDA kernels for the GPU(s) found by
-`nvidia-smi` (sm_86 on an RTX 30-series). Binaries end up in
-`multiview/multiview_cpp/build/cmake-release/`. Other forms:
+The tests need no external data and should end with `All tests passed`.
+A clean build takes about 4 minutes on 10 cores; rebuilds are much faster
+because `ccache` is used automatically.
+
+Tested on Ubuntu 24.04 with an NVIDIA GeForce RTX 3090 (driver 595), CUDA
+12.8, GCC 13.4, OpenCV 4.12 and Boost 1.86. All dependencies come from
+conda-forge via [`build/environment.yml`](build/environment.yml).
+
+## 2. Run it on real data
+
+The calibration data, and each testcase's manifest and ground truth, are
+bundled in [`data/`](data/README.md), and scenes load from there by default.
+The videos are in the Hugging Face dataset
+[prcvlabs/multiview-retail-tracking](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking).
+It is gated: accept its terms on the dataset page, then log in once with
+`hf auth login`.
 
 ```
-build/build.sh Debug multiview-testcases                     # build type, targets
-MULTIVIEW_CMAKE_ARGS="-DCMAKE_CUDA_ARCHITECTURES=75;86" build/build.sh  # pick CUDA archs
-MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_AWS=OFF" build/build.sh          # no AWS SDK
-MULTIVIEW_BUILD_DIR=$PWD/build-hp MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_HYPERPOSE=ON" build/build.sh  # separate build dir
+build/fetch-testcases.sh 7             # into ~/multiview-data/testcases
+CLI=multiview/multiview_cpp/build/cmake-release/multiview-cli
+TC=~/multiview-data/testcases/007_site03_sparse_tracks
+$CLI dump_default_params -d /tmp/007 $TC/manifest.json
 ```
+
+To run the full pipeline, including pose detection, build with HyperPose
+(see [Pose detection](#pose-detection-hyperpose) below), run the pipeline once
+to get a `params.json` in its output directory, and use that file as the
+template for later runs:
+
+```
+$CLI pipeline -m $TC/manifest.json -d /tmp/007-run -y --start 0 --n-frames 100
+$CLI pipeline -m $TC/manifest.json -p /tmp/007-run/params.json -d /tmp/007-run2 -y
+```
+
+`build/fetch-testcases.sh --list` lists the testcases, and
+`build/fetch-testcases.sh all` downloads all of them. `./bin/testcase.sh`
+runs a testcase end to end and downloads it if needed.
+
+## 3. Customize the build
+
+`build/build.sh` takes an optional build type and targets, and reads extra
+CMake flags from `MULTIVIEW_CMAKE_ARGS`:
+
+```
+build/build.sh Debug multiview-testcases
+MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_AWS=OFF" build/build.sh
+```
+
+| Variable | Default | Effect |
+|---|---|---|
+| `MULTIVIEW_CMAKE_ARGS` | | Extra flags passed to CMake. |
+| `MULTIVIEW_BUILD_DIR` | `multiview/multiview_cpp/build/cmake-<type>` | Build directory, e.g. a separate one for a HyperPose build. |
+| `CMAKE_BUILD_PARALLEL_LEVEL` | number of cores minus 2 | Compile jobs. |
+
+The options below are all independent. Pick the ones you need.
+
+<details>
+<summary><b>No NVIDIA GPU</b></summary>
+
+```
+MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_CUDA=OFF" build/build.sh
+```
+
+The CUDA kernels are skipped, rectification and stereo run on the CPU, and
+the GPU testcases are skipped. A build with CUDA on also runs on a machine
+without a GPU, falling back to the CPU at runtime.
+</details>
+
+<details>
+<summary><b>GPU stereo and rectification</b> (on by default with CUDA)</summary>
+
+With `MULTIVIEW_WITH_CUDA=ON` (the default), rectification uses a native CUDA
+remap kernel, and `MULTIVIEW_WITH_LIBSGM=ON` builds the vendored
+[libSGM](multiview/contrib/libSGM) for the GPU `CUDA_SGM` disparity strategy.
+`CMAKE_CUDA_ARCHITECTURES` defaults to the GPUs found by `nvidia-smi`; set it
+to build for others, e.g. `-DCMAKE_CUDA_ARCHITECTURES=75;86`.
+
+OpenCV's own GPU StereoBM/SGBM (`WITH_OPENCV_CUDA`) is enabled automatically
+if your OpenCV was built with the `cudastereo` module. The conda-forge OpenCV
+was not, so those strategies run on the CPU.
+</details>
+
+<details>
+<summary><b>Without the AWS SDK</b></summary>
+
+```
+MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_AWS=OFF" build/build.sh
+```
+
+Only needed for `s3://` asset stores. When off, S3 access raises an error.
+</details>
+
+<details>
+<summary><b>Pose detection (HyperPose)</b></summary>
+
+Pose detection uses [HyperPose](https://github.com/tensorlayer/hyperpose) on
+TensorRT 10. It is off by default because TensorRT is a large download
+(about 4.3 GB, 1.1 GB installed).
+
+```
+build/setup-env.sh --with-tensorrt     # TensorRT into the environment, no sudo
+build/download-hyperpose-models.sh     # models into ~/multiview-data/hyperpose
+MULTIVIEW_BUILD_DIR=$PWD/build-hp \
+  MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_HYPERPOSE=ON" build/build.sh
+export MULTIVIEW_HYPERPOSE_DIR=~/multiview-data/hyperpose
+```
+
+HyperPose itself is fetched at a pinned commit and patched for TensorRT 10
+when CMake configures. To reuse an already downloaded TensorRT wheel, set
+`TRT_WHEEL_FILE`; to use another TensorRT install, set `TENSORRT_ROOT`. The
+`[hyperpose]` testcase runs when `MULTIVIEW_HYPERPOSE_TEST_IMAGE` points to an
+image with a person in it.
+</details>
+
+<details>
+<summary><b>Other options</b></summary>
+
+| CMake option | Default | Effect |
+|---|---|---|
+| `MULTIVIEW_WITH_CCACHE` | `ON` | Use `ccache` as the compiler launcher when it is found. |
+| `MULTIVIEW_PROFILE_MEMORY` | `OFF` | Allocation tracking (`PERCEIVE_PROFILE_MEMORY`) for all targets. |
 
 To use CMake directly, activate the environment
 (`eval "$(micromamba shell hook -s bash)" && micromamba activate multiview`)
 and configure `multiview/multiview_cpp/CMakeLists.txt` as usual.
+</details>
 
-### Build options
+<details>
+<summary><b>Legacy build</b> (OpenPose, Triclops, PCL and the GUIs)</summary>
 
-| CMake option | Default | Effect |
-|---|---|---|
-| `MULTIVIEW_WITH_CUDA` | `ON` | Build the CUDA kernels in `src/cuda` (RGB to LAB, SLIC superpixels); defines `WITH_CUDA`. |
-| `MULTIVIEW_WITH_AWS` | `ON` | Link the AWS SDK for `s3://` assets. When `OFF`, `MULTIVIEW_NO_AWS` is defined and S3 access raises an error. |
-| `MULTIVIEW_WITH_LIBSGM` | `ON` with CUDA | Build `contrib/libSGM` and enable the GPU `CUDA_SGM` disparity strategy (`USE_SGM`). |
-| `MULTIVIEW_WITH_HYPERPOSE` | `OFF` | HyperPose + TensorRT 10 pose detection (`WITH_HYPERPOSE`). Needs `build/setup-env.sh --with-tensorrt` (TensorRT into `<env>/opt/tensorrt`, or set `TENSORRT_ROOT`) and models from `build/download-hyperpose-models.sh` (read from `$MULTIVIEW_HYPERPOSE_DIR/models`); HyperPose is fetched at a pinned commit during configure. |
-| `MULTIVIEW_WITH_CCACHE` | `ON` | Use `ccache` (in `environment.yml`) as the compiler launcher when it is found. |
-| `MULTIVIEW_PROFILE_MEMORY` | `OFF` | Allocation tracking (`PERCEIVE_PROFILE_MEMORY`), for all targets. |
-| `CMAKE_CUDA_ARCHITECTURES` | `native` | GPU architectures to compile for. |
-
-Rectification (`calc_rectified`) uses a native CUDA remap kernel whenever
-`MULTIVIEW_WITH_CUDA` is on. `WITH_OPENCV_CUDA` (GPU StereoBM/SGBM) is turned
-on automatically if your OpenCV has the `cudastereo` module; the conda-forge
-OpenCV does not, so those run on the CPU.
-
-These are **not** supported by the CMake build: OpenPose/Caffe pose
-detection, Triclops, PCL, OpenGL and the GUIs
-(`multiview-gui`, `multiview-imgui`). They still need the legacy build below.
-
-### Run the unit tests
-
-```
-multiview/multiview_cpp/build/cmake-release/multiview-testcases           # everything
-multiview/multiview_cpp/build/cmake-release/multiview-testcases "[cuda_slic],[cuda_argb_to_lab]"  # GPU tests
-multiview/multiview_cpp/build/cmake-release/multiview-testcases --list-tests
-```
-
-The unit tests need no external data.
-
-### Legacy build
-
-The original build (`multiview/multiview_cpp/run.sh` + `mobius`) expects a
-custom clang-11 toolchain in `/opt/multiview`, CUDA in `/usr/local/cuda`,
-and is set up with `sudo` from a
+These are not supported by the CMake build: OpenPose/Caffe pose detection,
+Triclops, PCL, OpenGL and the GUIs (`multiview-gui`, `multiview-imgui`). The
+original build (`multiview/multiview_cpp/run.sh` + `mobius`) expects a custom
+clang-11 toolchain in `/opt/multiview` and CUDA in `/usr/local/cuda`, and is
+set up with `sudo` from a
 [Dropbox bundle of install files](https://www.dropbox.com/sh/775n3sblawqinqt/AACalq6fX_ASjk2XS8GufmGna?dl=0)
 (2.5 GB) using `build/install-files/`. It was last tested on Ubuntu 18.04,
-CUDA 11.2 and OpenCV 4.4; see `build/install-files/README.md`. It is
-the only way to build the pose detection and GUI targets.
+CUDA 11.2 and OpenCV 4.4; see `build/install-files/README.md`. The Qt camera
+positioner and the im-gui viewer still read some files from the old S3 bucket.
+</details>
 
-## Running testcases
+## 4. Using multiview
+
+### The command line
+
+Run `multiview-cli -h` for the list of commands, and
+`multiview-cli <command> -h` for help on each one. Selected commands:
+
+      blur_faces                   Blur faces on an input video
+      classifier                   trains classifiers using either an rtree or svm.
+      distortion_calib             Distortion calibration.
+      phase_camera_extrinsic       Method for positioning cameras in 3D space.
+      pipeline                     The multiview pipeline!
+      position_scene_cameras       global camera position optimization.
+      render_floor_map             Create a floor map from the 3D point cloud.
+      sprite_main                  front-end for viewing 3D models using the `assimp` library.
+
+[doc/TOUR.md](doc/TOUR.md) describes all of the commands.
+
+### Testcases
 
 The testcases are listed by `./bin/testcase.sh -h`, for example:
 
@@ -124,75 +225,42 @@ The testcases are listed by `./bin/testcase.sh -h`, for example:
    * 013_site06_occlude        -- Three people in a tight space, with occlusion. Frames [1900-2100).
    * 014_site06_sitting        -- A group walking to a table, and some sitting. Frames [5300-5650).
 
-The calibration data and each testcase's manifest and ground truth are
-bundled in [`data/`](data/README.md). The videos are in the Hugging Face
-dataset
-[prcvlabs/multiview-retail-tracking](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking),
-which is gated: accept its terms, run `hf auth login`, and then download
-testcases with `build/fetch-testcases.sh` (`--list` lists them):
+Faces in the videos are blurred, and locations are identified only by site
+IDs; see the [dataset card](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking)
+and [`data/README.md`](data/README.md).
+
+### Assets and caches
+
+Commands that load a scene read its calibration data from the asset store.
+By default this is the bundled `data/` directory. To use another directory
+with the same layout (e.g. `calibration/scenes/<scene-key>.json`), set
+`MULTIVIEW_ASSET_DIR=/abs/path`; to use an S3 bucket with that layout, set
+`MULTIVIEW_ASSET_STORE=S3` (or `LAZY_S3`) and `MULTIVIEW_ASSET_S3_BUCKET`.
+Cached data, such as undistortion maps, is written to `MULTIVIEW_CACHE_DIR`
+(default `~/.cache/multiview-data/cache`), never to the asset directory.
+
+## 5. Developing
 
 ```
-build/fetch-testcases.sh 7          # into ~/multiview-data/testcases
-build/fetch-testcases.sh all
-./bin/testcase.sh 007_site03_sparse_tracks  # downloads it if needed
+build/build.sh Debug                                     # debug build
+multiview/multiview_cpp/build/cmake-debug/multiview-testcases "[cuda_slic]"   # one testcase by tag
+multiview/multiview_cpp/build/cmake-release/multiview-testcases --list-tests
 ```
 
-## Running multiview
-
-The CLI is `multiview/multiview_cpp/build/cmake-release/multiview-cli`
-(`run.sh` in the legacy build). Run `multiview-cli -h` for the list of
-commands, and `multiview-cli <command> -h` for help on each one, e.g.:
-
-```
-CLI=multiview/multiview_cpp/build/cmake-release/multiview-cli
-$CLI -h
-$CLI undistort -h
-$CLI dump_default_params -d /tmp/params /path/to/manifest.json
-```
-
-Commands that load a scene (`pipeline`, `dump_default_params`, ...) read its
-calibration data from the asset store. By default this is the bundled
-`data/` directory (`MULTIVIEW_ASSET_STORE=MULTIVIEW_ASSET_DIR`, with
-`MULTIVIEW_ASSET_DIR` set to the absolute path of `data/` at build time), so
-a downloaded testcase needs no further setup:
-
-```
-$CLI dump_default_params -d /tmp/params ~/multiview-data/testcases/007_site03_sparse_tracks/manifest.json
-```
-
-Set `MULTIVIEW_ASSET_DIR=/abs/path` to use another directory with the same
-layout (e.g. `calibration/scenes/<scene-key>.json`), or
-`MULTIVIEW_ASSET_STORE=S3` (or `LAZY_S3`) and `MULTIVIEW_ASSET_S3_BUCKET` to
-use an S3 bucket with that layout. Cached data, such as
-undistortion maps, is written to `MULTIVIEW_CACHE_DIR` (default
-`~/.cache/multiview-data/cache`), never to the asset directory.
-
-Selected commands are below.
-
-      blur_faces                   Blur faces on an input video
-      classifier                   trains classifiers using either an rtree or svm.
-      distortion_calib             Distortion calibration.
-      phase_camera_extrinsic       Method for positioning cameras in 3D space.
-      pipeline                     The multiview pipeline!
-      position_scene_cameras       global camera position optimization.
-      render_floor_map             Create a floor map from the 3D point cloud.
-      sprite_main                  front-end for viewing 3D models using the `assimp` library.
-
-## Tour of the library
-
-See [doc/TOUR.md](doc/TOUR.md) for an overview of the code base.
-
-## Demos
-
-For demo videos and other media see the [PRCV website](https://prcvlabs.org).
-
-## Developing
-
-In VS Code, go to Settings > Watcher Exclude and add `**/contrib/**` and `**/doc/**` to enable file watching. These directories either never change or are automatically generated.
+Code follows Aaron's conventions in
+[`doc/coding-style.notes`](doc/coding-style.notes) and the repository's
+`.clang-format`. In VS Code, go to Settings > Watcher Exclude and add
+`**/contrib/**` and `**/doc/**` to enable file watching. These directories
+either never change or are automatically generated.
 
 ## Contributors
 
 multiview was designed and written by [Aaron Michaux](https://github.com/aaron-michaux),
 its author, over several years at Perceive. It is maintained by PRCV Labs
 (Everett Berry). The 2026 build modernization (user-space environment, CMake
-build, CUDA 12 / OpenCV 4.12 support) was contributed with help from Claude.
+build, CUDA 12 / OpenCV 4.12 support, GPU stereo and rectification, HyperPose
+on TensorRT 10) was contributed with help from Claude.
+
+The code is licensed under the [Apache License 2.0](LICENSE). The bundled
+data and the Hugging Face dataset are licensed under
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
