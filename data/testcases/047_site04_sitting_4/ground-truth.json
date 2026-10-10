@@ -1,0 +1,2356 @@
+{
+   "config" : {
+      "allow_overwrite" : false,
+      "annotate_mode" : false,
+      "annotations_directory" : "s3://perceive-multiview/testcases/047_site04_sitting_4",
+      "colour_floor_hist" : false,
+      "debug_video_output" : false,
+      "developer_features" : true,
+      "generate_stats" : false,
+      "generate_timings" : false,
+      "generate_tracks" : true,
+      "has_error" : false,
+      "in_stats_filenames" : [],
+      "localization_data_fname" : "",
+      "manifest_opt_search_path" : "/home/user/.cache/multiview-data/testcases/047_site04_sitting_4",
+      "manifest_params" : {
+         "epoch" : "1970-01-01T00:00:00.000000",
+         "scene-key" : "site04_scene05",
+         "store" : 0,
+         "type" : "SceneManifest",
+         "videos" : [
+            {
+               "camera" : "C0001026_v4",
+               "file" : "C0001026_v4.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001027_v3",
+               "file" : "C0001027_v3.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001028_v3",
+               "file" : "C0001028_v3.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001030_v4",
+               "file" : "C0001030_v4.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001031_v3",
+               "file" : "C0001031_v3.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001034_v6",
+               "file" : "C0001034_v6.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001035_v3",
+               "file" : "C0001035_v3.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001036_v5",
+               "file" : "C0001036_v5.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001058_v3",
+               "file" : "C0001058_v3.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            }
+         ]
+      },
+      "n_frames_to_process" : -1,
+      "no_stereo" : false,
+      "on_the_fly_still" : false,
+      "outdir" : "/home/user/TMP/testcase-output/047_site04_sitting_4",
+      "output_video_blur_faces" : true,
+      "output_video_ground_truth_only" : false,
+      "output_video_height" : 1200,
+      "output_video_p2ds_on_localization" : true,
+      "output_video_render_pose" : true,
+      "output_video_render_tracks" : true,
+      "output_video_width" : 1600,
+      "pipeline_output_filename" : "/home/user/TMP/testcase-output/047_site04_sitting_4/pipeline-output.json",
+      "pipeline_params" : null,
+      "presentation_video_output" : false,
+      "run_pipeline_testcase" : false,
+      "save_localization_data" : false,
+      "show_help" : false,
+      "start_frame_no" : 0,
+      "stats_filename" : "",
+      "target_fps" : 0.0,
+      "tracks_filename" : "",
+      "verbosity" : 1,
+      "version" : "5.0.10-11-g0cf6f3a5:commit:0cf6f3a53b7a64203e7b8fd80879dcbb999e7ac5"
+   },
+   "params" : {
+      "fowlkes_params" : {
+         "min_track_seconds" : 2.0
+      },
+      "task_params" : {
+         "frame_params" : {
+            "bcam_init[0]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 0,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[1]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 1,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[2]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 2,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[3]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 3,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[4]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 4,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[5]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 5,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[6]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 6,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[7]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 7,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[8]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 8,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "calc_calibration_mask[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "calc_calibration_mask[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "calc_calibration_mask[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "calc_calibration_mask[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "calc_calibration_mask[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "calc_calibration_mask[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "calc_calibration_mask[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "calc_calibration_mask[16]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 16
+            },
+            "calc_calibration_mask[17]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 17
+            },
+            "calc_calibration_mask[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "calc_calibration_mask[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "calc_calibration_mask[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "calc_calibration_mask[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "calc_calibration_mask[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "calc_calibration_mask[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "calc_calibration_mask[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "calc_calibration_mask[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "calc_calibration_mask[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "calc_rectified[0]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 0,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[10]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 10,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[11]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 11,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[12]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 12,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[13]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 13,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[14]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 14,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[15]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 15,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[16]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 16,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[17]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 17,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[1]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 1,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[2]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 2,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[3]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 3,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[4]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 4,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[5]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 5,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[6]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 6,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[7]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 7,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[8]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 8,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[9]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 9,
+               "use_cuda_if_available" : false
+            },
+            "convert_to_lab[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "convert_to_lab[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "convert_to_lab[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "convert_to_lab[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "convert_to_lab[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "convert_to_lab[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "convert_to_lab[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "convert_to_lab[16]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 16
+            },
+            "convert_to_lab[17]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 17
+            },
+            "convert_to_lab[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "convert_to_lab[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "convert_to_lab[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "convert_to_lab[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "convert_to_lab[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "convert_to_lab[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "convert_to_lab[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "convert_to_lab[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "convert_to_lab[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "copy_sensor_images" : {
+               "export_frames" : false,
+               "feedback" : false,
+               "frame_num" : 0,
+               "out_dir" : "/tmp"
+            },
+            "create_slic_lookup[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "create_slic_lookup[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "create_slic_lookup[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "create_slic_lookup[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "create_slic_lookup[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "create_slic_lookup[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "create_slic_lookup[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "create_slic_lookup[16]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 16
+            },
+            "create_slic_lookup[17]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 17
+            },
+            "create_slic_lookup[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "create_slic_lookup[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "create_slic_lookup[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "create_slic_lookup[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "create_slic_lookup[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "create_slic_lookup[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "create_slic_lookup[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "create_slic_lookup[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "create_slic_lookup[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "disp_init[0]" : {
+               "cam_num" : 0,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[1]" : {
+               "cam_num" : 1,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[2]" : {
+               "cam_num" : 2,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[3]" : {
+               "cam_num" : 3,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[4]" : {
+               "cam_num" : 4,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[5]" : {
+               "cam_num" : 5,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[6]" : {
+               "cam_num" : 6,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[7]" : {
+               "cam_num" : 7,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[8]" : {
+               "cam_num" : 8,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_map_update[0]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 0,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[1]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 1,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[2]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 2,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[3]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 3,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[4]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 4,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[5]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 5,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[6]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 6,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[7]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 7,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[8]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 8,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "floor_hist" : {
+               "feedback" : false,
+               "hist_params" : {
+                  "apply_slic_still_weights" : true,
+                  "color_hist_sz" : 0.0099999997764825821,
+                  "color_histogram" : false,
+                  "gaussian_sigma" : 0.5,
+                  "hist_max_z" : 2.0,
+                  "hist_min_z" : 0.5,
+                  "hist_sz" : 0.10000000149011612,
+                  "max_hist_count" : 1000.0,
+                  "min_hist_count" : 0.0,
+                  "n_spread" : 3.0,
+                  "skip_cameras" : [],
+                  "super_pixel_min_z" : 0.25,
+                  "use_median" : true,
+                  "weighting" : "WGT_NORM"
+               },
+               "out_dir" : "/tmp"
+            },
+            "get_xy_mapping[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "get_xy_mapping[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "get_xy_mapping[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "get_xy_mapping[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "get_xy_mapping[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "get_xy_mapping[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "get_xy_mapping[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "get_xy_mapping[16]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 16
+            },
+            "get_xy_mapping[17]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 17
+            },
+            "get_xy_mapping[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "get_xy_mapping[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "get_xy_mapping[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "get_xy_mapping[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "get_xy_mapping[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "get_xy_mapping[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "get_xy_mapping[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "get_xy_mapping[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "get_xy_mapping[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "input_images[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 0
+            },
+            "input_images[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 10
+            },
+            "input_images[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 11
+            },
+            "input_images[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 12
+            },
+            "input_images[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 13
+            },
+            "input_images[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 14
+            },
+            "input_images[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 15
+            },
+            "input_images[16]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 16
+            },
+            "input_images[17]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 17
+            },
+            "input_images[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 1
+            },
+            "input_images[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 2
+            },
+            "input_images[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 3
+            },
+            "input_images[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 4
+            },
+            "input_images[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 5
+            },
+            "input_images[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 6
+            },
+            "input_images[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 7
+            },
+            "input_images[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 8
+            },
+            "input_images[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 9
+            },
+            "load_scene_description" : {},
+            "localization" : {
+               "feedback" : false,
+               "localization_params" : {
+                  "apply_smooth_mhist_to_p3ds" : true,
+                  "background_median" : 0.0,
+                  "background_stddev" : 20.0,
+                  "dist_weight_factor" : 1.0,
+                  "extrinsic_calibration_error_factor" : 4.0,
+                  "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+                  "filter_radius" : 0.050000000000000003,
+                  "localization_max" : 20.0,
+                  "localization_min" : -20.0,
+                  "n_deviations" : 3.0,
+                  "p3d_params" : {
+                     "feedback" : false,
+                     "foot_dist_radius_factor" : 2.0,
+                     "skeleton_disparity_weight" : 2.0
+                  },
+                  "person_diameter" : 0.40000000000000002,
+                  "pose2d_patch_h" : 3,
+                  "pose2d_patch_w" : 12,
+                  "prefer_openpose_method" : true,
+                  "prob_bg_max" : 0.050000000000000003,
+                  "prob_scale" : 2.0,
+                  "prob_shift" : 0.050000000000000003,
+                  "theta_stddev_degrees" : 4.0,
+                  "track_median" : 200.0,
+                  "track_stddev" : 50.0,
+                  "use_median" : false,
+                  "zero_value" : -0.20000000000000001
+               },
+               "out_dir" : "/tmp"
+            },
+            "movie_stats" : {
+               "feedback" : false,
+               "in_stats_fnames" : [],
+               "no_stats" : false,
+               "out_dir" : "/tmp",
+               "save_filename" : ""
+            },
+            "openpose_init" : {
+               "op_params" : {
+                  "PAF_heatmap" : false,
+                  "add_part_candidates" : false,
+                  "bg_heatmap" : false,
+                  "body_heatmap" : false,
+                  "feedback" : false,
+                  "gpu_start" : 0,
+                  "image_patch_size" : 7,
+                  "max_n_people" : -1,
+                  "maximize_recall" : false,
+                  "net_input_size" : [ 656, 368 ],
+                  "num_gpus" : -1,
+                  "only_one_sensor_per_camera" : true,
+                  "pose_enabled" : true,
+                  "pose_model" : "BODY_25",
+                  "render_mode" : "NONE",
+                  "render_threshold" : 0.05000000074505806,
+                  "scale_gap" : 0.15000000596046448,
+                  "scales_num" : 1,
+                  "single_threaded" : false
+               }
+            },
+            "run_f2d[0]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "run_f2d[10]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "run_f2d[11]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "run_f2d[12]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "run_f2d[13]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "run_f2d[14]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "run_f2d[15]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "run_f2d[16]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 16
+            },
+            "run_f2d[17]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 17
+            },
+            "run_f2d[1]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "run_f2d[2]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "run_f2d[3]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "run_f2d[4]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "run_f2d[5]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "run_f2d[6]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "run_f2d[7]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "run_f2d[8]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "run_f2d[9]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            }
+         },
+         "post_process" : {
+            "dist_median" : 0.10000000149011612,
+            "dist_stddev" : 0.05000000074505806,
+            "duration_median" : 3.0,
+            "duration_stddev" : 1.0,
+            "prob_fp_median" : 0.25,
+            "prob_fp_stddev" : 0.05000000074505806,
+            "score_threshold" : 0.25
+         },
+         "tracklet_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "tracklet_params" : {
+               "frame_t_interp_window" : 4,
+               "max_frames_per_tracklet" : 10,
+               "noise_factor" : 0.40000000596046448,
+               "projective_distance_threshold" : 55.0,
+               "speed_cap" : 3.5,
+               "speed_median" : 1.3999999761581421,
+               "speed_stddev" : 1.0
+            }
+         },
+         "tracks_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "start_frame" : 0,
+            "tracks_params" : {
+               "edge_d0_delta" : -0.80000001192092896,
+               "edge_d0_scale" : 2.0,
+               "edge_d1_delta" : -0.5,
+               "edge_d1_scale" : 2.0,
+               "edge_dt_delta" : -0.10000000149011612,
+               "edge_dt_scale" : 2.0,
+               "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+               "fixed_window_prev_tracklet" : 6,
+               "hungarian_score_threshold" : 0.10000000149011612,
+               "merge_threshold" : 0.0,
+               "method" : "SP1",
+               "random_seed" : 0
+            }
+         }
+      }
+   },
+   "track_results" : {
+      "frame-duration" : 0.066666666666666666,
+      "frames" : 149,
+      "height" : 150,
+      "hist-sz" : 0.10000000149011612,
+      "start-frame" : 0,
+      "top-left" : [ -4.0, -8.0 ],
+      "tracks" : [
+         {
+            "cost" : 0.0,
+            "fp_info" : {
+               "dist_p" : null,
+               "duration_p" : null,
+               "is_true_positive" : false,
+               "lab_p" : null,
+               "prob_fp_p" : null,
+               "score" : null
+            },
+            "height" : 0.0,
+            "id" : 0,
+            "label" : "UNLABELLED",
+            "path" : [
+               [ 69, 97, 0, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 1, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 2, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 3, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 4, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 5, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 6, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 7, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 8, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 9, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 10, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 11, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 12, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 13, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 14, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 15, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 16, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 17, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 18, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 19, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 20, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 21, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 22, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 23, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 24, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 25, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 26, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 27, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 28, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 29, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 30, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 31, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 32, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 33, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 34, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 35, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 36, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 37, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 38, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 39, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 40, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 41, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 42, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 43, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 44, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 45, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 46, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 47, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 48, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 49, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 50, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 51, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 52, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 53, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 54, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 55, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 56, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 57, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 58, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 59, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 60, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 61, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 62, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 63, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 64, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 65, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 66, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 67, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 68, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 69, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 70, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 71, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 72, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 73, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 74, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 75, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 76, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 77, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 78, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 79, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 80, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 81, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 82, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 83, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 84, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 85, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 86, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 87, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 88, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 89, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 90, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 91, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 92, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 93, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 94, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 95, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 96, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 97, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 98, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 99, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 100, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 101, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 102, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 103, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 104, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 105, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 106, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 107, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 108, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 109, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 110, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 111, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 112, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 113, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 114, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 115, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 116, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 117, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 118, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 119, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 120, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 121, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 122, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 123, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 124, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 125, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 126, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 127, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 128, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 129, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 130, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 131, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 132, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 133, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 134, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 135, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 136, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 137, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 138, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 139, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 140, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 141, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 142, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 143, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 144, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 145, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 146, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 147, 2.4617909999999998, -1, "I" ],
+               [ 69, 97, 148, 2.4617909999999998, -1, "I" ]
+            ]
+         },
+         {
+            "cost" : 0.0,
+            "fp_info" : {
+               "dist_p" : null,
+               "duration_p" : null,
+               "is_true_positive" : false,
+               "lab_p" : null,
+               "prob_fp_p" : null,
+               "score" : null
+            },
+            "height" : 0.0,
+            "id" : 1,
+            "label" : "UNLABELLED",
+            "path" : [
+               [ 4, 139, 0, -0.696492, -1, "I" ],
+               [ 4, 139, 1, -0.696492, -1, "I" ],
+               [ 4, 139, 2, -0.696492, -1, "I" ],
+               [ 4, 139, 3, -0.696492, -1, "I" ],
+               [ 4, 139, 4, -0.696492, -1, "I" ],
+               [ 4, 139, 5, -0.696492, -1, "I" ],
+               [ 4, 139, 6, -0.696492, -1, "I" ],
+               [ 4, 139, 7, -0.696492, -1, "I" ],
+               [ 4, 139, 8, -0.696492, -1, "I" ],
+               [ 4, 139, 9, -0.696492, -1, "I" ],
+               [ 4, 139, 10, -0.696492, -1, "I" ],
+               [ 4, 139, 11, -0.696492, -1, "I" ],
+               [ 4, 139, 12, -0.696492, -1, "I" ],
+               [ 4, 139, 13, -0.696492, -1, "I" ],
+               [ 4, 139, 14, -0.696492, -1, "I" ],
+               [ 4, 139, 15, -0.696492, -1, "I" ],
+               [ 4, 139, 16, -0.696492, -1, "I" ],
+               [ 4, 139, 17, -0.696492, -1, "I" ],
+               [ 4, 139, 18, -0.696492, -1, "I" ],
+               [ 4, 139, 19, -0.696492, -1, "I" ],
+               [ 4, 139, 20, -0.696492, -1, "I" ],
+               [ 4, 139, 21, -0.696492, -1, "I" ],
+               [ 4, 139, 22, -0.696492, -1, "I" ],
+               [ 4, 139, 23, -0.696492, -1, "I" ],
+               [ 4, 139, 24, -0.696492, -1, "I" ],
+               [ 4, 139, 25, -0.696492, -1, "I" ],
+               [ 4, 139, 26, -0.696492, -1, "I" ],
+               [ 4, 139, 27, -0.696492, -1, "I" ],
+               [ 4, 139, 28, -0.696492, -1, "I" ],
+               [ 4, 139, 29, -0.696492, -1, "I" ],
+               [ 4, 139, 30, -0.696492, -1, "I" ],
+               [ 4, 139, 31, -0.696492, -1, "I" ],
+               [ 4, 139, 32, -0.696492, -1, "I" ],
+               [ 4, 139, 33, -0.696492, -1, "I" ],
+               [ 4, 139, 34, -0.696492, -1, "I" ],
+               [ 4, 139, 35, -0.696492, -1, "I" ],
+               [ 4, 139, 36, -0.696492, -1, "I" ],
+               [ 4, 139, 37, -0.696492, -1, "I" ],
+               [ 4, 139, 38, -0.696492, -1, "I" ],
+               [ 4, 139, 39, -0.696492, -1, "I" ],
+               [ 4, 139, 40, -0.696492, -1, "I" ],
+               [ 4, 139, 41, -0.696492, -1, "I" ],
+               [ 4, 139, 42, -0.696492, -1, "I" ],
+               [ 4, 139, 43, -0.696492, -1, "I" ],
+               [ 4, 139, 44, -0.696492, -1, "I" ],
+               [ 4, 139, 45, -0.696492, -1, "I" ],
+               [ 4, 139, 46, -0.696492, -1, "I" ],
+               [ 4, 139, 47, -0.696492, -1, "I" ],
+               [ 4, 139, 48, -0.696492, -1, "I" ],
+               [ 4, 139, 49, -0.696492, -1, "I" ],
+               [ 4, 139, 50, -0.696492, -1, "I" ],
+               [ 4, 139, 51, -0.696492, -1, "I" ],
+               [ 4, 139, 52, -0.696492, -1, "I" ],
+               [ 4, 139, 53, -0.696492, -1, "I" ],
+               [ 4, 139, 54, -0.696492, -1, "I" ],
+               [ 4, 139, 55, -0.696492, -1, "I" ],
+               [ 4, 139, 56, -0.696492, -1, "I" ],
+               [ 4, 139, 57, -0.696492, -1, "I" ],
+               [ 4, 139, 58, -0.696492, -1, "I" ],
+               [ 4, 139, 59, -0.696492, -1, "I" ],
+               [ 4, 139, 60, -0.696492, -1, "I" ],
+               [ 4, 139, 61, -0.696492, -1, "I" ],
+               [ 4, 139, 62, -0.696492, -1, "I" ],
+               [ 4, 139, 63, -0.696492, -1, "I" ],
+               [ 4, 139, 64, -0.696492, -1, "I" ],
+               [ 4, 139, 65, -0.696492, -1, "I" ],
+               [ 4, 139, 66, -0.696492, -1, "I" ],
+               [ 4, 139, 67, -0.696492, -1, "I" ],
+               [ 4, 139, 68, -0.696492, -1, "I" ],
+               [ 4, 139, 69, -0.696492, -1, "I" ],
+               [ 4, 139, 70, -0.696492, -1, "I" ],
+               [ 4, 139, 71, -0.696492, -1, "I" ],
+               [ 4, 139, 72, -0.696492, -1, "I" ],
+               [ 4, 139, 73, -0.696492, -1, "I" ],
+               [ 4, 139, 74, -0.696492, -1, "I" ],
+               [ 4, 139, 75, -0.696492, -1, "I" ],
+               [ 4, 139, 76, -0.696492, -1, "I" ],
+               [ 4, 139, 77, -0.696492, -1, "I" ],
+               [ 4, 139, 78, -0.696492, -1, "I" ],
+               [ 4, 139, 79, -0.696492, -1, "I" ],
+               [ 4, 139, 80, -0.696492, -1, "I" ],
+               [ 4, 139, 81, -0.696492, -1, "I" ],
+               [ 4, 139, 82, -0.696492, -1, "I" ],
+               [ 4, 139, 83, -0.696492, -1, "I" ],
+               [ 4, 139, 84, -0.696492, -1, "I" ],
+               [ 4, 139, 85, -0.696492, -1, "I" ],
+               [ 4, 139, 86, -0.696492, -1, "I" ],
+               [ 4, 139, 87, -0.696492, -1, "I" ],
+               [ 4, 139, 88, -0.696492, -1, "I" ],
+               [ 4, 139, 89, -0.696492, -1, "I" ],
+               [ 4, 139, 90, -0.696492, -1, "I" ],
+               [ 4, 139, 91, -0.696492, -1, "I" ],
+               [ 4, 139, 92, -0.696492, -1, "I" ],
+               [ 4, 139, 93, -0.696492, -1, "I" ],
+               [ 4, 139, 94, -0.696492, -1, "I" ],
+               [ 4, 139, 95, -0.696492, -1, "I" ],
+               [ 4, 139, 96, -0.696492, -1, "I" ],
+               [ 4, 139, 97, -0.696492, -1, "I" ],
+               [ 4, 139, 98, -0.696492, -1, "I" ],
+               [ 4, 139, 99, -0.696492, -1, "I" ],
+               [ 4, 139, 100, -0.696492, -1, "I" ],
+               [ 4, 139, 101, -0.696492, -1, "I" ],
+               [ 4, 139, 102, -0.696492, -1, "I" ],
+               [ 4, 139, 103, -0.696492, -1, "I" ],
+               [ 4, 139, 104, -0.696492, -1, "I" ],
+               [ 4, 139, 105, -0.696492, -1, "I" ],
+               [ 4, 139, 106, -0.696492, -1, "I" ],
+               [ 4, 139, 107, -0.696492, -1, "I" ],
+               [ 4, 139, 108, -0.696492, -1, "I" ],
+               [ 4, 139, 109, -0.696492, -1, "I" ],
+               [ 4, 139, 110, -0.696492, -1, "I" ],
+               [ 4, 139, 111, -0.696492, -1, "I" ],
+               [ 4, 139, 112, -0.696492, -1, "I" ],
+               [ 4, 139, 113, -0.696492, -1, "I" ],
+               [ 4, 139, 114, -0.696492, -1, "I" ],
+               [ 4, 139, 115, -0.696492, -1, "I" ],
+               [ 4, 139, 116, -0.696492, -1, "I" ],
+               [ 4, 139, 117, -0.696492, -1, "I" ],
+               [ 4, 139, 118, -0.696492, -1, "I" ],
+               [ 4, 139, 119, -0.696492, -1, "I" ],
+               [ 4, 139, 120, -0.696492, -1, "I" ],
+               [ 4, 139, 121, -0.696492, -1, "I" ],
+               [ 4, 139, 122, -0.696492, -1, "I" ],
+               [ 4, 139, 123, -0.696492, -1, "I" ],
+               [ 4, 139, 124, -0.696492, -1, "I" ],
+               [ 4, 139, 125, -0.696492, -1, "I" ],
+               [ 4, 139, 126, -0.696492, -1, "I" ],
+               [ 4, 139, 127, -0.696492, -1, "I" ],
+               [ 4, 139, 128, -0.696492, -1, "I" ],
+               [ 4, 139, 129, -0.696492, -1, "I" ],
+               [ 4, 139, 130, -0.696492, -1, "I" ],
+               [ 4, 139, 131, -0.696492, -1, "I" ],
+               [ 4, 139, 132, -0.696492, -1, "I" ],
+               [ 4, 139, 133, -0.696492, -1, "I" ],
+               [ 4, 139, 134, -0.696492, -1, "I" ],
+               [ 4, 139, 135, -0.696492, -1, "I" ],
+               [ 4, 139, 136, -0.696492, -1, "I" ],
+               [ 4, 139, 137, -0.696492, -1, "I" ],
+               [ 4, 139, 138, -0.696492, -1, "I" ],
+               [ 4, 139, 139, -0.696492, -1, "I" ],
+               [ 4, 139, 140, -0.696492, -1, "I" ],
+               [ 4, 139, 141, -0.696492, -1, "I" ],
+               [ 4, 139, 142, -0.696492, -1, "I" ],
+               [ 4, 139, 143, -0.696492, -1, "I" ],
+               [ 4, 139, 144, -0.696492, -1, "I" ],
+               [ 4, 139, 145, -0.696492, -1, "I" ],
+               [ 4, 139, 146, -0.696492, -1, "I" ],
+               [ 4, 139, 147, -0.696492, -1, "I" ],
+               [ 4, 139, 148, -0.696492, -1, "I" ]
+            ]
+         }
+      ],
+      "width" : 120
+   }
+}

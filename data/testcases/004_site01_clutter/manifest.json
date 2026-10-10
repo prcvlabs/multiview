@@ -1,0 +1,21 @@
+
+{
+   "type":                  "SceneManifest",
+   "store":                 0,
+   "scene-key":             "site01_scene02",
+   "epoch":                 "1970-01-01T00:00:00.000000",
+   "videos":                [        
+        {
+            "camera":    "C0001019_v2",
+            "file":      "C0001019_v2.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.000000
+        },
+        {
+            "camera":    "C0001020_v1",
+            "file":      "C0001020_v1.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.000000
+        }
+]
+}

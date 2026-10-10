@@ -1,0 +1,15 @@
+
+{
+   "type":                  "SceneManifest",
+   "store":                 0,
+   "scene-key":             "site07_scene06_v1_152fd9a9f7ae5b70e3793386e359673a",
+   "epoch":                 "1970-01-01T00:00:00.000000",
+   "videos":               [        
+        {
+            "camera":    "C0001082_v1_134e5915896b140ca2ea5dd61dc84b66",
+            "file":      "C0001082_v1_134e5915896b140ca2ea5dd61dc84b66.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        }
+]
+}

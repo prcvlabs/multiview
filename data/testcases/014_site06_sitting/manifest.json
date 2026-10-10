@@ -1,0 +1,57 @@
+
+{
+   "type":                  "SceneManifest",
+   "store":                 0,
+   "scene-key":             "site06_scene01_v2-PROD_e41d0e1b3a9318e842cd6308b9e0a4e0",
+   "epoch":                 "1970-01-01T00:00:00.000000",
+   "videos":               [        
+        {
+            "camera":    "C0001021_v2_d66b8e40171c975100c5427d34a217cd",
+            "file":      "C0001021_v2_d66b8e40171c975100c5427d34a217cd.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001039_v1_9e741276d07e8bb8c220d6ac2273991a",
+            "file":      "C0001039_v1_9e741276d07e8bb8c220d6ac2273991a.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001042_v4_4808eefb9141971571c271891d8407a1",
+            "file":      "C0001042_v4_4808eefb9141971571c271891d8407a1.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001057_v4_0e5829dafeb440fa06ddb299c625e70b",
+            "file":      "C0001057_v4_0e5829dafeb440fa06ddb299c625e70b.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001074_v1_cdb308d20c592c68d93e4beb8655690d",
+            "file":      "C0001074_v1_cdb308d20c592c68d93e4beb8655690d.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001086_v1_9a7b749e3c409eab2b7baf4400360592",
+            "file":      "C0001086_v1_9a7b749e3c409eab2b7baf4400360592.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001087_v1_a2ffef1e7c5a7b80314034321dd90e57",
+            "file":      "C0001087_v1_a2ffef1e7c5a7b80314034321dd90e57.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        },
+        {
+            "camera":    "C0001091_v2_b50fc9e996ec014f60a75e3b9608740d",
+            "file":      "C0001091_v2_b50fc9e996ec014f60a75e3b9608740d.mp4",
+            "timestamp": "1970-01-01T00:00:00.000000",
+            "fps":       15.0
+        }
+]
+}

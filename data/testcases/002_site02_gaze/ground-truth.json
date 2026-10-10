@@ -1,0 +1,2179 @@
+{
+   "config": {
+      "version": "4.3.11-21-g0b24f89:commit:0b24f89ffc9c335eae0458d588a0152615078467",
+      "show_help": false,
+      "has_error": false,
+      "stats_filename": "",
+      "tracks_filename": "",
+      "in_stats_filenames": [
+	"/home/user/TMP/zzz-testcases/002_site02_gaze/stats.data"
+],
+      "allow_overwrite": false,
+      "generate_stats": false,
+      "generate_tracks": true,
+      "verbosity": 1,
+      "outdir": "/home/user/TMP/zzz-testcases/002_site02_gaze",
+      "start_frame_no": 4702,
+      "n_frames_to_process": 218,
+      "target_fps": 0,
+      "pipeline_output_filename": "/home/user/TMP/zzz-testcases/002_site02_gaze/pipeline-output.json",
+      "debug_video_output": true,
+      "presentation_video_output": false,
+      "generate_timings": false,
+      "save_localization_data": true,
+      "localization_data_fname": "",
+      "developer_features": false,
+      "on_the_fly_still": false,
+      "colour_floor_hist": false,
+      "manifest_opt_search_path": "/home/user/TMP/zzz-testcases/002_site02_gaze",
+      "manifest_params": {
+	"epoch" : "2000-01-01T15:00:00",
+	"scene-key" : "site02_scene01_v1",
+	"store" : 2,
+	"videos" : 
+	[
+		{
+			"camera" : "C0001001",
+			"duration" : 599.93700000000001,
+			"file" : "C0001001.mp4",
+			"timestamp" : "2000-01-01T15:00:00.018725+0000"
+		},
+		{
+			"camera" : "C0001011",
+			"duration" : 599.93700000000001,
+			"file" : "C0001011.mp4",
+			"timestamp" : "2000-01-01T15:00:00.039391+0000"
+		}
+	]
+},
+      "pipeline_params": null,
+      "output_video_width": 1024,
+      "output_video_height": 768,
+      "output_video_render_tracks": true,
+      "output_video_render_pose": true,
+      "output_video_p3ds_on_localization": true,
+      "output_video_blur_faces": true,
+      "run_pipeline_testcase": false
+   },
+   "params": {
+	"fowlkes_params" : 
+	{
+		"min_track_seconds" : 2.0
+	},
+	"frame_params" : 
+	{
+		"bcam_init[0]" : 
+		{
+			"K_fx" : 200.0,
+			"K_fy" : 200.0,
+			"K_pptx" : 400.0,
+			"K_ppty" : 300.0,
+			"cam_num" : 0,
+			"feedback" : false,
+			"height" : 600,
+			"out_dir" : "/tmp",
+			"use_calib_roi" : true,
+			"width" : 800
+		},
+		"bcam_init[1]" : 
+		{
+			"K_fx" : 200.0,
+			"K_fy" : 200.0,
+			"K_pptx" : 400.0,
+			"K_ppty" : 300.0,
+			"cam_num" : 1,
+			"feedback" : false,
+			"height" : 600,
+			"out_dir" : "/tmp",
+			"use_calib_roi" : true,
+			"width" : 800
+		},
+		"calc_calibration_mask[0]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 0
+		},
+		"calc_calibration_mask[1]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 1
+		},
+		"calc_calibration_mask[2]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 2
+		},
+		"calc_calibration_mask[3]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 3
+		},
+		"calc_rectified[0]" : 
+		{
+			"feedback" : false,
+			"interpolation_method" : "CUBIC",
+			"out_dir" : "/tmp",
+			"sensor_index" : 0,
+			"use_cuda_if_available" : false
+		},
+		"calc_rectified[1]" : 
+		{
+			"feedback" : false,
+			"interpolation_method" : "CUBIC",
+			"out_dir" : "/tmp",
+			"sensor_index" : 1,
+			"use_cuda_if_available" : false
+		},
+		"calc_rectified[2]" : 
+		{
+			"feedback" : false,
+			"interpolation_method" : "CUBIC",
+			"out_dir" : "/tmp",
+			"sensor_index" : 2,
+			"use_cuda_if_available" : false
+		},
+		"calc_rectified[3]" : 
+		{
+			"feedback" : false,
+			"interpolation_method" : "CUBIC",
+			"out_dir" : "/tmp",
+			"sensor_index" : 3,
+			"use_cuda_if_available" : false
+		},
+		"convert_to_lab[0]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 0
+		},
+		"convert_to_lab[1]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 1
+		},
+		"convert_to_lab[2]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 2
+		},
+		"convert_to_lab[3]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 3
+		},
+		"copy_sensor_images" : 
+		{
+			"export_frames" : false,
+			"feedback" : false,
+			"frame_num" : 0,
+			"out_dir" : "/tmp"
+		},
+		"create_slic_lookup[0]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 0
+		},
+		"create_slic_lookup[1]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 1
+		},
+		"create_slic_lookup[2]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 2
+		},
+		"create_slic_lookup[3]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 3
+		},
+		"disp_init[0]" : 
+		{
+			"cam_num" : 0,
+			"disp_params" : 
+			{
+				"disparity_method" : "STEREO_BM",
+				"presmooth_sigma" : 2.1499999999999999,
+				"sgm_params" : 
+				{
+					"disparity_size" : 256,
+					"use_16bit_greyscale" : true
+				},
+				"stereobm_params" : 
+				{
+					"bm_12_max_diff" : 126,
+					"bm_SAD_window_size" : 25,
+					"bm_block_size" : 15,
+					"bm_min_disparity" : 1,
+					"bm_num_disparities" : 96,
+					"bm_prefilter_cap" : 63,
+					"bm_prefilter_size" : 7,
+					"bm_prefilter_type" : 1,
+					"bm_speckle_range" : 111,
+					"bm_speckle_window_size" : 185,
+					"bm_texture_threshold" : 259,
+					"bm_uniqueness_ratio" : 9
+				},
+				"stereosgbm_params" : 
+				{
+					"sg_12_max_diff" : 596,
+					"sg_SAD_window_size" : 13,
+					"sg_min_disparity" : 1,
+					"sg_mode" : 3,
+					"sg_num_disparities" : 96,
+					"sg_p1" : 22,
+					"sg_p2" : 1000,
+					"sg_prefilter_cap" : 54,
+					"sg_speckle_range" : 250,
+					"sg_speckle_window_size" : 600,
+					"sg_uniqueness_ratio" : 3
+				},
+				"triclops_params" : 
+				{
+					"edge_correlation" : true,
+					"edge_mask" : 11,
+					"lowpass" : true,
+					"max_disp" : 128,
+					"min_disp" : 1,
+					"rectify" : false,
+					"stereo_mask" : 17,
+					"subpixel" : true,
+					"subpixel_validation" : true,
+					"surface_validation" : true,
+					"surface_validation_size" : 400,
+					"texture_validation" : true
+				},
+				"use_cuda_if_available" : false
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp"
+		},
+		"disp_init[1]" : 
+		{
+			"cam_num" : 1,
+			"disp_params" : 
+			{
+				"disparity_method" : "STEREO_BM",
+				"presmooth_sigma" : 2.1499999999999999,
+				"sgm_params" : 
+				{
+					"disparity_size" : 256,
+					"use_16bit_greyscale" : true
+				},
+				"stereobm_params" : 
+				{
+					"bm_12_max_diff" : 126,
+					"bm_SAD_window_size" : 25,
+					"bm_block_size" : 15,
+					"bm_min_disparity" : 1,
+					"bm_num_disparities" : 96,
+					"bm_prefilter_cap" : 63,
+					"bm_prefilter_size" : 7,
+					"bm_prefilter_type" : 1,
+					"bm_speckle_range" : 111,
+					"bm_speckle_window_size" : 185,
+					"bm_texture_threshold" : 259,
+					"bm_uniqueness_ratio" : 9
+				},
+				"stereosgbm_params" : 
+				{
+					"sg_12_max_diff" : 596,
+					"sg_SAD_window_size" : 13,
+					"sg_min_disparity" : 1,
+					"sg_mode" : 3,
+					"sg_num_disparities" : 96,
+					"sg_p1" : 22,
+					"sg_p2" : 1000,
+					"sg_prefilter_cap" : 54,
+					"sg_speckle_range" : 250,
+					"sg_speckle_window_size" : 600,
+					"sg_uniqueness_ratio" : 3
+				},
+				"triclops_params" : 
+				{
+					"edge_correlation" : true,
+					"edge_mask" : 11,
+					"lowpass" : true,
+					"max_disp" : 128,
+					"min_disp" : 1,
+					"rectify" : false,
+					"stereo_mask" : 17,
+					"subpixel" : true,
+					"subpixel_validation" : true,
+					"surface_validation" : true,
+					"surface_validation_size" : 400,
+					"texture_validation" : true
+				},
+				"use_cuda_if_available" : false
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp"
+		},
+		"disp_map_update[0]" : 
+		{
+			"apply_smoothing" : false,
+			"cam_num" : 0,
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"smooth_polynomial_order" : 3,
+			"smooth_search_radius" : 0.14999999999999999
+		},
+		"disp_map_update[1]" : 
+		{
+			"apply_smoothing" : false,
+			"cam_num" : 1,
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"smooth_polynomial_order" : 3,
+			"smooth_search_radius" : 0.14999999999999999
+		},
+		"floor_hist" : 
+		{
+			"feedback" : false,
+			"hist_params" : 
+			{
+				"apply_slic_still_weights" : true,
+				"color_hist_sz" : 0.01,
+				"color_histogram" : false,
+				"gaussian_sigma" : 0.10000000000000001,
+				"hist_max_z" : 2.0,
+				"hist_min_z" : 0.5,
+				"hist_sz" : 0.10000000000000001,
+				"max_hist_count" : 9999.0,
+				"min_hist_count" : 0.0,
+				"n_spread" : 3.0,
+				"skip_cameras" : [],
+				"use_median" : true,
+				"weighting" : "WGT_NORM"
+			},
+			"out_dir" : "/tmp"
+		},
+		"get_xy_mapping[0]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 0
+		},
+		"get_xy_mapping[1]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 1
+		},
+		"get_xy_mapping[2]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 2
+		},
+		"get_xy_mapping[3]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 3
+		},
+		"input_images[0]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"raw_image_equalize" : false,
+			"sensor_index" : 0
+		},
+		"input_images[1]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"raw_image_equalize" : false,
+			"sensor_index" : 1
+		},
+		"input_images[2]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"raw_image_equalize" : false,
+			"sensor_index" : 2
+		},
+		"input_images[3]" : 
+		{
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"raw_image_equalize" : false,
+			"sensor_index" : 3
+		},
+		"load_scene_description" : {},
+		"localization" : 
+		{
+			"feedback" : false,
+			"localization_params" : 
+			{
+				"apply_smooth_mhist_to_p3ds" : true,
+				"background_median" : 0.0,
+				"background_stddev" : 20.0,
+				"dist_weight_factor" : 1.0,
+				"filter_radius" : 0.050000000000000003,
+				"localization_max" : 20.0,
+				"localization_min" : -20.0,
+				"n_deviations" : 3.0,
+				"p3d_params" : 
+				{
+					"feedback" : false,
+					"foot_dist_radius_factor" : 2.0,
+					"skeleton_disparity_weight" : 2.0
+				},
+				"person_diameter" : 0.69999999999999996,
+				"pose_3d_greedy_select" : false,
+				"prefer_openpose_method" : true,
+				"prob_bg_max" : 0.050000000000000003,
+				"prob_scale" : 2.0,
+				"prob_shift" : 0.050000000000000003,
+				"track_median" : 200.0,
+				"track_stddev" : 50.0,
+				"use_median" : false,
+				"zero_value" : -0.20000000000000001
+			},
+			"out_dir" : "/tmp"
+		},
+		"movie_stats" : 
+		{
+			"feedback" : false,
+			"in_stats_fnames" : [],
+			"no_stats" : false,
+			"out_dir" : "/tmp",
+			"save_filename" : ""
+		},
+		"openpose_init" : 
+		{
+			"op_params" : 
+			{
+				"PAF_heatmap" : false,
+				"add_part_candidates" : false,
+				"bg_heatmap" : false,
+				"body_heatmap" : false,
+				"feedback" : false,
+				"gpu_start" : 0,
+				"image_patch_size" : 7,
+				"max_n_people" : -1,
+				"maximize_recall" : false,
+				"net_input_size" : 
+				[
+					656,
+					368
+				],
+				"num_gpus" : -1,
+				"only_one_sensor_per_camera" : true,
+				"pose_enabled" : true,
+				"pose_model" : "BODY_25",
+				"render_mode" : "GPU",
+				"render_threshold" : 0.05000000074505806,
+				"scale_gap" : 0.15000000596046448,
+				"scales_num" : 1,
+				"single_threaded" : false
+			}
+		},
+		"run_f2d[0]" : 
+		{
+			"f2d" : 
+			{
+				"block_size" : 7,
+				"compactness" : 15.0,
+				"harris_k" : 0.040000000000000001,
+				"is_subpixel" : true,
+				"max_corners" : 1000,
+				"min_dist" : 9.0,
+				"quality_level" : 0.02,
+				"scharr_blur_sigma" : 5.0,
+				"scharr_blur_sz" : 9,
+				"scharr_threshold_absdevs" : 1.5,
+				"slic_edge_enhance" : true,
+				"slic_still_cutoff" : 0.12,
+				"stipple_stride" : 7,
+				"superpixel_size" : 430,
+				"test_azi" : 0.0,
+				"test_d" : 2.0,
+				"test_do_opt" : false,
+				"test_inc" : 0.0,
+				"test_set_label" : false,
+				"use_harris" : true,
+				"use_slic_cuda_if_available" : true
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 0
+		},
+		"run_f2d[1]" : 
+		{
+			"f2d" : 
+			{
+				"block_size" : 7,
+				"compactness" : 15.0,
+				"harris_k" : 0.040000000000000001,
+				"is_subpixel" : true,
+				"max_corners" : 1000,
+				"min_dist" : 9.0,
+				"quality_level" : 0.02,
+				"scharr_blur_sigma" : 5.0,
+				"scharr_blur_sz" : 9,
+				"scharr_threshold_absdevs" : 1.5,
+				"slic_edge_enhance" : true,
+				"slic_still_cutoff" : 0.12,
+				"stipple_stride" : 7,
+				"superpixel_size" : 430,
+				"test_azi" : 0.0,
+				"test_d" : 2.0,
+				"test_do_opt" : false,
+				"test_inc" : 0.0,
+				"test_set_label" : false,
+				"use_harris" : true,
+				"use_slic_cuda_if_available" : true
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 1
+		},
+		"run_f2d[2]" : 
+		{
+			"f2d" : 
+			{
+				"block_size" : 7,
+				"compactness" : 15.0,
+				"harris_k" : 0.040000000000000001,
+				"is_subpixel" : true,
+				"max_corners" : 1000,
+				"min_dist" : 9.0,
+				"quality_level" : 0.02,
+				"scharr_blur_sigma" : 5.0,
+				"scharr_blur_sz" : 9,
+				"scharr_threshold_absdevs" : 1.5,
+				"slic_edge_enhance" : true,
+				"slic_still_cutoff" : 0.12,
+				"stipple_stride" : 7,
+				"superpixel_size" : 430,
+				"test_azi" : 0.0,
+				"test_d" : 2.0,
+				"test_do_opt" : false,
+				"test_inc" : 0.0,
+				"test_set_label" : false,
+				"use_harris" : true,
+				"use_slic_cuda_if_available" : true
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 2
+		},
+		"run_f2d[3]" : 
+		{
+			"f2d" : 
+			{
+				"block_size" : 7,
+				"compactness" : 15.0,
+				"harris_k" : 0.040000000000000001,
+				"is_subpixel" : true,
+				"max_corners" : 1000,
+				"min_dist" : 9.0,
+				"quality_level" : 0.02,
+				"scharr_blur_sigma" : 5.0,
+				"scharr_blur_sz" : 9,
+				"scharr_threshold_absdevs" : 1.5,
+				"slic_edge_enhance" : true,
+				"slic_still_cutoff" : 0.12,
+				"stipple_stride" : 7,
+				"superpixel_size" : 430,
+				"test_azi" : 0.0,
+				"test_d" : 2.0,
+				"test_do_opt" : false,
+				"test_inc" : 0.0,
+				"test_set_label" : false,
+				"use_harris" : true,
+				"use_slic_cuda_if_available" : true
+			},
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"sensor_index" : 3
+		},
+		"slic_3d_init[0]" : 
+		{
+			"cam_num" : 0,
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"slic3d" : 
+			{
+				"selected_threshold" : 0.10000000000000001
+			}
+		},
+		"slic_3d_init[1]" : 
+		{
+			"cam_num" : 1,
+			"feedback" : false,
+			"out_dir" : "/tmp",
+			"slic3d" : 
+			{
+				"selected_threshold" : 0.10000000000000001
+			}
+		}
+	},
+	"use_fowlkes_tracker" : false
+},
+   "track_results": {
+	"frame-duration" : 0.066666699999999995,
+	"frames" : 218,
+	"height" : 50,
+	"hist-sz" : 0.10000000000000001,
+	"start-frame" : 4702,
+	"top-left" : 
+	[
+		-0.75,
+		-2.5
+	],
+	"tracks" : 
+	[
+		{
+			"cost" : 0.0,
+			"height" : 0.0,
+			"id" : 0,
+			"label" : "UNLABELLED",
+			"path" : 
+			[
+				[
+					21,
+					47,
+					0,
+					-1.7442679999999999,
+					0
+				],
+				[
+					21,
+					47,
+					1,
+					-1.7318089999999999,
+					0
+				],
+				[
+					21,
+					46,
+					2,
+					-1.829772,
+					0
+				],
+				[
+					21,
+					46,
+					3,
+					-1.794343,
+					0
+				],
+				[
+					21,
+					46,
+					4,
+					-1.504532,
+					0
+				],
+				[
+					21,
+					45,
+					5,
+					-1.6671609999999999,
+					0
+				],
+				[
+					21,
+					45,
+					6,
+					-1.008618,
+					0
+				],
+				[
+					21,
+					45,
+					7,
+					-0.94582699999999997,
+					0
+				],
+				[
+					21,
+					44,
+					8,
+					-0.266405,
+					0
+				],
+				[
+					21,
+					43,
+					9,
+					-0.36151,
+					0
+				],
+				[
+					21,
+					43,
+					10,
+					-0.64218500000000001,
+					0
+				],
+				[
+					21,
+					42,
+					11,
+					-0.44543100000000002,
+					0
+				],
+				[
+					21,
+					41,
+					12,
+					-0.30349500000000001,
+					0
+				],
+				[
+					21,
+					41,
+					13,
+					-0.347779,
+					0
+				],
+				[
+					21,
+					40,
+					14,
+					-0.21635199999999999,
+					0
+				],
+				[
+					21,
+					40,
+					15,
+					-0.28630899999999998,
+					0
+				],
+				[
+					21,
+					39,
+					16,
+					-0.20189799999999999,
+					0
+				],
+				[
+					21,
+					38,
+					17,
+					-0.28415800000000002,
+					0
+				],
+				[
+					21,
+					38,
+					18,
+					-0.250863,
+					0
+				],
+				[
+					21,
+					37,
+					19,
+					-0.027424,
+					0
+				],
+				[
+					21,
+					36,
+					20,
+					-0.385376,
+					0
+				],
+				[
+					21,
+					36,
+					21,
+					-0.47632999999999998,
+					0
+				],
+				[
+					21,
+					35,
+					22,
+					-0.43234099999999998,
+					0
+				],
+				[
+					21,
+					35,
+					23,
+					-0.39488099999999998,
+					0
+				],
+				[
+					21,
+					35,
+					24,
+					-0.36467100000000002,
+					0
+				],
+				[
+					21,
+					35,
+					25,
+					-0.34254299999999999,
+					0
+				],
+				[
+					22,
+					35,
+					26,
+					-0.32860200000000001,
+					0
+				],
+				[
+					22,
+					34,
+					27,
+					-0.32195400000000002,
+					0
+				],
+				[
+					22,
+					33,
+					28,
+					-0.32192599999999999,
+					0
+				],
+				[
+					22,
+					33,
+					29,
+					-0.32733000000000001,
+					0
+				],
+				[
+					22,
+					32,
+					30,
+					-0.33659699999999998,
+					0
+				],
+				[
+					22,
+					32,
+					31,
+					-0.34851700000000002,
+					0
+				],
+				[
+					22,
+					31,
+					32,
+					-0.36163299999999998,
+					0
+				],
+				[
+					22,
+					31,
+					33,
+					0.15668699999999999,
+					0
+				],
+				[
+					22,
+					31,
+					34,
+					-0.38343899999999997,
+					0
+				],
+				[
+					22,
+					30,
+					35,
+					-0.388652,
+					0
+				],
+				[
+					23,
+					30,
+					36,
+					-0.38996399999999998,
+					0
+				],
+				[
+					23,
+					29,
+					37,
+					-0.38784600000000002,
+					0
+				],
+				[
+					23,
+					29,
+					38,
+					-0.38311299999999998,
+					0
+				],
+				[
+					23,
+					29,
+					39,
+					-0.37684400000000001,
+					0
+				],
+				[
+					23,
+					28,
+					40,
+					0.19007399999999999,
+					0
+				],
+				[
+					23,
+					28,
+					41,
+					-0.020865000000000002,
+					0
+				],
+				[
+					23,
+					27,
+					42,
+					0.120323,
+					0
+				],
+				[
+					23,
+					27,
+					43,
+					-0.110517,
+					0
+				],
+				[
+					23,
+					27,
+					44,
+					0.069487999999999994,
+					0
+				],
+				[
+					23,
+					27,
+					45,
+					0.35548099999999999,
+					0
+				],
+				[
+					23,
+					27,
+					46,
+					-0.100081,
+					0
+				],
+				[
+					23,
+					27,
+					47,
+					0.31308799999999998,
+					0
+				],
+				[
+					23,
+					27,
+					48,
+					-0.041508999999999997,
+					0
+				],
+				[
+					23,
+					27,
+					49,
+					0.27780899999999997,
+					0
+				],
+				[
+					23,
+					27,
+					50,
+					0.51556000000000002,
+					0
+				],
+				[
+					23,
+					27,
+					51,
+					0.15032699999999999,
+					0
+				],
+				[
+					23,
+					27,
+					52,
+					0.26290599999999997,
+					0
+				],
+				[
+					23,
+					27,
+					53,
+					0.36732100000000001,
+					0
+				],
+				[
+					23,
+					27,
+					54,
+					0.33640799999999998,
+					0
+				],
+				[
+					23,
+					28,
+					55,
+					0.316108,
+					0
+				],
+				[
+					23,
+					28,
+					56,
+					-0.049281999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					57,
+					0.15429200000000001,
+					0
+				],
+				[
+					23,
+					28,
+					58,
+					0.32617299999999999,
+					0
+				],
+				[
+					23,
+					28,
+					59,
+					0.49754399999999999,
+					0
+				],
+				[
+					23,
+					28,
+					60,
+					0.218275,
+					0
+				],
+				[
+					23,
+					28,
+					61,
+					0.26340599999999997,
+					0
+				],
+				[
+					23,
+					28,
+					62,
+					0.43502299999999999,
+					0
+				],
+				[
+					23,
+					28,
+					63,
+					-0.029330999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					64,
+					0.0086650000000000008,
+					0
+				],
+				[
+					23,
+					28,
+					65,
+					0.027432999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					66,
+					-0.13758400000000001,
+					0
+				],
+				[
+					23,
+					28,
+					67,
+					0.29023700000000002,
+					0
+				],
+				[
+					23,
+					28,
+					68,
+					0.28444000000000003,
+					0
+				],
+				[
+					23,
+					28,
+					69,
+					0.29389599999999999,
+					0
+				],
+				[
+					23,
+					28,
+					70,
+					0.18180399999999999,
+					0
+				],
+				[
+					23,
+					28,
+					71,
+					0.23488500000000001,
+					0
+				],
+				[
+					23,
+					28,
+					72,
+					0.22209200000000001,
+					0
+				],
+				[
+					23,
+					28,
+					73,
+					0.035999000000000003,
+					0
+				],
+				[
+					23,
+					28,
+					74,
+					0.24715699999999999,
+					0
+				],
+				[
+					23,
+					28,
+					75,
+					0.029378999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					76,
+					0.23852899999999999,
+					0
+				],
+				[
+					23,
+					28,
+					77,
+					0.048101999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					78,
+					0.15221699999999999,
+					0
+				],
+				[
+					23,
+					28,
+					79,
+					0.188975,
+					0
+				],
+				[
+					23,
+					28,
+					80,
+					0.26020900000000002,
+					0
+				],
+				[
+					23,
+					28,
+					81,
+					0.36248599999999997,
+					0
+				],
+				[
+					23,
+					28,
+					82,
+					0.18729100000000001,
+					0
+				],
+				[
+					23,
+					28,
+					83,
+					0.0098060000000000005,
+					0
+				],
+				[
+					23,
+					28,
+					84,
+					-0.071369000000000002,
+					0
+				],
+				[
+					23,
+					28,
+					85,
+					-0.31883699999999998,
+					0
+				],
+				[
+					23,
+					28,
+					86,
+					-0.31734800000000002,
+					0
+				],
+				[
+					23,
+					28,
+					87,
+					-0.31716499999999997,
+					0
+				],
+				[
+					23,
+					28,
+					88,
+					-0.31832199999999999,
+					0
+				],
+				[
+					23,
+					28,
+					89,
+					-0.320799,
+					0
+				],
+				[
+					23,
+					28,
+					90,
+					-0.32455499999999998,
+					0
+				],
+				[
+					23,
+					28,
+					91,
+					-0.32954,
+					0
+				],
+				[
+					23,
+					28,
+					92,
+					-0.33563300000000001,
+					0
+				],
+				[
+					23,
+					28,
+					93,
+					-0.34265400000000001,
+					0
+				],
+				[
+					23,
+					28,
+					94,
+					-0.35032999999999997,
+					0
+				],
+				[
+					23,
+					28,
+					95,
+					-0.35837599999999997,
+					0
+				],
+				[
+					23,
+					28,
+					96,
+					-0.36653400000000003,
+					0
+				],
+				[
+					23,
+					28,
+					97,
+					-0.37454399999999999,
+					0
+				],
+				[
+					23,
+					28,
+					98,
+					0.150648,
+					0
+				],
+				[
+					23,
+					28,
+					99,
+					0.122803,
+					0
+				],
+				[
+					23,
+					28,
+					100,
+					0.29237299999999999,
+					0
+				],
+				[
+					23,
+					28,
+					101,
+					0.39914899999999998,
+					0
+				],
+				[
+					23,
+					28,
+					102,
+					0.22920199999999999,
+					0
+				],
+				[
+					23,
+					28,
+					103,
+					0.25680799999999998,
+					0
+				],
+				[
+					23,
+					28,
+					104,
+					0.23224,
+					0
+				],
+				[
+					23,
+					28,
+					105,
+					0.55154800000000004,
+					0
+				],
+				[
+					23,
+					28,
+					106,
+					0.32160699999999998,
+					0
+				],
+				[
+					23,
+					28,
+					107,
+					0.251363,
+					0
+				],
+				[
+					23,
+					28,
+					108,
+					0.40883900000000001,
+					0
+				],
+				[
+					23,
+					28,
+					109,
+					0.31563799999999997,
+					0
+				],
+				[
+					23,
+					28,
+					110,
+					0.029909999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					111,
+					0.33234200000000003,
+					0
+				],
+				[
+					23,
+					28,
+					112,
+					0.010255999999999999,
+					0
+				],
+				[
+					23,
+					28,
+					113,
+					0.20097899999999999,
+					0
+				],
+				[
+					23,
+					28,
+					114,
+					0.0095270000000000007,
+					0
+				],
+				[
+					23,
+					28,
+					115,
+					0.124529,
+					0
+				],
+				[
+					23,
+					28,
+					116,
+					0.17849899999999999,
+					0
+				],
+				[
+					23,
+					28,
+					117,
+					0.23930100000000001,
+					0
+				],
+				[
+					23,
+					28,
+					118,
+					0.228106,
+					0
+				],
+				[
+					23,
+					28,
+					119,
+					0.33155099999999998,
+					0
+				],
+				[
+					23,
+					28,
+					120,
+					0.53503800000000001,
+					0
+				],
+				[
+					23,
+					28,
+					121,
+					0.35267900000000002,
+					0
+				],
+				[
+					23,
+					28,
+					122,
+					0.24679400000000001,
+					0
+				],
+				[
+					23,
+					28,
+					123,
+					0.54027499999999995,
+					0
+				],
+				[
+					23,
+					28,
+					124,
+					0.32779799999999998,
+					0
+				],
+				[
+					23,
+					28,
+					125,
+					0.33609600000000001,
+					0
+				],
+				[
+					23,
+					28,
+					126,
+					0.29080600000000001,
+					0
+				],
+				[
+					23,
+					28,
+					127,
+					0.357124,
+					0
+				],
+				[
+					23,
+					28,
+					128,
+					0.210177,
+					0
+				],
+				[
+					23,
+					28,
+					129,
+					0.112972,
+					0
+				],
+				[
+					23,
+					28,
+					130,
+					0.110746,
+					0
+				],
+				[
+					23,
+					28,
+					131,
+					0.27199099999999998,
+					0
+				],
+				[
+					23,
+					28,
+					132,
+					0.18029100000000001,
+					0
+				],
+				[
+					23,
+					28,
+					133,
+					0.110746,
+					0
+				],
+				[
+					23,
+					28,
+					134,
+					0.16486700000000001,
+					0
+				],
+				[
+					23,
+					28,
+					135,
+					0.224802,
+					0
+				],
+				[
+					23,
+					28,
+					136,
+					0.087896000000000002,
+					0
+				],
+				[
+					23,
+					28,
+					137,
+					0.33234200000000003,
+					0
+				],
+				[
+					23,
+					28,
+					138,
+					0.30941099999999999,
+					0
+				],
+				[
+					23,
+					28,
+					139,
+					0.19739399999999999,
+					0
+				],
+				[
+					23,
+					28,
+					140,
+					0.084182999999999994,
+					0
+				],
+				[
+					23,
+					28,
+					141,
+					0.115288,
+					0
+				],
+				[
+					22,
+					28,
+					142,
+					0.025239000000000001,
+					0
+				],
+				[
+					22,
+					28,
+					143,
+					0.066144999999999995,
+					0
+				],
+				[
+					22,
+					28,
+					144,
+					0.057859000000000001,
+					0
+				],
+				[
+					22,
+					28,
+					145,
+					0.085255999999999998,
+					0
+				],
+				[
+					22,
+					28,
+					146,
+					0.034828999999999999,
+					0
+				],
+				[
+					22,
+					28,
+					147,
+					0.152757,
+					0
+				],
+				[
+					22,
+					28,
+					148,
+					0.28551700000000002,
+					0
+				],
+				[
+					22,
+					28,
+					149,
+					0.81732099999999996,
+					0
+				],
+				[
+					22,
+					28,
+					150,
+					0.56809699999999996,
+					0
+				],
+				[
+					22,
+					28,
+					151,
+					0.69861200000000001,
+					1
+				],
+				[
+					22,
+					28,
+					152,
+					0.81183099999999997,
+					1
+				],
+				[
+					22,
+					29,
+					153,
+					0.90514700000000003,
+					0
+				],
+				[
+					22,
+					30,
+					154,
+					0.97904599999999997,
+					1
+				],
+				[
+					22,
+					30,
+					155,
+					1.0354650000000001,
+					0
+				],
+				[
+					22,
+					30,
+					156,
+					1.0771409999999999,
+					0
+				],
+				[
+					22,
+					30,
+					157,
+					1.1063270000000001,
+					0
+				],
+				[
+					22,
+					30,
+					158,
+					1.125424,
+					0
+				],
+				[
+					22,
+					31,
+					159,
+					1.136682,
+					0
+				],
+				[
+					22,
+					32,
+					160,
+					1.142385,
+					0
+				],
+				[
+					22,
+					32,
+					161,
+					1.1442920000000001,
+					0
+				],
+				[
+					22,
+					32,
+					162,
+					1.1437310000000001,
+					0
+				],
+				[
+					22,
+					32,
+					163,
+					1.1416500000000001,
+					0
+				],
+				[
+					22,
+					32,
+					164,
+					1.1387579999999999,
+					0
+				],
+				[
+					22,
+					32,
+					165,
+					1.1352960000000001,
+					0
+				],
+				[
+					22,
+					32,
+					166,
+					1.1314329999999999,
+					0
+				],
+				[
+					22,
+					32,
+					167,
+					1.1270169999999999,
+					0
+				],
+				[
+					22,
+					32,
+					168,
+					1.1218809999999999,
+					0
+				],
+				[
+					22,
+					32,
+					169,
+					1.115726,
+					0
+				],
+				[
+					22,
+					33,
+					170,
+					1.1085259999999999,
+					0
+				],
+				[
+					22,
+					33,
+					171,
+					1.100303,
+					0
+				],
+				[
+					22,
+					34,
+					172,
+					1.0911869999999999,
+					0
+				],
+				[
+					23,
+					34,
+					173,
+					1.0813379999999999,
+					0
+				],
+				[
+					23,
+					34,
+					174,
+					1.0709839999999999,
+					0
+				],
+				[
+					23,
+					34,
+					175,
+					1.0602670000000001,
+					0
+				],
+				[
+					23,
+					34,
+					176,
+					1.049207,
+					0
+				],
+				[
+					23,
+					34,
+					177,
+					1.037655,
+					0
+				],
+				[
+					23,
+					34,
+					178,
+					1.0252190000000001,
+					0
+				],
+				[
+					23,
+					34,
+					179,
+					1.01091,
+					0
+				],
+				[
+					23,
+					35,
+					180,
+					0.99335700000000005,
+					0
+				],
+				[
+					23,
+					35,
+					181,
+					0.97063100000000002,
+					0
+				],
+				[
+					23,
+					35,
+					182,
+					1.4823930000000001,
+					0
+				],
+				[
+					23,
+					36,
+					183,
+					0.90139499999999995,
+					0
+				],
+				[
+					23,
+					36,
+					184,
+					0.850603,
+					0
+				],
+				[
+					23,
+					37,
+					185,
+					0.78623699999999996,
+					0
+				],
+				[
+					23,
+					37,
+					186,
+					1.156636,
+					0
+				],
+				[
+					23,
+					38,
+					187,
+					0.95127399999999995,
+					0
+				],
+				[
+					23,
+					38,
+					188,
+					1.17811,
+					0
+				],
+				[
+					23,
+					38,
+					189,
+					1.216297,
+					0
+				],
+				[
+					23,
+					39,
+					190,
+					1.1582440000000001,
+					0
+				],
+				[
+					23,
+					39,
+					191,
+					1.1166180000000001,
+					0
+				],
+				[
+					23,
+					40,
+					192,
+					0.99633799999999995,
+					0
+				],
+				[
+					23,
+					41,
+					193,
+					0.91848600000000002,
+					0
+				],
+				[
+					23,
+					41,
+					194,
+					1.1029770000000001,
+					0
+				],
+				[
+					23,
+					42,
+					195,
+					1.2008129999999999,
+					0
+				],
+				[
+					23,
+					43,
+					196,
+					1.211848,
+					0
+				],
+				[
+					23,
+					43,
+					197,
+					1.182739,
+					0
+				],
+				[
+					23,
+					44,
+					198,
+					1.153041,
+					0
+				],
+				[
+					23,
+					44,
+					199,
+					0.77050600000000002,
+					0
+				],
+				[
+					23,
+					44,
+					200,
+					0.85094499999999995,
+					0
+				],
+				[
+					23,
+					45,
+					201,
+					0.60539699999999996,
+					0
+				],
+				[
+					23,
+					45,
+					202,
+					1.000785,
+					0
+				],
+				[
+					23,
+					45,
+					203,
+					0.87946299999999999,
+					0
+				],
+				[
+					23,
+					45,
+					204,
+					1.1802140000000001,
+					0
+				],
+				[
+					23,
+					45,
+					205,
+					1.0346949999999999,
+					0
+				],
+				[
+					23,
+					45,
+					206,
+					1.177718,
+					0
+				],
+				[
+					23,
+					45,
+					207,
+					1.095618,
+					0
+				],
+				[
+					23,
+					46,
+					208,
+					1.017306,
+					0
+				],
+				[
+					23,
+					46,
+					209,
+					0.99646599999999996,
+					0
+				],
+				[
+					23,
+					47,
+					210,
+					0.91761800000000004,
+					0
+				],
+				[
+					23,
+					47,
+					211,
+					0.77766299999999999,
+					0
+				],
+				[
+					23,
+					48,
+					212,
+					1.103348,
+					0
+				],
+				[
+					23,
+					49,
+					213,
+					0.94122099999999997,
+					0
+				],
+				[
+					23,
+					50,
+					214,
+					1.0480959999999999,
+					0
+				],
+				[
+					23,
+					50,
+					215,
+					1.0373289999999999,
+					0
+				],
+				[
+					23,
+					50,
+					216,
+					0.94072299999999998,
+					0
+				],
+				[
+					23,
+					50,
+					217,
+					1.071447,
+					0
+				]
+			]
+		}
+	],
+	"width" : 38
+}
+}

@@ -1,0 +1,403 @@
+{
+   "config" : {
+      "allow_overwrite" : false,
+      "annotate_mode" : false,
+      "annotations_directory" : "s3://perceive-multiview/testcases/075_site07_measuring_1",
+      "colour_floor_hist" : false,
+      "debug_video_output" : false,
+      "developer_features" : true,
+      "export_training_data" : false,
+      "generate_stats" : false,
+      "generate_timings" : false,
+      "generate_tracks" : true,
+      "has_error" : false,
+      "in_stats_filenames" : [],
+      "localization_data_fname" : "",
+      "manifest_opt_search_path" : "/home/user/.cache/multiview-data/testcases/075_site07_measuring_1",
+      "manifest_params" : {
+         "epoch" : "1970-01-01T00:00:00.000000",
+         "scene-key" : "site07_scene04_v1_e624d22ca290068bda602e810c53a60b",
+         "store" : 0,
+         "type" : "SceneManifest",
+         "videos" : [
+            {
+               "camera" : "C0001082_v1_134e5915896b140ca2ea5dd61dc84b66",
+               "file" : "C0001082_v1_134e5915896b140ca2ea5dd61dc84b66.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            }
+         ]
+      },
+      "n_frames_to_process" : -1,
+      "no_stereo" : true,
+      "on_the_fly_still" : false,
+      "outdir" : "/home/user/TMP/testcase-output/075_site07_measuring_1",
+      "output_video_blur_faces" : true,
+      "output_video_ground_truth_only" : false,
+      "output_video_height" : 1200,
+      "output_video_p2ds_on_localization" : true,
+      "output_video_render_pose" : true,
+      "output_video_render_tracks" : true,
+      "output_video_width" : 1600,
+      "pipeline_output_filename" : "/home/user/TMP/testcase-output/075_site07_measuring_1/pipeline-output.json",
+      "pipeline_params" : null,
+      "presentation_video_output" : false,
+      "run_pipeline_testcase" : false,
+      "save_localization_data" : false,
+      "show_help" : false,
+      "start_frame_no" : 0,
+      "stats_filename" : "",
+      "target_fps" : 0.0,
+      "tracks_filename" : "",
+      "verbosity" : 1,
+      "version" : "5.0.12-22-gb61a1efb:commit:b61a1efbb83774ca004b337498b0b2b593f6266f"
+   },
+   "params" : {
+      "fowlkes_params" : {
+         "min_track_seconds" : 2.0
+      },
+      "task_params" : {
+         "frame_params" : {
+            "bcam_init[0]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 0,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "calc_calibration_mask[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "calc_calibration_mask[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "calc_rectified[0]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 0,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[1]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 1,
+               "use_cuda_if_available" : false
+            },
+            "convert_to_lab[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "convert_to_lab[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "copy_sensor_images" : {
+               "export_frames" : false,
+               "feedback" : false,
+               "frame_num" : 0,
+               "out_dir" : "/tmp"
+            },
+            "create_slic_lookup[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "create_slic_lookup[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "disp_init[0]" : {
+               "cam_num" : 0,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_map_update[0]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 0,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "floor_hist" : {
+               "feedback" : false,
+               "hist_params" : {
+                  "apply_slic_still_weights" : true,
+                  "color_hist_sz" : 0.0099999997764825821,
+                  "color_histogram" : false,
+                  "gaussian_sigma" : 0.5,
+                  "hist_max_z" : 2.0,
+                  "hist_min_z" : 0.5,
+                  "hist_sz" : 0.10000000149011612,
+                  "max_hist_count" : 1000.0,
+                  "min_hist_count" : 0.0,
+                  "n_spread" : 3.0,
+                  "skip_cameras" : [],
+                  "super_pixel_min_z" : 0.25,
+                  "use_median" : true,
+                  "weighting" : "WGT_NORM"
+               },
+               "out_dir" : "/tmp"
+            },
+            "get_xy_mapping[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "get_xy_mapping[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "input_images[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 0
+            },
+            "input_images[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 1
+            },
+            "load_scene_description" : {},
+            "localization" : {
+               "feedback" : false,
+               "localization_params" : {
+                  "apply_smooth_mhist_to_p3ds" : true,
+                  "background_median" : 0.0,
+                  "background_stddev" : 20.0,
+                  "dist_weight_factor" : 1.0,
+                  "extrinsic_calibration_error_factor" : 4.0,
+                  "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+                  "filter_radius" : 0.050000000000000003,
+                  "localization_max" : 20.0,
+                  "localization_min" : -20.0,
+                  "n_deviations" : 3.0,
+                  "p3d_params" : {
+                     "feedback" : false,
+                     "foot_dist_radius_factor" : 2.0,
+                     "skeleton_disparity_weight" : 2.0
+                  },
+                  "person_diameter" : 0.40000000000000002,
+                  "pose2d_patch_h" : 3,
+                  "pose2d_patch_w" : 12,
+                  "prefer_openpose_method" : true,
+                  "prob_bg_max" : 0.050000000000000003,
+                  "prob_scale" : 2.0,
+                  "prob_shift" : 0.050000000000000003,
+                  "theta_stddev_degrees" : 4.0,
+                  "track_median" : 200.0,
+                  "track_stddev" : 50.0,
+                  "use_median" : false,
+                  "zero_value" : -0.20000000000000001
+               },
+               "out_dir" : "/tmp"
+            },
+            "movie_stats" : {
+               "feedback" : false,
+               "in_stats_fnames" : [],
+               "no_stats" : false,
+               "out_dir" : "/tmp",
+               "save_filename" : ""
+            },
+            "openpose_init" : {
+               "op_params" : {
+                  "PAF_heatmap" : false,
+                  "add_part_candidates" : false,
+                  "bg_heatmap" : false,
+                  "body_heatmap" : false,
+                  "feedback" : false,
+                  "gpu_start" : 0,
+                  "image_patch_size" : 7,
+                  "max_n_people" : -1,
+                  "maximize_recall" : false,
+                  "net_input_size" : [ 960, 720 ],
+                  "num_gpus" : -1,
+                  "only_one_sensor_per_camera" : true,
+                  "pose_enabled" : true,
+                  "pose_model" : "BODY_25",
+                  "render_mode" : "NONE",
+                  "render_threshold" : 0.05000000074505806,
+                  "scale_gap" : 0.15000000596046448,
+                  "scales_num" : 1,
+                  "single_threaded" : false
+               }
+            },
+            "run_f2d[0]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "run_f2d[1]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            }
+         },
+         "post_process" : {
+            "dist_median" : 0.10000000149011612,
+            "dist_stddev" : 0.05000000074505806,
+            "duration_median" : 3.0,
+            "duration_stddev" : 1.0,
+            "prob_fp_median" : 0.25,
+            "prob_fp_stddev" : 0.05000000074505806,
+            "score_threshold" : 0.25
+         },
+         "tracklet_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "tracklet_params" : {
+               "frame_t_interp_window" : 4,
+               "max_frames_per_tracklet" : 10,
+               "noise_factor" : 0.40000000596046448,
+               "projective_distance_threshold" : 55.0,
+               "speed_cap" : 3.5,
+               "speed_median" : 1.3999999761581421,
+               "speed_stddev" : 1.0
+            }
+         },
+         "tracks_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "start_frame" : 0,
+            "tracks_params" : {
+               "edge_d0_delta" : -0.80000001192092896,
+               "edge_d0_scale" : 2.0,
+               "edge_d1_delta" : -0.5,
+               "edge_d1_scale" : 2.0,
+               "edge_dt_delta" : -0.10000000149011612,
+               "edge_dt_scale" : 2.0,
+               "export_training_data" : false,
+               "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+               "fixed_window_prev_tracklet" : 6,
+               "hungarian_score_threshold" : 0.10000000149011612,
+               "merge_threshold" : 0.0,
+               "method" : "SP1",
+               "random_seed" : 0
+            }
+         }
+      }
+   },
+   "track_results" : {
+      "frame-duration" : 0.066666666666666666,
+      "frames" : 1754,
+      "height" : 50,
+      "hist-sz" : 0.10000000149011612,
+      "start-frame" : 0,
+      "top-left" : [ -2.0, -1.0 ],
+      "tracks" : [],
+      "width" : 45
+   }
+}

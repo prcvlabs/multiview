@@ -1,0 +1,2318 @@
+{
+   "config" : {
+      "allow_overwrite" : false,
+      "annotate_mode" : false,
+      "annotations_directory" : "s3://perceive-multiview/testcases/044_site06_sitting_1",
+      "colour_floor_hist" : false,
+      "debug_video_output" : false,
+      "developer_features" : true,
+      "generate_stats" : false,
+      "generate_timings" : false,
+      "generate_tracks" : true,
+      "has_error" : false,
+      "in_stats_filenames" : [],
+      "localization_data_fname" : "",
+      "manifest_opt_search_path" : "/home/user/.cache/multiview-data/testcases/044_site06_sitting_1",
+      "manifest_params" : {
+         "epoch" : "1970-01-01T00:00:00.000000",
+         "scene-key" : "site06_scene01_v2-PROD_e41d0e1b3a9318e842cd6308b9e0a4e0",
+         "store" : 0,
+         "type" : "SceneManifest",
+         "videos" : [
+            {
+               "camera" : "C0001021_v2_d66b8e40171c975100c5427d34a217cd",
+               "file" : "C0001021_v2_d66b8e40171c975100c5427d34a217cd.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001039_v1_9e741276d07e8bb8c220d6ac2273991a",
+               "file" : "C0001039_v1_9e741276d07e8bb8c220d6ac2273991a.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001042_v4_4808eefb9141971571c271891d8407a1",
+               "file" : "C0001042_v4_4808eefb9141971571c271891d8407a1.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001057_v4_0e5829dafeb440fa06ddb299c625e70b",
+               "file" : "C0001057_v4_0e5829dafeb440fa06ddb299c625e70b.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001074_v1_cdb308d20c592c68d93e4beb8655690d",
+               "file" : "C0001074_v1_cdb308d20c592c68d93e4beb8655690d.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001086_v1_9a7b749e3c409eab2b7baf4400360592",
+               "file" : "C0001086_v1_9a7b749e3c409eab2b7baf4400360592.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001087_v1_a2ffef1e7c5a7b80314034321dd90e57",
+               "file" : "C0001087_v1_a2ffef1e7c5a7b80314034321dd90e57.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            },
+            {
+               "camera" : "C0001091_v2_b50fc9e996ec014f60a75e3b9608740d",
+               "file" : "C0001091_v2_b50fc9e996ec014f60a75e3b9608740d.mp4",
+               "fps" : 15.0,
+               "timestamp" : "1970-01-01T00:00:00.000000"
+            }
+         ]
+      },
+      "n_frames_to_process" : -1,
+      "no_stereo" : false,
+      "on_the_fly_still" : false,
+      "outdir" : "/home/user/TMP/testcase-output/044_site06_sitting_1",
+      "output_video_blur_faces" : true,
+      "output_video_ground_truth_only" : false,
+      "output_video_height" : 1200,
+      "output_video_p2ds_on_localization" : true,
+      "output_video_render_pose" : true,
+      "output_video_render_tracks" : true,
+      "output_video_width" : 1600,
+      "pipeline_output_filename" : "/home/user/TMP/testcase-output/044_site06_sitting_1/pipeline-output.json",
+      "pipeline_params" : null,
+      "presentation_video_output" : false,
+      "run_pipeline_testcase" : false,
+      "save_localization_data" : false,
+      "show_help" : false,
+      "start_frame_no" : 0,
+      "stats_filename" : "",
+      "target_fps" : 0.0,
+      "tracks_filename" : "",
+      "verbosity" : 1,
+      "version" : "5.0.10-11-g0cf6f3a5:commit:0cf6f3a53b7a64203e7b8fd80879dcbb999e7ac5"
+   },
+   "params" : {
+      "fowlkes_params" : {
+         "min_track_seconds" : 2.0
+      },
+      "task_params" : {
+         "frame_params" : {
+            "bcam_init[0]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 0,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[1]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 1,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[2]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 2,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[3]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 3,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[4]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 4,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[5]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 5,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[6]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 6,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "bcam_init[7]" : {
+               "K_fx" : 200.0,
+               "K_fy" : 200.0,
+               "K_pptx" : 400.0,
+               "K_ppty" : 300.0,
+               "cam_num" : 7,
+               "feedback" : false,
+               "height" : 600,
+               "out_dir" : "/tmp",
+               "use_calib_roi" : true,
+               "width" : 800
+            },
+            "calc_calibration_mask[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "calc_calibration_mask[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "calc_calibration_mask[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "calc_calibration_mask[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "calc_calibration_mask[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "calc_calibration_mask[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "calc_calibration_mask[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "calc_calibration_mask[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "calc_calibration_mask[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "calc_calibration_mask[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "calc_calibration_mask[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "calc_calibration_mask[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "calc_calibration_mask[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "calc_calibration_mask[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "calc_calibration_mask[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "calc_calibration_mask[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "calc_rectified[0]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 0,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[10]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 10,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[11]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 11,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[12]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 12,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[13]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 13,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[14]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 14,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[15]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 15,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[1]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 1,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[2]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 2,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[3]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 3,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[4]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 4,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[5]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 5,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[6]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 6,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[7]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 7,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[8]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 8,
+               "use_cuda_if_available" : false
+            },
+            "calc_rectified[9]" : {
+               "feedback" : false,
+               "interpolation_method" : "CUBIC",
+               "out_dir" : "/tmp",
+               "sensor_index" : 9,
+               "use_cuda_if_available" : false
+            },
+            "convert_to_lab[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "convert_to_lab[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "convert_to_lab[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "convert_to_lab[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "convert_to_lab[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "convert_to_lab[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "convert_to_lab[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "convert_to_lab[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "convert_to_lab[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "convert_to_lab[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "convert_to_lab[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "convert_to_lab[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "convert_to_lab[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "convert_to_lab[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "convert_to_lab[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "convert_to_lab[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "copy_sensor_images" : {
+               "export_frames" : false,
+               "feedback" : false,
+               "frame_num" : 0,
+               "out_dir" : "/tmp"
+            },
+            "create_slic_lookup[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "create_slic_lookup[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "create_slic_lookup[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "create_slic_lookup[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "create_slic_lookup[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "create_slic_lookup[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "create_slic_lookup[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "create_slic_lookup[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "create_slic_lookup[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "create_slic_lookup[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "create_slic_lookup[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "create_slic_lookup[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "create_slic_lookup[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "create_slic_lookup[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "create_slic_lookup[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "create_slic_lookup[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "disp_init[0]" : {
+               "cam_num" : 0,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[1]" : {
+               "cam_num" : 1,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[2]" : {
+               "cam_num" : 2,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[3]" : {
+               "cam_num" : 3,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[4]" : {
+               "cam_num" : 4,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[5]" : {
+               "cam_num" : 5,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[6]" : {
+               "cam_num" : 6,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_init[7]" : {
+               "cam_num" : 7,
+               "disp_params" : {
+                  "disparity_method" : "STEREO_BM",
+                  "presmooth_sigma" : 2.1499999999999999,
+                  "sgm_params" : {
+                     "disparity_size" : 256,
+                     "use_16bit_greyscale" : true
+                  },
+                  "stereobm_params" : {
+                     "bm_12_max_diff" : 126,
+                     "bm_SAD_window_size" : 25,
+                     "bm_block_size" : 15,
+                     "bm_min_disparity" : 1,
+                     "bm_num_disparities" : 96,
+                     "bm_prefilter_cap" : 63,
+                     "bm_prefilter_size" : 7,
+                     "bm_prefilter_type" : 1,
+                     "bm_speckle_range" : 111,
+                     "bm_speckle_window_size" : 185,
+                     "bm_texture_threshold" : 259,
+                     "bm_uniqueness_ratio" : 9
+                  },
+                  "stereosgbm_params" : {
+                     "sg_12_max_diff" : 596,
+                     "sg_SAD_window_size" : 13,
+                     "sg_min_disparity" : 1,
+                     "sg_mode" : 3,
+                     "sg_num_disparities" : 96,
+                     "sg_p1" : 22,
+                     "sg_p2" : 1000,
+                     "sg_prefilter_cap" : 54,
+                     "sg_speckle_range" : 250,
+                     "sg_speckle_window_size" : 600,
+                     "sg_uniqueness_ratio" : 3
+                  },
+                  "triclops_params" : {
+                     "edge_correlation" : true,
+                     "edge_mask" : 11,
+                     "lowpass" : true,
+                     "max_disp" : 128,
+                     "min_disp" : 1,
+                     "rectify" : false,
+                     "stereo_mask" : 17,
+                     "subpixel" : true,
+                     "subpixel_validation" : true,
+                     "surface_validation" : true,
+                     "surface_validation_size" : 400,
+                     "texture_validation" : true
+                  },
+                  "use_cuda_if_available" : false
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp"
+            },
+            "disp_map_update[0]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 0,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[1]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 1,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[2]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 2,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[3]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 3,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[4]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 4,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[5]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 5,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[6]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 6,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "disp_map_update[7]" : {
+               "apply_smoothing" : false,
+               "cam_num" : 7,
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "smooth_polynomial_order" : 3,
+               "smooth_search_radius" : 0.14999999999999999
+            },
+            "floor_hist" : {
+               "feedback" : false,
+               "hist_params" : {
+                  "apply_slic_still_weights" : true,
+                  "color_hist_sz" : 0.0099999997764825821,
+                  "color_histogram" : false,
+                  "gaussian_sigma" : 0.5,
+                  "hist_max_z" : 2.0,
+                  "hist_min_z" : 0.5,
+                  "hist_sz" : 0.10000000149011612,
+                  "max_hist_count" : 1000.0,
+                  "min_hist_count" : 0.0,
+                  "n_spread" : 3.0,
+                  "skip_cameras" : [],
+                  "super_pixel_min_z" : 0.25,
+                  "use_median" : true,
+                  "weighting" : "WGT_NORM"
+               },
+               "out_dir" : "/tmp"
+            },
+            "get_xy_mapping[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "get_xy_mapping[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "get_xy_mapping[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "get_xy_mapping[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "get_xy_mapping[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "get_xy_mapping[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "get_xy_mapping[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "get_xy_mapping[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "get_xy_mapping[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "get_xy_mapping[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "get_xy_mapping[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "get_xy_mapping[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "get_xy_mapping[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "get_xy_mapping[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "get_xy_mapping[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "get_xy_mapping[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            },
+            "input_images[0]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 0
+            },
+            "input_images[10]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 10
+            },
+            "input_images[11]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 11
+            },
+            "input_images[12]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 12
+            },
+            "input_images[13]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 13
+            },
+            "input_images[14]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 14
+            },
+            "input_images[15]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 15
+            },
+            "input_images[1]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 1
+            },
+            "input_images[2]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 2
+            },
+            "input_images[3]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 3
+            },
+            "input_images[4]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 4
+            },
+            "input_images[5]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 5
+            },
+            "input_images[6]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 6
+            },
+            "input_images[7]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 7
+            },
+            "input_images[8]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 8
+            },
+            "input_images[9]" : {
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "raw_image_equalize" : false,
+               "sensor_index" : 9
+            },
+            "load_scene_description" : {},
+            "localization" : {
+               "feedback" : false,
+               "localization_params" : {
+                  "apply_smooth_mhist_to_p3ds" : true,
+                  "background_median" : 0.0,
+                  "background_stddev" : 20.0,
+                  "dist_weight_factor" : 1.0,
+                  "extrinsic_calibration_error_factor" : 4.0,
+                  "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+                  "filter_radius" : 0.050000000000000003,
+                  "localization_max" : 20.0,
+                  "localization_min" : -20.0,
+                  "n_deviations" : 3.0,
+                  "p3d_params" : {
+                     "feedback" : false,
+                     "foot_dist_radius_factor" : 2.0,
+                     "skeleton_disparity_weight" : 2.0
+                  },
+                  "person_diameter" : 0.40000000000000002,
+                  "pose2d_patch_h" : 3,
+                  "pose2d_patch_w" : 12,
+                  "prefer_openpose_method" : true,
+                  "prob_bg_max" : 0.050000000000000003,
+                  "prob_scale" : 2.0,
+                  "prob_shift" : 0.050000000000000003,
+                  "theta_stddev_degrees" : 4.0,
+                  "track_median" : 200.0,
+                  "track_stddev" : 50.0,
+                  "use_median" : false,
+                  "zero_value" : -0.20000000000000001
+               },
+               "out_dir" : "/tmp"
+            },
+            "movie_stats" : {
+               "feedback" : false,
+               "in_stats_fnames" : [],
+               "no_stats" : false,
+               "out_dir" : "/tmp",
+               "save_filename" : ""
+            },
+            "openpose_init" : {
+               "op_params" : {
+                  "PAF_heatmap" : false,
+                  "add_part_candidates" : false,
+                  "bg_heatmap" : false,
+                  "body_heatmap" : false,
+                  "feedback" : false,
+                  "gpu_start" : 0,
+                  "image_patch_size" : 7,
+                  "max_n_people" : -1,
+                  "maximize_recall" : false,
+                  "net_input_size" : [ 656, 368 ],
+                  "num_gpus" : -1,
+                  "only_one_sensor_per_camera" : true,
+                  "pose_enabled" : true,
+                  "pose_model" : "BODY_25",
+                  "render_mode" : "NONE",
+                  "render_threshold" : 0.05000000074505806,
+                  "scale_gap" : 0.15000000596046448,
+                  "scales_num" : 1,
+                  "single_threaded" : false
+               }
+            },
+            "run_f2d[0]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 0
+            },
+            "run_f2d[10]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 10
+            },
+            "run_f2d[11]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 11
+            },
+            "run_f2d[12]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 12
+            },
+            "run_f2d[13]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 13
+            },
+            "run_f2d[14]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 14
+            },
+            "run_f2d[15]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 15
+            },
+            "run_f2d[1]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 1
+            },
+            "run_f2d[2]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 2
+            },
+            "run_f2d[3]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 3
+            },
+            "run_f2d[4]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 4
+            },
+            "run_f2d[5]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 5
+            },
+            "run_f2d[6]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 6
+            },
+            "run_f2d[7]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 7
+            },
+            "run_f2d[8]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 8
+            },
+            "run_f2d[9]" : {
+               "f2d" : {
+                  "block_size" : 7,
+                  "compactness" : 15.0,
+                  "harris_k" : 0.040000000000000001,
+                  "is_subpixel" : true,
+                  "max_corners" : 1000,
+                  "min_dist" : 9.0,
+                  "quality_level" : 0.02,
+                  "scharr_blur_sigma" : 5.0,
+                  "scharr_blur_sz" : 9,
+                  "scharr_threshold_absdevs" : 1.5,
+                  "slic_edge_enhance" : true,
+                  "slic_still_cutoff" : 0.12,
+                  "stipple_stride" : 7,
+                  "superpixel_size" : 430,
+                  "test_azi" : 0.0,
+                  "test_d" : 2.0,
+                  "test_do_opt" : false,
+                  "test_inc" : 0.0,
+                  "test_set_label" : false,
+                  "use_harris" : true,
+                  "use_slic_cuda_if_available" : true
+               },
+               "feedback" : false,
+               "out_dir" : "/tmp",
+               "sensor_index" : 9
+            }
+         },
+         "post_process" : {
+            "dist_median" : 0.10000000149011612,
+            "dist_stddev" : 0.05000000074505806,
+            "duration_median" : 3.0,
+            "duration_stddev" : 1.0,
+            "prob_fp_median" : 0.25,
+            "prob_fp_stddev" : 0.05000000074505806,
+            "score_threshold" : 0.25
+         },
+         "tracklet_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "tracklet_params" : {
+               "frame_t_interp_window" : 4,
+               "max_frames_per_tracklet" : 10,
+               "noise_factor" : 0.40000000596046448,
+               "projective_distance_threshold" : 55.0,
+               "speed_cap" : 3.5,
+               "speed_median" : 1.3999999761581421,
+               "speed_stddev" : 1.0
+            }
+         },
+         "tracks_params" : {
+            "feedback" : false,
+            "out_dir" : "/tmp",
+            "start_frame" : 0,
+            "tracks_params" : {
+               "edge_d0_delta" : -0.80000001192092896,
+               "edge_d0_scale" : 2.0,
+               "edge_d1_delta" : -0.5,
+               "edge_d1_scale" : 2.0,
+               "edge_dt_delta" : -0.10000000149011612,
+               "edge_dt_scale" : 2.0,
+               "false_positive_weight_vector" : [ 0.25, 0.25, 0.0, 0.25 ],
+               "fixed_window_prev_tracklet" : 6,
+               "hungarian_score_threshold" : 0.10000000149011612,
+               "merge_threshold" : 0.0,
+               "method" : "SP1",
+               "random_seed" : 0
+            }
+         }
+      }
+   },
+   "track_results" : {
+      "frame-duration" : 0.066666666666666666,
+      "frames" : 149,
+      "height" : 90,
+      "hist-sz" : 0.10000000149011612,
+      "start-frame" : 0,
+      "top-left" : [ -3.0, -4.0 ],
+      "tracks" : [
+         {
+            "cost" : 0.0,
+            "fp_info" : {
+               "dist_p" : null,
+               "duration_p" : null,
+               "is_true_positive" : false,
+               "lab_p" : null,
+               "prob_fp_p" : null,
+               "score" : null
+            },
+            "height" : 0.0,
+            "id" : 0,
+            "label" : "UNLABELLED",
+            "path" : [
+               [ 63, 57, 0, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 1, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 2, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 3, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 4, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 5, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 6, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 7, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 8, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 9, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 10, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 11, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 12, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 13, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 14, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 15, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 16, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 17, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 18, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 19, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 20, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 21, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 22, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 23, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 24, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 25, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 26, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 27, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 28, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 29, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 30, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 31, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 32, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 33, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 34, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 35, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 36, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 37, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 38, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 39, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 40, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 41, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 42, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 43, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 44, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 45, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 46, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 47, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 48, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 49, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 50, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 51, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 52, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 53, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 54, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 55, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 56, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 57, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 58, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 59, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 60, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 61, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 62, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 63, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 64, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 65, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 66, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 67, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 68, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 69, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 70, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 71, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 72, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 73, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 74, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 75, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 76, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 77, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 78, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 79, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 80, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 81, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 82, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 83, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 84, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 85, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 86, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 87, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 88, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 89, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 90, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 91, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 92, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 93, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 94, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 95, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 96, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 97, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 98, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 99, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 100, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 101, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 102, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 103, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 104, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 105, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 106, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 107, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 108, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 109, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 110, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 111, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 112, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 113, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 114, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 115, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 116, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 117, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 118, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 119, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 120, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 121, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 122, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 123, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 124, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 125, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 126, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 127, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 128, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 129, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 130, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 131, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 132, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 133, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 134, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 135, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 136, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 137, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 138, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 139, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 140, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 141, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 142, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 143, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 144, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 145, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 146, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 147, 0.081906000000000007, -1, "I" ],
+               [ 63, 57, 148, 0.081906000000000007, -1, "I" ]
+            ]
+         },
+         {
+            "cost" : 0.0,
+            "fp_info" : {
+               "dist_p" : null,
+               "duration_p" : null,
+               "is_true_positive" : false,
+               "lab_p" : null,
+               "prob_fp_p" : null,
+               "score" : null
+            },
+            "height" : 0.0,
+            "id" : 1,
+            "label" : "UNLABELLED",
+            "path" : [
+               [ 75, 60, 0, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 1, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 2, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 3, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 4, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 5, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 6, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 7, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 8, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 9, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 10, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 11, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 12, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 13, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 14, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 15, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 16, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 17, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 18, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 19, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 20, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 21, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 22, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 23, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 24, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 25, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 26, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 27, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 28, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 29, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 30, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 31, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 32, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 33, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 34, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 35, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 36, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 37, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 38, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 39, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 40, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 41, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 42, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 43, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 44, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 45, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 46, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 47, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 48, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 49, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 50, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 51, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 52, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 53, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 54, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 55, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 56, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 57, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 58, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 59, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 60, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 61, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 62, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 63, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 64, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 65, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 66, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 67, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 68, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 69, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 70, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 71, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 72, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 73, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 74, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 75, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 76, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 77, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 78, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 79, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 80, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 81, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 82, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 83, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 84, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 85, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 86, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 87, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 88, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 89, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 90, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 91, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 92, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 93, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 94, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 95, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 96, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 97, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 98, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 99, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 100, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 101, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 102, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 103, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 104, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 105, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 106, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 107, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 108, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 109, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 110, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 111, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 112, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 113, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 114, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 115, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 116, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 117, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 118, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 119, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 120, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 121, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 122, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 123, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 124, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 125, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 126, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 127, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 128, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 129, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 130, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 131, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 132, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 133, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 134, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 135, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 136, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 137, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 138, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 139, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 140, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 141, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 142, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 143, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 144, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 145, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 146, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 147, 3.1150500000000001, -1, "I" ],
+               [ 75, 60, 148, 3.1150500000000001, -1, "I" ]
+            ]
+         },
+         {
+            "cost" : 0.0,
+            "fp_info" : {
+               "dist_p" : null,
+               "duration_p" : null,
+               "is_true_positive" : false,
+               "lab_p" : null,
+               "prob_fp_p" : null,
+               "score" : null
+            },
+            "height" : 0.0,
+            "id" : 2,
+            "label" : "UNLABELLED",
+            "path" : [
+               [ 75, 50, 0, 3.123631, -1, "I" ],
+               [ 75, 50, 1, 3.123631, -1, "I" ],
+               [ 75, 50, 2, 3.123631, -1, "I" ],
+               [ 75, 50, 3, 3.123631, -1, "I" ],
+               [ 75, 50, 4, 3.123631, -1, "I" ],
+               [ 75, 50, 5, 3.123631, -1, "I" ],
+               [ 75, 50, 6, 3.123631, -1, "I" ],
+               [ 75, 50, 7, 3.123631, -1, "I" ],
+               [ 75, 50, 8, 3.123631, -1, "I" ],
+               [ 75, 50, 9, 3.123631, -1, "I" ],
+               [ 75, 50, 10, 3.123631, -1, "I" ],
+               [ 75, 50, 11, 3.123631, -1, "I" ],
+               [ 75, 50, 12, 3.123631, -1, "I" ],
+               [ 75, 50, 13, 3.123631, -1, "I" ],
+               [ 75, 50, 14, 3.123631, -1, "I" ],
+               [ 75, 50, 15, 3.123631, -1, "I" ],
+               [ 75, 50, 16, 3.123631, -1, "I" ],
+               [ 75, 50, 17, 3.123631, -1, "I" ],
+               [ 75, 50, 18, 3.123631, -1, "I" ],
+               [ 75, 50, 19, 3.123631, -1, "I" ],
+               [ 75, 50, 20, 3.123631, -1, "I" ],
+               [ 75, 50, 21, 3.123631, -1, "I" ],
+               [ 75, 50, 22, 3.123631, -1, "I" ],
+               [ 75, 50, 23, 3.123631, -1, "I" ],
+               [ 75, 50, 24, 3.123631, -1, "I" ],
+               [ 75, 50, 25, 3.123631, -1, "I" ],
+               [ 75, 50, 26, 3.123631, -1, "I" ],
+               [ 75, 50, 27, 3.123631, -1, "I" ],
+               [ 75, 50, 28, 3.123631, -1, "I" ],
+               [ 75, 50, 29, 3.123631, -1, "I" ],
+               [ 75, 50, 30, 3.123631, -1, "I" ],
+               [ 75, 50, 31, 3.123631, -1, "I" ],
+               [ 75, 50, 32, 3.123631, -1, "I" ],
+               [ 75, 50, 33, 3.123631, -1, "I" ],
+               [ 75, 50, 34, 3.123631, -1, "I" ],
+               [ 75, 50, 35, 3.123631, -1, "I" ],
+               [ 75, 50, 36, 3.123631, -1, "I" ],
+               [ 75, 50, 37, 3.123631, -1, "I" ],
+               [ 75, 50, 38, 3.123631, -1, "I" ],
+               [ 75, 50, 39, 3.123631, -1, "I" ],
+               [ 75, 50, 40, 3.123631, -1, "I" ],
+               [ 75, 50, 41, 3.123631, -1, "I" ],
+               [ 75, 50, 42, 3.123631, -1, "I" ],
+               [ 75, 50, 43, 3.123631, -1, "I" ],
+               [ 75, 50, 44, 3.123631, -1, "I" ],
+               [ 75, 50, 45, 3.123631, -1, "I" ],
+               [ 75, 50, 46, 3.123631, -1, "I" ],
+               [ 75, 50, 47, 3.123631, -1, "I" ],
+               [ 75, 50, 48, 3.123631, -1, "I" ],
+               [ 75, 50, 49, 3.123631, -1, "I" ],
+               [ 75, 50, 50, 3.123631, -1, "I" ],
+               [ 75, 50, 51, 3.123631, -1, "I" ],
+               [ 75, 50, 52, 3.123631, -1, "I" ],
+               [ 75, 50, 53, 3.123631, -1, "I" ],
+               [ 75, 50, 54, 3.123631, -1, "I" ],
+               [ 75, 50, 55, 3.123631, -1, "I" ],
+               [ 75, 50, 56, 3.123631, -1, "I" ],
+               [ 75, 50, 57, 3.123631, -1, "I" ],
+               [ 75, 50, 58, 3.123631, -1, "I" ],
+               [ 75, 50, 59, 3.123631, -1, "I" ],
+               [ 75, 50, 60, 3.123631, -1, "I" ],
+               [ 75, 50, 61, 3.123631, -1, "I" ],
+               [ 75, 50, 62, 3.123631, -1, "I" ],
+               [ 75, 50, 63, 3.123631, -1, "I" ],
+               [ 75, 50, 64, 3.123631, -1, "I" ],
+               [ 75, 50, 65, 3.123631, -1, "I" ],
+               [ 75, 50, 66, 3.123631, -1, "I" ],
+               [ 75, 50, 67, 3.123631, -1, "I" ],
+               [ 75, 50, 68, 3.123631, -1, "I" ],
+               [ 75, 50, 69, 3.123631, -1, "I" ],
+               [ 75, 50, 70, 3.123631, -1, "I" ],
+               [ 75, 50, 71, 3.123631, -1, "I" ],
+               [ 75, 50, 72, 3.123631, -1, "I" ],
+               [ 75, 50, 73, 3.123631, -1, "I" ],
+               [ 75, 50, 74, 3.123631, -1, "I" ],
+               [ 75, 50, 75, 3.123631, -1, "I" ],
+               [ 75, 50, 76, 3.123631, -1, "I" ],
+               [ 75, 50, 77, 3.123631, -1, "I" ],
+               [ 75, 50, 78, 3.123631, -1, "I" ],
+               [ 75, 50, 79, 3.123631, -1, "I" ],
+               [ 75, 50, 80, 3.123631, -1, "I" ],
+               [ 75, 50, 81, 3.123631, -1, "I" ],
+               [ 75, 50, 82, 3.123631, -1, "I" ],
+               [ 75, 50, 83, 3.123631, -1, "I" ],
+               [ 75, 50, 84, 3.123631, -1, "I" ],
+               [ 75, 50, 85, 3.123631, -1, "I" ],
+               [ 75, 50, 86, 3.123631, -1, "I" ],
+               [ 75, 50, 87, 3.123631, -1, "I" ],
+               [ 75, 50, 88, 3.123631, -1, "I" ],
+               [ 75, 50, 89, 3.123631, -1, "I" ],
+               [ 75, 50, 90, 3.123631, -1, "I" ],
+               [ 75, 50, 91, 3.123631, -1, "I" ],
+               [ 75, 50, 92, 3.123631, -1, "I" ],
+               [ 75, 50, 93, 3.123631, -1, "I" ],
+               [ 75, 50, 94, 3.123631, -1, "I" ],
+               [ 75, 50, 95, 3.123631, -1, "I" ],
+               [ 75, 50, 96, 3.123631, -1, "I" ],
+               [ 75, 50, 97, 3.123631, -1, "I" ],
+               [ 75, 50, 98, 3.123631, -1, "I" ],
+               [ 75, 50, 99, 3.123631, -1, "I" ],
+               [ 75, 50, 100, 3.123631, -1, "I" ],
+               [ 75, 50, 101, 3.123631, -1, "I" ],
+               [ 75, 50, 102, 3.123631, -1, "I" ],
+               [ 75, 50, 103, 3.123631, -1, "I" ],
+               [ 75, 50, 104, 3.123631, -1, "I" ],
+               [ 75, 50, 105, 3.123631, -1, "I" ],
+               [ 75, 50, 106, 3.123631, -1, "I" ],
+               [ 75, 50, 107, 3.123631, -1, "I" ],
+               [ 75, 50, 108, 3.123631, -1, "I" ],
+               [ 75, 50, 109, 3.123631, -1, "I" ],
+               [ 75, 50, 110, 3.123631, -1, "I" ],
+               [ 75, 50, 111, 3.123631, -1, "I" ],
+               [ 75, 50, 112, 3.123631, -1, "I" ],
+               [ 75, 50, 113, 3.123631, -1, "I" ],
+               [ 75, 50, 114, 3.123631, -1, "I" ],
+               [ 75, 50, 115, 3.123631, -1, "I" ],
+               [ 75, 50, 116, 3.123631, -1, "I" ],
+               [ 75, 50, 117, 3.123631, -1, "I" ],
+               [ 75, 50, 118, 3.123631, -1, "I" ],
+               [ 75, 50, 119, 3.123631, -1, "I" ],
+               [ 75, 50, 120, 3.123631, -1, "I" ],
+               [ 75, 50, 121, 3.123631, -1, "I" ],
+               [ 75, 50, 122, 3.123631, -1, "I" ],
+               [ 75, 50, 123, 3.123631, -1, "I" ],
+               [ 75, 50, 124, 3.123631, -1, "I" ],
+               [ 75, 50, 125, 3.123631, -1, "I" ],
+               [ 75, 50, 126, 3.123631, -1, "I" ],
+               [ 75, 50, 127, 3.123631, -1, "I" ],
+               [ 75, 50, 128, 3.123631, -1, "I" ],
+               [ 75, 50, 129, 3.123631, -1, "I" ],
+               [ 75, 50, 130, 3.123631, -1, "I" ],
+               [ 75, 50, 131, 3.123631, -1, "I" ],
+               [ 75, 50, 132, 3.123631, -1, "I" ],
+               [ 75, 50, 133, 3.123631, -1, "I" ],
+               [ 75, 50, 134, 3.123631, -1, "I" ],
+               [ 75, 50, 135, 3.123631, -1, "I" ],
+               [ 75, 50, 136, 3.123631, -1, "I" ],
+               [ 75, 50, 137, 3.123631, -1, "I" ],
+               [ 75, 50, 138, 3.123631, -1, "I" ],
+               [ 75, 50, 139, 3.123631, -1, "I" ],
+               [ 75, 50, 140, 3.123631, -1, "I" ],
+               [ 75, 50, 141, 3.123631, -1, "I" ],
+               [ 75, 50, 142, 3.123631, -1, "I" ],
+               [ 75, 50, 143, 3.123631, -1, "I" ],
+               [ 75, 50, 144, 3.123631, -1, "I" ],
+               [ 75, 50, 145, 3.123631, -1, "I" ],
+               [ 75, 50, 146, 3.123631, -1, "I" ],
+               [ 75, 50, 147, 3.123631, -1, "I" ],
+               [ 75, 50, 148, 3.123631, -1, "I" ]
+            ]
+         }
+      ],
+      "width" : 150
+   }
+}
