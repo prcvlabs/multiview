@@ -388,7 +388,7 @@ CATCH_TEST_CASE("EuclideanTransform", "[euclidean_transform]")
 
    CATCH_SECTION("euclidean-math-health")
    {
-      const ArucoCube ac = make_kyle_aruco_cube();
+      const ArucoCube ac = make_aruco_cube_a();
       Matrix3r K         = Matrix3r::Identity();
       const unsigned uh  = 1944;
       const unsigned uw  = 2592;

@@ -7,7 +7,7 @@ We're using the calibration files in: `$PERCEIVE_DATA/computer-vision/experiment
 # Steps to create a new scene
 
  * Install the cameras on site.
- * Take photos of the Aruco Cube. (Currently we only have the "Kyle Cube".)
+ * Take photos of the Aruco Cube. (Currently we only have `cube-a`.)
  * Run the "extrinsic calibration" procedure to produce a scene file.
 
 # Workflow

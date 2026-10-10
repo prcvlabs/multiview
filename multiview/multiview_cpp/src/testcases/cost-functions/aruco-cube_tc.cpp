@@ -15,7 +15,7 @@ CATCH_TEST_CASE("ArucoCube", "[aruco-cube]")
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("aruco-cube")
    { //
-      const auto ac   = make_kyle_aruco_cube();
+      const auto ac   = make_aruco_cube_a();
       const auto ac_s = ac.to_json_str();
 
       ArucoCube bc;

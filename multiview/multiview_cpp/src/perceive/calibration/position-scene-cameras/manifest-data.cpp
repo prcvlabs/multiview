@@ -271,10 +271,10 @@ ManifestData parse_manifest_file(const Config& config) noexcept(false)
    { // ---- Load the aruco cube
       try {
          if(config.cube_key.empty() and config.cube_filename.empty()) {
-            mdata.ac = make_kyle_aruco_cube();
+            mdata.ac = make_aruco_cube_a();
             print(g_info,
                   g_default,
-                  format("set aruco cube to default bespoke `kyle-cube`"));
+                  format("set aruco cube to default bespoke `cube-a`"));
          } else if(!config.cube_key.empty()) {
             fetch(mdata.ac, config.cube_key);
             print(g_info,

@@ -170,7 +170,7 @@ struct ArucoCube
                      const EuclideanTransform& cube_et // Wolrd->cube
                      ) const;
 
-   static ArucoCube make_kyle_aruco_cube() noexcept;
+   static ArucoCube make_aruco_cube_a() noexcept;
    static const char* face_to_str(face_e) noexcept;
    static face_e str_to_face(const string_view ss) noexcept(false);
 
@@ -213,7 +213,7 @@ struct ArucoCube
    friend void write(const ArucoCube& acube, string& ss) noexcept;
 };
 
-ArucoCube make_kyle_aruco_cube() noexcept;
+ArucoCube make_aruco_cube_a() noexcept;
 
 // -------------------------------------------------- projecting faces
 //

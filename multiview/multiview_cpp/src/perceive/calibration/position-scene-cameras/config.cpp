@@ -19,7 +19,7 @@ void show_help(string argv0)
    Options:
 
       -m <filename>         Manifest filename.
-      --aruco-cube <key>    The cube to use. Default is the bespoke "kyle-cube".
+      --aruco-cube <key>    The cube to use. Default is the bespoke "cube-a".
       --aruco-file <fname>  Json filename to load cube data from.
       --scene-id <name>     Mandatory.
 

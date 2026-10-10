@@ -109,7 +109,7 @@ process_cam()
          -d "$OUTDIR" \
          -s0 $SENSOR0 -s1 $SENSOR1 \
          --cam-id "$CAM" \
-         --aruco-cube kyle-cube \
+         --aruco-cube cube-a \
          $IN \
          2>&1 | tee $OUTDIR/log.text \
         && cp $OUTDIR/$CAM.json $PERCEIVE_DATA/multiview/calibration/binocular/$CAM.json \

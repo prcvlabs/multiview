@@ -58,7 +58,7 @@ void show_help(string argv0)
       --fast-distort        Faster distort method that clips edges of images.
       --full-distort        Distorted/Undistort the full image.
  
-      --aruco-cube <key>   The cube to use. Default is the bespoke "kyle-cube".
+      --aruco-cube <key>   The cube to use. Default is the bespoke "cube-a".
       --aruco-file <fname> Json filename to load cube data from.
 
       --render-cube-only   Do not perform calibration, but instead, only render
@@ -167,7 +167,7 @@ int run_main(int argc, char** argv)
 
    calibration::PhasePositionParams p;
    if(config.cube_key.empty() and config.cube_filename.empty()) {
-      p.ac = make_kyle_aruco_cube();
+      p.ac = make_aruco_cube_a();
    } else if(!config.cube_key.empty()) {
       fetch(p.ac, config.cube_key);
    } else if(!config.cube_filename.empty()) {

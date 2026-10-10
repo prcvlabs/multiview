@@ -100,12 +100,12 @@ const AABB& This::FaceMeasurement::marker_aabb(const int m_ind) const noexcept
    return this->marker_aabbs_[size_t(m_ind)];
 }
 
-static array<AABB, 4> make_kyle_marker_aabbs(const Vector2& tl,
-                                             const real col,
-                                             const real row,
-                                             const real marker_size) noexcept
+static array<AABB, 4> make_cube_a_marker_aabbs(const Vector2& tl,
+                                               const real col,
+                                               const real row,
+                                               const real marker_size) noexcept
 {
-   auto make_kyle_aabb = [&](const int m_ind) -> AABB {
+   auto make_cube_a_aabb = [&](const int m_ind) -> AABB {
       Expects(m_ind >= 0 and m_ind < 4);
       AABB aabb;
       aabb.left   = tl.x + ((m_ind == 0 or m_ind == 2) ? 0.0 : col);
@@ -117,8 +117,8 @@ static array<AABB, 4> make_kyle_marker_aabbs(const Vector2& tl,
 
    array<AABB, 4> aabbs;
    int counter = 0;
-   std::generate(begin(aabbs), end(aabbs), [&counter, &make_kyle_aabb]() {
-      return make_kyle_aabb(counter++);
+   std::generate(begin(aabbs), end(aabbs), [&counter, &make_cube_a_aabb]() {
+      return make_cube_a_aabb(counter++);
    });
    return aabbs;
 }
@@ -950,13 +950,13 @@ string This::FaceDetection::to_string() const noexcept
    return ss.str();
 }
 
-// -------------------------------------------------------- make kyle aruco cube
+// ----------------------------------------------------------- make aruco cube a
 
-ArucoCube This::make_kyle_aruco_cube() noexcept
+ArucoCube This::make_aruco_cube_a() noexcept
 {
    ArucoCube ac;
 
-   ac.id = "kyle-cube"s;
+   ac.id = "cube-a"s;
 
    // ac.marker_offset_ = 1;
 
@@ -997,7 +997,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{-0.0130, 0.0, 0.0}; // thickness of face
       face.face          = ArucoCube::FRONT;
       face.Xs            = {{T[3] + o, T[0] + o, B[0] + o, B[3] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.0256, 0.0273}, 0.2495, 0.2500, marker_size);
       // face.tl         = Vector2{0.0256, 0.0273};
       // face.col        = 0.2495;
@@ -1011,7 +1011,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{0.0120, 0.0, 0.0}; // thickness of face
       face.face          = ArucoCube::BACK;
       face.Xs            = {{T[1] + o, T[2] + o, B[2] + o, B[1] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.0254, 0.0305}, 0.2500, 0.2495, marker_size);
       // face.tl         = Vector2{0.0254, 0.0305};
       // face.col        = 0.2500;
@@ -1025,7 +1025,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{0.0, 0.0, 0.0110}; // thickness of face
       face.face          = ArucoCube::TOP;
       face.Xs            = {{T[2] + o, T[1] + o, T[0] + o, T[3] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.0264, 0.0302}, 0.2500, 0.2460, marker_size);
       // face.tl         = Vector2{0.0264, 0.0302};
       // face.col        = 0.2500;
@@ -1039,7 +1039,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{0.0, 0.0, 0.0}; // thickness of face
       face.face          = ArucoCube::BOTTOM;
       face.Xs            = {{B[2] + o, B[1] + o, B[0] + o, B[3] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.01, 0.01}, 0.2600, 0.2600, marker_size);
       // face.tl         = Vector2{0.01, 0.01};
       // face.col        = 0.2600;
@@ -1053,7 +1053,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{0.0, -0.0120, 0.0}; // thickness of face
       face.face          = ArucoCube::EAST;
       face.Xs            = {{T[1] + o, B[1] + o, B[0] + o, T[0] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.0250, 0.0251}, 0.2520, 0.2500, marker_size);
       // face.tl         = Vector2{0.0250, 0.0251};
       // face.col        = 0.2520;
@@ -1067,7 +1067,7 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
       const auto o       = Vector3{0.0, 0.0130, 0.0}; // thickness of face
       face.face          = ArucoCube::WEST;
       face.Xs            = {{T[2] + o, T[3] + o, B[3] + o, B[2] + o}};
-      face.marker_aabbs_ = make_kyle_marker_aabbs(
+      face.marker_aabbs_ = make_cube_a_marker_aabbs(
           Vector2{0.0278, 0.0282}, 0.2485, 0.2465, marker_size);
       // face.tl         = Vector2{0.0278, 0.0282};
       // face.col        = 0.2485;
@@ -1092,32 +1092,30 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
          const auto nh = M.tl.y + M.row + ac.marker_size;
 
          if(nw > ac.width(f_ind)) {
-            LOG_ERR(format(
-                "face {} of the 'kyle cube' is {} wide, but that's larger"
-                "than the measurements: margin-x({}) + col({}) + "
-                "marker({}) = "
-                "{}!",
-                ArucoCube::face_to_str(f_ind),
-                ac.width(f_ind),
-                M.tl.x,
-                M.col,
-                ac.marker_size,
-                nw));
+            LOG_ERR(format("face {} of 'cube-a' is {} wide, but that's larger"
+                           "than the measurements: margin-x({}) + col({}) + "
+                           "marker({}) = "
+                           "{}!",
+                           ArucoCube::face_to_str(f_ind),
+                           ac.width(f_ind),
+                           M.tl.x,
+                           M.col,
+                           ac.marker_size,
+                           nw));
             has_error = true;
          }
 
          if(nh > ac.height(f_ind)) {
-            LOG_ERR(format(
-                "face {} of the 'kyle cube' is {} high, but that's larger"
-                "than the measurements: margin-y({}) + row({}) + "
-                "marker({}) = "
-                "{}!",
-                ArucoCube::face_to_str(f_ind),
-                ac.height(f_ind),
-                M.tl.y,
-                M.row,
-                ac.marker_size,
-                nh));
+            LOG_ERR(format("face {} of 'cube-a' is {} high, but that's larger"
+                           "than the measurements: margin-y({}) + row({}) + "
+                           "marker({}) = "
+                           "{}!",
+                           ArucoCube::face_to_str(f_ind),
+                           ac.height(f_ind),
+                           M.tl.y,
+                           M.row,
+                           ac.marker_size,
+                           nh));
             has_error = true;
          }
       }
@@ -1129,9 +1127,9 @@ ArucoCube This::make_kyle_aruco_cube() noexcept
    return ac;
 }
 
-ArucoCube make_kyle_aruco_cube() noexcept
+ArucoCube make_aruco_cube_a() noexcept
 {
-   return ArucoCube::make_kyle_aruco_cube();
+   return ArucoCube::make_aruco_cube_a();
 }
 
 // ------------------------------------------------------------------------- str

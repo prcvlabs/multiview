@@ -2,7 +2,7 @@
 Extrinsic Camera Positioning           {#extrinsic_camera_positioning}
 ============================
 
-These procedures work with the _*Kyle Aruco Cube*_.
+These procedures work with the _*`cube-a` Aruco cube*_.
 If we build a new cube, then we'll need to make minor changes to both the code and the calibration procedures.
 
 # Summary #
@@ -46,9 +46,9 @@ The cameras and euclidean transforms are stored in two different keys:
 
 You need to copy the output from `$OUTDIR/positions.json` into the correct position in the scene file.
 
-# What is the "Kyle Arubo Cube"? #
+# What is the `cube-a` Aruco cube? #
 
-The "Kyle Aruco Cube" is a Aruco Cube that has been carefully measured. The details of this are stored in the header file: `$PERCEIVE_CODE/multiview/multiview_cpp/src/perceive/calibration/aruco-cube.hpp`
+The `cube-a` Aruco cube is an Aruco cube that has been carefully measured. The details of this are stored in the header file: `$PERCEIVE_CODE/multiview/multiview_cpp/src/perceive/calibration/aruco-cube.hpp`
 
 The origin sits at the intersection of the FRONT, BOTTOM, and EAST faces of the Aruco Cube. A small mark has been made on the three faces close to that corner. See the Aruco Cube docks to match pictures of the faces. [https://docs.google.com/document/d/1xaKrIOwItwW6szzPPmGfJ5gqsGzolg6K3WyRxBHg_jc/edit?pli=1#heading=h.ut2khdnlrrkx](https://docs.google.com/document/d/1xaKrIOwItwW6szzPPmGfJ5gqsGzolg6K3WyRxBHg_jc/edit?pli=1#heading=h.ut2khdnlrrkx).
 

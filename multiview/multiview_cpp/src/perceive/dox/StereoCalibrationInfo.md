@@ -2,7 +2,7 @@
 Stereo Camera Calibration           {#stereo_camera_calibration}
 =========================
 
-These procedures work with the _*Kyle Aruco Cube*_.
+These procedures work with the _*`cube-a` Aruco cube*_.
 If we build a new cube, then we'll need to make minor changes to both the code and the calibration procedures.
 
 ## Capture Some Photos ##
