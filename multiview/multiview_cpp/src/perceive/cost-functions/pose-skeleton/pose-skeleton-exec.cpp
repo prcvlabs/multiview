@@ -105,7 +105,6 @@ This::Result This::run_(const SceneDescription* scene_desc_ptr,
                         const string_view outdir,
                         std::function<bool()> is_cancelled) noexcept
 {
-   const bool is_trace_mode = multiview_trace_mode();
    const unsigned n_sensors = unsigned(images.size());
    Expects((scene_desc_ptr == nullptr)
            || (n_sensors <= unsigned(scene_desc_ptr->n_sensors())));
@@ -156,16 +155,17 @@ This::Result This::run_(const SceneDescription* scene_desc_ptr,
    ret.pimpl_->frame_no_ = frame_no;
    ret.pimpl_->time_     = tock(now);
 
-   if(false && is_trace_mode) {
+   if(p.feedback and !outdir.empty()) { // One json array of poses per sensor
       for(auto i = 0u; i < ret.size(); ++i) {
          const auto& poses = ret.pose(int(i));
-         for(auto j = 0u; j < poses.size(); ++j) {
-            const auto fname = format("/tmp/pose_{}_{}.json", i, j);
-            file_put_contents(fname, poses[j]->to_json_str());
-            INFO(format("saved {}, (memory-usage = {} kbytes)",
-                        fname,
-                        real(poses[j]->memory_usage()) / 1024.0));
-         }
+         std::stringstream ss{""};
+         ss << "[";
+         for(auto j = 0u; j < poses.size(); ++j)
+            ss << (j == 0 ? "" : ",\n") << poses[j]->to_json_str();
+         ss << "]\n";
+         file_put_contents(
+             format("{}/pose-2d_{:06d}_{:02d}.json", outdir, frame_no, i),
+             ss.str());
       }
    }
 
