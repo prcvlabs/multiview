@@ -27,8 +27,7 @@ testcases/<NNN_siteNN_...>/
 
 The Hugging Face dataset has the same layout. It also has each testcase's
 videos and `annotation-data.json`, the rtree pose classifiers and the
-many-triangle CAD models. The dataset is gated: accept its terms on the
-dataset page, run `hf auth login`, and then download testcases with:
+many-triangle CAD models. It is freely downloadable; fetch testcases with:
 
 ```
 build/fetch-testcases.sh 7          # one testcase, into ~/multiview-data/testcases

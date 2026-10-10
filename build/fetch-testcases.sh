@@ -4,8 +4,8 @@
 # bundled in data/testcases, and are copied next to the videos so that each
 # downloaded testcase directory is complete.
 #
-# The dataset is gated: accept its terms on the dataset page, then log in
-# with `hf auth login` (pip install -U huggingface_hub).
+# Needs the Hugging Face CLI (pip install -U huggingface_hub); no login is
+# required.
 
 set -euo pipefail
 
@@ -35,11 +35,7 @@ show_help()
       -l|--list      List the testcases, and exit.
       --dry-run      Print the download command, but do not run it.
 
-   The dataset is gated. Before downloading, accept its terms at
-
-      https://huggingface.co/datasets/$REPO_ID
-
-   and then log in with 'hf auth login'.
+   The dataset is at https://huggingface.co/datasets/$REPO_ID.
 
 EOF
 }
@@ -161,13 +157,6 @@ fi
 
 if ! command -v hf > /dev/null ; then
     echo "Failed to find 'hf'; install it with 'pip install -U huggingface_hub'."
-    exit 1
-fi
-
-if ! hf auth whoami > /dev/null 2>&1 ; then
-    echo "Not logged in to Hugging Face. The dataset is gated: accept its terms"
-    echo "at https://huggingface.co/datasets/$REPO_ID, and then run"
-    echo "'hf auth login'."
     exit 1
 fi
 

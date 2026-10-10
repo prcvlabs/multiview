@@ -60,9 +60,8 @@ conda-forge via [`build/environment.yml`](build/environment.yml).
 The calibration data, and each testcase's manifest and ground truth, are
 bundled in [`data/`](data/README.md), and scenes load from there by default.
 The videos are in the Hugging Face dataset
-[prcvlabs/multiview-retail-tracking](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking).
-It is gated: accept its terms on the dataset page, then log in once with
-`hf auth login`.
+[prcvlabs/multiview-retail-tracking](https://huggingface.co/datasets/prcvlabs/multiview-retail-tracking),
+which is freely downloadable; no login is needed.
 
 ```
 build/fetch-testcases.sh 7             # into ~/multiview-data/testcases
