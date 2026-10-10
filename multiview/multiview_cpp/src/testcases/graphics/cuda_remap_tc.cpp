@@ -29,8 +29,12 @@ CATCH_TEST_CASE("CudaRemap", "[cuda_remap]")
 
       // Barrel distortion plus a rotation, scaled so that the edges map
       // outside the source image (exercising the constant border).
-      cv::Mat mapx(h, w, CV_32FC1), mapy(h, w, CV_32FC1);
-      const double cx = 0.5 * w, cy = 0.5 * h, theta = 0.1, k1 = 0.25;
+      cv::Mat mapx(h, w, CV_32FC1);
+      cv::Mat mapy(h, w, CV_32FC1);
+      const double cx    = 0.5 * w;
+      const double cy    = 0.5 * h;
+      const double theta = 0.1;
+      const double k1    = 0.25;
       for(int y = 0; y < h; ++y) {
          for(int x = 0; x < w; ++x) {
             const double dx = (x - cx) / cx, dy = (y - cy) / cy;

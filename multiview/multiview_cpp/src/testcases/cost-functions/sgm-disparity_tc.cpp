@@ -23,7 +23,10 @@ CATCH_TEST_CASE("SGMDisparity", "[sgm_disparity]")
       }
 
       // 240 is not a multiple of 32, which exercises the padding path
-      const int w = 320, h = 240, d_bg = 8, d_fg = 24;
+      const int w    = 320;
+      const int h    = 240;
+      const int d_bg = 8;
+      const int d_fg = 24;
       const cv::Rect fg_right(120, 70, 100, 100); // square in the right image
 
       cv::Mat left(h, w, CV_8UC1);
@@ -62,7 +65,8 @@ CATCH_TEST_CASE("SGMDisparity", "[sgm_disparity]")
          p.disparity_size      = 64;
          p.use_16bit_greyscale = use_16bit;
 
-         cv::Mat l = left, r = right;
+         cv::Mat l = left;
+         cv::Mat r = right;
          if(use_16bit) {
             left.convertTo(l, CV_16UC1, 256.0);
             right.convertTo(r, CV_16UC1, 256.0);

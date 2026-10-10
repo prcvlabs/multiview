@@ -1,6 +1,6 @@
 
 #include "slic_impl.hpp"
-#include "strided-loop.cuh"
+#include "strided-loop.hpp"
 #include <algorithm>
 
 namespace perceive

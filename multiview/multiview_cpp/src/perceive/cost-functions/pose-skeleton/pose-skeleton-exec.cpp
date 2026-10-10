@@ -155,17 +155,15 @@ This::Result This::run_(const SceneDescription* scene_desc_ptr,
    ret.pimpl_->frame_no_ = frame_no;
    ret.pimpl_->time_     = tock(now);
 
-   if(p.feedback and !outdir.empty()) { // One json array of poses per sensor
+   if(p.feedback && !outdir.empty()) { // One json array of poses per sensor
+      auto to_json = [](const auto& pose) { return pose->to_json_str(); };
       for(auto i = 0u; i < ret.size(); ++i) {
+         if(!ret.pimpl_->sensor_included.at(i)) continue;
          const auto& poses = ret.pose(int(i));
-         std::stringstream ss{""};
-         ss << "[";
-         for(auto j = 0u; j < poses.size(); ++j)
-            ss << (j == 0 ? "" : ",\n") << poses[j]->to_json_str();
-         ss << "]\n";
          file_put_contents(
              format("{}/pose-2d_{:06d}_{:02d}.json", outdir, frame_no, i),
-             ss.str());
+             format("[{}]\n",
+                    implode(cbegin(poses), cend(poses), ",\n", to_json)));
       }
    }
 

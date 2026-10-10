@@ -131,7 +131,7 @@ static void calculate_(const This::Params& p,
       FATAL(format("attempt to calculate disparity on empty image"));
 
    const int in_type = p.use_16bit_greyscale ? CV_16UC1 : CV_8UC1;
-   if(image0.type() != in_type || image1.type() != in_type) {
+   if(image0.type() != in_type or image1.type() != in_type) {
       LOG_ERR(format("expected a pair of {}-bit greyscale images",
                      p.use_16bit_greyscale ? 16 : 8));
       return; // outta here!

@@ -1,9 +1,10 @@
 
 #include "image-layout.hpp"
-#include "strided-loop.cuh"
+#include "strided-loop.hpp"
 
 #include <cstdint>
 #include <cuda_runtime.h>
+#include <stdexcept>
 
 namespace perceive
 {
@@ -122,13 +123,15 @@ namespace cuda
                    unsigned dst_height,
                    int n_channels,
                    bool bilinear,
-                   const float border_value[4],
+                   const uint8_t border_value[4],
                    cudaStream_t stream)
    {
       const ImageLayout<const float> mapx_layout{dst_width, dst_height, mapx};
       const ImageLayout<const float> mapy_layout{dst_width, dst_height, mapy};
-      const BorderValue border{
-          {border_value[0], border_value[1], border_value[2], border_value[3]}};
+      const BorderValue border{{float(border_value[0]),
+                                float(border_value[1]),
+                                float(border_value[2]),
+                                float(border_value[3])}};
 
       auto launch = [&](auto pixel) {
          using Pix = decltype(pixel);
@@ -149,6 +152,8 @@ namespace cuda
       case 2: launch(Pixel<2>{}); break;
       case 3: launch(Pixel<3>{}); break;
       case 4: launch(Pixel<4>{}); break;
+      default:
+         throw std::runtime_error("remap: n-channels must be 1, 2, 3 or 4");
       }
    }
 

@@ -19,7 +19,7 @@ void cuda_remap(const uint8_t* src,
                 unsigned dst_height,
                 int n_channels,
                 bool bilinear,
-                const float border_value[4],
+                const uint8_t border_value[4],
                 cudaStream_t stream);
 
 // ------------------------------------------------------ RemapMaps construction
@@ -143,10 +143,10 @@ cv::Mat Remapper::remap(const cv::Mat& src,
                                 cudaMemcpyHostToDevice,
                                 P.stream));
 
-   const float border[4] = {float(border_value[0]),
-                            float(border_value[1]),
-                            float(border_value[2]),
-                            float(border_value[3])};
+   const uint8_t border[4] = {cv::saturate_cast<uint8_t>(border_value[0]),
+                              cv::saturate_cast<uint8_t>(border_value[1]),
+                              cv::saturate_cast<uint8_t>(border_value[2]),
+                              cv::saturate_cast<uint8_t>(border_value[3])};
    cuda_remap(static_cast<const uint8_t*>(P.src_buffer.data()),
               unsigned(src.cols),
               unsigned(src.rows),
