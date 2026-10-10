@@ -57,6 +57,7 @@ build/build.sh         # Release build of multiview-cli and multiview-testcases
 build/build.sh Debug multiview-testcases                     # build type, targets
 MULTIVIEW_CMAKE_ARGS="-DCMAKE_CUDA_ARCHITECTURES=75;86" build/build.sh  # pick CUDA archs
 MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_AWS=OFF" build/build.sh          # no AWS SDK
+MULTIVIEW_BUILD_DIR=$PWD/build-hp MULTIVIEW_CMAKE_ARGS="-DMULTIVIEW_WITH_HYPERPOSE=ON" build/build.sh  # separate build dir
 ```
 
 To use CMake directly, activate the environment
@@ -69,15 +70,19 @@ and configure `multiview/multiview_cpp/CMakeLists.txt` as usual.
 |---|---|---|
 | `MULTIVIEW_WITH_CUDA` | `ON` | Build the CUDA kernels in `src/cuda` (RGB to LAB, SLIC superpixels); defines `WITH_CUDA`. |
 | `MULTIVIEW_WITH_AWS` | `ON` | Link the AWS SDK for `s3://` assets. When `OFF`, `MULTIVIEW_NO_AWS` is defined and S3 access raises an error. |
-| `MULTIVIEW_PROFILE_MEMORY` | `ON` | Memory profiling in the testcases (`PERCEIVE_PROFILE_MEMORY`). |
+| `MULTIVIEW_WITH_LIBSGM` | `ON` with CUDA | Build `contrib/libSGM` and enable the GPU `CUDA_SGM` disparity strategy (`USE_SGM`). |
+| `MULTIVIEW_WITH_HYPERPOSE` | `OFF` | HyperPose + TensorRT 10 pose detection (`WITH_HYPERPOSE`). Needs `build/setup-env.sh --with-tensorrt` (TensorRT into `<env>/opt/tensorrt`, or set `TENSORRT_ROOT`) and models from `build/download-hyperpose-models.sh` (read from `$MULTIVIEW_HYPERPOSE_DIR/models`); HyperPose is fetched at a pinned commit during configure. |
+| `MULTIVIEW_WITH_CCACHE` | `ON` | Use `ccache` (in `environment.yml`) as the compiler launcher when it is found. |
+| `MULTIVIEW_PROFILE_MEMORY` | `OFF` | Allocation tracking (`PERCEIVE_PROFILE_MEMORY`), for all targets. |
 | `CMAKE_CUDA_ARCHITECTURES` | `native` | GPU architectures to compile for. |
 
-`WITH_OPENCV_CUDA` (GPU StereoBM/SGBM and GPU remap) is turned on
-automatically if your OpenCV has the `cudastereo` and `cudawarping` modules.
-The conda-forge OpenCV does not, so those steps run on the CPU.
+Rectification (`calc_rectified`) uses a native CUDA remap kernel whenever
+`MULTIVIEW_WITH_CUDA` is on. `WITH_OPENCV_CUDA` (GPU StereoBM/SGBM) is turned
+on automatically if your OpenCV has the `cudastereo` and `cudawarping`
+modules; the conda-forge OpenCV does not, so those run on the CPU.
 
-These are **not** supported by the CMake build: pose detection
-(HyperPose/OpenPose/Caffe), Triclops, libSGM, PCL, OpenGL and the GUIs
+These are **not** supported by the CMake build: OpenPose/Caffe pose
+detection, Triclops, PCL, OpenGL and the GUIs
 (`multiview-gui`, `multiview-imgui`). They still need the legacy build below.
 
 ### Run the unit tests
