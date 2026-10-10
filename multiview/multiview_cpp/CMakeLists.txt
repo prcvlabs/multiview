@@ -10,7 +10,7 @@
 #   ninja -C build/cmake-release multiview-cli multiview-testcases
 #
 # or simply use ../../build/build.sh (see ../../build/environment.yml for the
-# dependencies). Pose detection (HyperPose/OpenPose), Triclops, libSGM, PCL,
+# dependencies). Pose detection (HyperPose/OpenPose), Triclops, PCL,
 # OpenGL and the GUIs are not supported by this build; they remain
 # available through run.sh with the legacy /opt/multiview toolchain.
 
@@ -20,6 +20,10 @@ project(multiview LANGUAGES C CXX)
 option(MULTIVIEW_WITH_CUDA "Build the CUDA kernels in src/cuda (-DWITH_CUDA)" ON)
 option(MULTIVIEW_WITH_AWS "Link the AWS S3 SDK (s3:// paths)" ON)
 option(MULTIVIEW_PROFILE_MEMORY "Define PERCEIVE_PROFILE_MEMORY for testcases" ON)
+include(CMakeDependentOption)
+cmake_dependent_option(MULTIVIEW_WITH_LIBSGM
+  "Build contrib/libSGM and enable the GPU SGM disparity strategy (-DUSE_SGM)"
+  ON "MULTIVIEW_WITH_CUDA" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -79,6 +83,22 @@ if(MULTIVIEW_WITH_CUDA)
     message(STATUS "multiview: OpenCV has no CUDA modules; "
                    "GPU stereo/remap disabled, project CUDA kernels enabled")
   endif()
+endif()
+
+# libSGM: plain-CUDA semi-global matching (no OpenCV CUDA modules needed)
+if(MULTIVIEW_WITH_LIBSGM)
+  set(SGM_DIR ${MV_CONTRIB}/libSGM)
+  configure_file(${SGM_DIR}/include/libsgm_config.h.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/libsgm/libsgm_config.h)
+  file(GLOB SGM_SRCS ${SGM_DIR}/src/*.cu)
+  add_library(mv-sgm STATIC ${SGM_SRCS} ${SGM_DIR}/src/stereo_sgm.cpp)
+  target_include_directories(mv-sgm SYSTEM PUBLIC
+    ${SGM_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/libsgm)
+  target_link_libraries(mv-sgm PUBLIC CUDA::cudart)
+  target_compile_options(mv-sgm PRIVATE -w)
+  list(APPEND MV_DEFS USE_SGM)
+  list(APPEND MV_LIBS mv-sgm)
+  message(STATUS "multiview: libSGM GPU stereo enabled (USE_SGM)")
 endif()
 
 execute_process(

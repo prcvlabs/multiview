@@ -16,7 +16,7 @@ class SGMDisparity
       virtual ~Params() {}
       const vector<MemberMetaData>& meta_data() const noexcept override;
 
-      int disparity_size       = 256; // must be: 64, 128, or 256
+      int disparity_size       = 128; // must be: 64 or 128
       bool use_16bit_greyscale = true;
    };
 

@@ -9,15 +9,12 @@ static constexpr bool k_use_sgm = false;
 #endif
 
 #ifdef SGM_IS_AVAILABLE
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include <libsgm.h>
 #endif
 
 #include "perceive/foundation.hpp"
 #include "perceive/utils/cuda-spec.hpp"
 #include "perceive/utils/threads.hpp"
-#include "perceive/utils/tick-tock.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/version.hpp>
@@ -28,37 +25,6 @@ static constexpr bool k_use_sgm = false;
 
 namespace perceive::disparity
 {
-static constexpr float max_disparity = 512.0f;
-
-// ---------------------------------------------------------------- DeviceBuffer
-//
-#ifdef SGM_IS_AVAILABLE
-class DeviceBuffer
-{
- private:
-   void* data_ = nullptr;
-
- public:
-   DeviceBuffer() = default;
-   DeviceBuffer(size_t count) { allocate(count); }
-   DeviceBuffer(const DeviceBuffer&) = delete;
-   DeviceBuffer(DeviceBuffer&& o) noexcept { *this = std::move(o); }
-   ~DeviceBuffer() { cudaFree(data_); }
-
-   DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-
-   DeviceBuffer& operator=(DeviceBuffer&& o) noexcept
-   {
-      std::swap(data_, o.data_);
-      return *this;
-   }
-
-   void allocate(size_t count) { cudaMalloc(&data_, count); }
-
-   void* data() noexcept { return data_; }
-};
-#endif
-
 // ------------------------------------------------------------------- meta-data
 //
 const vector<MemberMetaData>& This::Params::meta_data() const noexcept
@@ -79,18 +45,14 @@ const vector<MemberMetaData>& This::Params::meta_data() const noexcept
 //
 static int disparity_size(const This::Params& p) noexcept
 {
+   // contrib/libSGM supports 64 and 128 disparities
    int ret = 128;
    switch(p.disparity_size) {
    case 64: [[fallthrough]];
-   case 128: [[fallthrough]];
-   case 256: ret = p.disparity_size; break;
+   case 128: ret = p.disparity_size; break;
    default:
-      WARN(format("disparity-size = {}, but must be in {{}, {}, or "
-                  "{}}. Using {}.",
+      WARN(format("disparity-size = {}, but must be 64 or 128. Using {}.",
                   p.disparity_size,
-                  64,
-                  128,
-                  256,
                   ret));
    }
    return ret;
@@ -99,114 +61,85 @@ static int disparity_size(const This::Params& p) noexcept
 #ifdef SGM_IS_AVAILABLE
 // -------------------------------------------------------------- calculate CUDA
 //
+// libSGM needs the width and height to be multiples of 32, and the width to
+// be at least the disparity range. Inputs are padded (edge-replicated) on the
+// right/bottom, and the result cropped back.
 static void calculate_(const This::Params& p,
                        const cv::Mat& image0,
                        const cv::Mat& image1,
                        cv::Mat& out_left) noexcept
 {
    Expects(k_cuda_is_available == true);
-   auto is_grey_8 = [](const cv::Mat& im) {
-      return im.type() == CV_8U || im.type() == CV_8UC1;
-   };
-
-   auto is_grey_16 = [](const cv::Mat& im) {
-      return im.type() == CV_16U || im.type() == CV_16UC1;
-   };
-
-   auto is_grey
-       = [&](const cv::Mat& im) { return is_grey_8(im) || is_grey_16(im); };
-
+   if(!cuda::cuda_is_available()) { // libSGM exit()s on CUDA errors
+      LOG_ERR(format("SGM stereo correspondence needs a CUDA device"));
+      return;
+   }
    if(image0.empty() or image1.empty())
       FATAL(format("attempt to calculate disparity on empty image"));
 
-   if(p.use_16bit_greyscale) {
-      if(!is_grey_16(image0) || !is_grey_16(image1)) {
-         LOG_ERR(format("expected a pair of 16-bit greyscale images"));
-         return; // outta here!
-      }
-   } else { // expects grey 16
-      if(!is_grey_8(image0) || !is_grey_8(image1)) {
-         LOG_ERR(format("expected a pair of 8-bit greyscale images"));
-         return; // outta here!
-      }
+   const int in_type = p.use_16bit_greyscale ? CV_16UC1 : CV_8UC1;
+   if(image0.type() != in_type || image1.type() != in_type) {
+      LOG_ERR(format("expected a pair of {}-bit greyscale images",
+                     p.use_16bit_greyscale ? 16 : 8));
+      return; // outta here!
    }
+   if(image0.size() != image1.size()) {
+      LOG_ERR(format("SGM: left and right images differ in size"));
+      return;
+   }
+
+   const int w         = image0.cols;
+   const int h         = image0.rows;
+   const int disp_size = disparity_size(p);
+   const int in_depth  = p.use_16bit_greyscale ? 16 : 8;
+   auto round_up       = [](int x, int m) { return ((x + m - 1) / m) * m; };
+   const int pw        = round_up(std::max(w, disp_size), 32);
+   const int ph        = round_up(h, 32);
 
    struct TLParams
    {
-      cv::Mat disparity;
+      std::unique_ptr<sgm::StereoSGM> sgm;
+      int w = 0, h = 0, disp_size = 0, in_depth = 0;
+      cv::Mat pad0, pad1, disparity;
    };
    static thread_local TLParams tl;
 
-   const auto now = tick();
+   try {
+      if(!tl.sgm || tl.w != pw || tl.h != ph || tl.disp_size != disp_size
+         || tl.in_depth != in_depth) {
+         tl.sgm.reset(); // free GPU memory before reallocating
+         tl.sgm = std::make_unique<sgm::StereoSGM>(
+             pw, ph, disp_size, in_depth, 16, sgm::EXECUTE_INOUT_HOST2HOST);
+         tl.w         = pw;
+         tl.h         = ph;
+         tl.disp_size = disp_size;
+         tl.in_depth  = in_depth;
+      }
 
-   const auto w = image0.cols;
-   const auto h = image0.rows;
+      auto pad = [&](const cv::Mat& src, cv::Mat& dst) -> const cv::Mat& {
+         if(pw == w && ph == h && src.isContinuous()) return src;
+         cv::copyMakeBorder(
+             src, dst, 0, ph - h, 0, pw - w, cv::BORDER_REPLICATE);
+         return dst;
+      };
+      const cv::Mat& in0 = pad(image0, tl.pad0);
+      const cv::Mat& in1 = pad(image1, tl.pad1);
 
-   const int disp_size = disparity_size(p);
-   const int in_depth  = p.use_16bit_greyscale ? 16 : 8;
-   const int in_bytes  = (in_depth * w * h) / 8;
-
-   const bool output_16 = (disp_size == 256);
-   const int out_depth  = (output_16 == true) ? 16 : 8;
-   const int out_bytes  = (out_depth * w * h) / 8;
-
-   sgm::StereoSGM sgm(
-       w, h, disp_size, in_depth, out_depth, sgm::EXECUTE_INOUT_CUDA2CUDA);
-
-   const int invalid_disp
-       = (out_depth == 8) ? static_cast<uint8_t>(sgm.get_invalid_disparity())
-                          : static_cast<uint16_t>(sgm.get_invalid_disparity());
-
-   auto& disparity = tl.disparity;
-
-   auto ensure_dimensions = [w, h](cv::Mat& m, const int type) {
-      if(m.rows != h || m.cols != w || m.type() != type)
-         m = cv::Mat(h, w, type);
-      Expects(w == m.cols);
-      Expects(h == m.rows);
-      Expects(type == m.type());
-   };
-
-   ensure_dimensions(disparity, (out_depth == 8 ? CV_8U : CV_16U));
-   ensure_dimensions(out_left, CV_32FC1);
-
-   DeviceBuffer in0(in_bytes), in1(in_bytes), outbuf(out_bytes);
-
-   cudaMemcpy(in0.data(), image0.data, in_bytes, cudaMemcpyHostToDevice);
-   cudaMemcpy(in1.data(), image1.data, in_bytes, cudaMemcpyHostToDevice);
-
-   sgm.execute(in0.data(), in1.data(), outbuf.data());
-   cudaDeviceSynchronize();
-
-   if(false) {
-      INFO(format("in-depth = {}, out-depth = {}, out-bytes = {}, wh = "
-                  "[{}x{}], "
-                  "disp = [{}x{}]",
-                  in_depth,
-                  out_depth,
-                  out_bytes,
-                  w,
-                  h,
-                  disparity.rows,
-                  disparity.cols));
+      tl.disparity.create(ph, pw, CV_16UC1);
+      void* dst = tl.disparity.data;
+      tl.sgm->execute(in0.data, in1.data, &dst);
+   } catch(std::exception& e) {
+      LOG_ERR(format("libSGM failed: {}", e.what()));
+      return;
    }
 
-   cudaMemcpy(disparity.data, outbuf.data(), out_bytes, cudaMemcpyDeviceToHost);
-
-   if(disparity.type() == CV_16U) {
-      for(auto y = 0; y < h; ++y) {
-         const uint16_t* src_ptr
-             = reinterpret_cast<uint16_t*>(disparity.ptr(y));
-         float* dst_ptr = reinterpret_cast<float*>(out_left.ptr(y));
-         for(auto x = 0; x < w; ++x) {
-            auto val   = std::fabs(float(*src_ptr++));
-            *dst_ptr++ = val > max_disparity ? 0.0f : val;
-         }
-      }
-   } else if(disparity.type() == CV_8U) {
-      disparity.convertTo(out_left, CV_32F);
-   } else {
-      FATAL("Invalid StereoBM result type");
+   // libSGM reports (disparity + 1), with 0 meaning invalid
+   out_left.create(h, w, CV_32FC1);
+   for(auto y = 0; y < h; ++y) {
+      const uint16_t* src = tl.disparity.ptr<uint16_t>(y);
+      float* dst          = out_left.ptr<float>(y);
+      for(auto x = 0; x < w; ++x)
+         dst[x] = (src[x] == 0) ? 0.0f : float(src[x] - 1);
    }
 }
 
