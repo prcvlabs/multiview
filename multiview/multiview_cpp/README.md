@@ -7,7 +7,12 @@ Refer to '../../README.md'
 
 # Building #
 
-Building works through the 'run.sh' script, in three stages
+The recommended build is CMake ('CMakeLists.txt' in this directory), driven
+by '../../build/build.sh' inside the micromamba environment created by
+'../../build/setup-env.sh'. See '../../README.md'.
+
+The legacy build (needs the /opt/multiview toolchain) works through the
+'run.sh' script, in three stages
  + arguments passed to 'run.sh' select the compiler, target, and build type
    Look at the top 30-40 lines of this script to see what arguments are
    supported.
