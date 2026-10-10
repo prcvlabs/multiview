@@ -1,5 +1,5 @@
 
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
 
 #define CATCH_CONFIG_PREFIX_ALL
 #include "perceive/contrib/catch.hpp"
@@ -48,4 +48,4 @@ CATCH_TEST_CASE("StereoBM", "[stereo_bm]")
 }
 } // namespace perceive
 
-#endif // WITH_CUDA
+#endif // WITH_OPENCV_CUDA

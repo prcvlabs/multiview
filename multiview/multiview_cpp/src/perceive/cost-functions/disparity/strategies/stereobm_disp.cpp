@@ -6,7 +6,7 @@
 #include "perceive/utils/threads.hpp"
 #include "perceive/utils/tick-tock.hpp"
 
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
 #include <opencv2/cudastereo.hpp>
 #endif
 
@@ -120,7 +120,7 @@ void This::calculate(const Params& p,
 
    auto run_stereo_bm_cuda
        = [&](const cv::Mat& left, const cv::Mat& right, cv::Mat& result) {
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
             cv::Ptr<cv::StereoBM> sbm_ptr = cv::cuda::createStereoBM();
             set_sbm_params(sbm_ptr, p);
             cv::cuda::GpuMat gpu_left{left};

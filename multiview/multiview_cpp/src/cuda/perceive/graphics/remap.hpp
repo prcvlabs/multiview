@@ -6,7 +6,7 @@
 
 namespace perceive::cuda
 {
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
 
 class Remapper
 {

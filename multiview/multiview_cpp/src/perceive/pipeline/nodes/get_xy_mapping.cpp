@@ -57,7 +57,7 @@ Task::execute(const RunData& data,
    auto s{time_thunk([&] {
       if(is_cancelled()) return;
       bino_cam.get_sensor_mapxy(unsigned(bcam_sensor), ret->mapx, ret->mapy);
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
       ret->mapx_gpu.upload(ret->mapx);
       ret->mapy_gpu.upload(ret->mapy);
 #endif

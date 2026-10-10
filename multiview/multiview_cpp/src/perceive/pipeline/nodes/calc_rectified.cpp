@@ -95,8 +95,16 @@ Task::execute(const RunData& data,
    const cv::Mat& in = ret->image_result->equal;
 
    if(!in.empty()) {
-      if(params.use_cuda_if_available and cuda::cuda_is_available()) {
-#ifdef WITH_CUDA
+      // GPU remap needs OpenCV's cudawarping module; otherwise use the CPU
+      constexpr bool k_has_gpu_remap =
+#ifdef WITH_OPENCV_CUDA
+          true;
+#else
+          false;
+#endif
+      if(k_has_gpu_remap and params.use_cuda_if_available
+         and cuda::cuda_is_available()) {
+#ifdef WITH_OPENCV_CUDA
          ret->rectified = cuda_remapper.remap(ret->rectified,
                                               ret->mapping_result->mapx_gpu,
                                               ret->mapping_result->mapy_gpu,

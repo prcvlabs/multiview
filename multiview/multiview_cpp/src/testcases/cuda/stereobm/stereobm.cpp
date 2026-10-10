@@ -6,10 +6,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
 #include <opencv2/cudastereo.hpp>
-#undef WITH_CUDA
-#endif // WITH_CUDA
+#undef WITH_OPENCV_CUDA
+#endif // WITH_OPENCV_CUDA
 
 #include "stereobm.hpp"
 
@@ -117,7 +117,7 @@ Task::execute(const RunData& data,
          }
       }
    } else if(Params::CUDA == params.implementation) {
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
       INFO("Using cv::cuda::StereoBM");
       auto impl = cv::cuda::createStereoBM();
       init_stereobm(*impl);
@@ -145,11 +145,11 @@ Task::execute(const RunData& data,
       INFO(format("{:s}: Calculated disparity map in {} seconds",
                   taskname(),
                   duration));
-#else // not WITH_CUDA
+#else // not WITH_OPENCV_CUDA
       // FATAL("attempt to run CUDA code, when compiled without CUDA");
       WARN("skipping stereobm::cuda, because of some bug with recent compute "
            "capabilities");
-#endif // WITH_CUDA
+#endif // WITH_OPENCV_CUDA
    } else {
       LOG_ERR(format("Unknown implementation: {}", params.implementation));
       return nullptr;

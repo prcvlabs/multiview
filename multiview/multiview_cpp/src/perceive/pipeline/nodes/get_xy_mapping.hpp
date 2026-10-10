@@ -33,7 +33,7 @@ struct Result
 
    cv::Mat mapx, mapy; // rectification maps for sensor
 
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
    cv::cuda::GpuMat mapx_gpu, mapy_gpu; // rectification maps in GPU memory
 #endif
 

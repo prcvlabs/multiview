@@ -1,9 +1,9 @@
 
 #include <cmath>
+#include <cstdint>
 #include <cuda_runtime.h>
 #include <iostream>
-#include <opencv2/core/cuda_stream_accessor.hpp>
-#include <opencv2/opencv.hpp>
+#include <stdexcept>
 #include <sstream>
 
 namespace perceive
@@ -96,9 +96,8 @@ namespace cuda
        float* lab_pixel_start, // pointer to 'L' value of first pixel. L A and
                                // B values are assumed to be contiguous
        size_t lab_pixel_size,  // bytes from one pixel to next
-       cv::cuda::Stream& stream)
+       cudaStream_t cuda_stream)
    {
-      cudaStream_t cuda_stream{cv::cuda::StreamAccessor::getStream(stream)};
       dim3 blockSize{256};
       dim3 gridSize{256};
 

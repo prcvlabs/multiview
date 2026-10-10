@@ -6,7 +6,7 @@
 #include "perceive/utils/threads.hpp"
 #include "perceive/utils/tick-tock.hpp"
 
-#ifdef WITH_CUDA
+#ifdef WITH_OPENCV_CUDA
 #include <opencv2/cudastereo.hpp>
 #endif
 

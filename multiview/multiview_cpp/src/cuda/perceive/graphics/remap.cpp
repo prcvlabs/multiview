@@ -1,6 +1,8 @@
 
 #include "remap.hpp"
 
+#ifdef WITH_OPENCV_CUDA
+
 #include <opencv2/cudawarping.hpp>
 
 namespace perceive::cuda
@@ -34,3 +36,5 @@ cv::Mat Remapper::remap(const cv::Mat& distorted,
 }
 
 } // namespace perceive::cuda
+
+#endif // WITH_OPENCV_CUDA

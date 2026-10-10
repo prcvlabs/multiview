@@ -4,24 +4,40 @@
 #include "perceive/foundation.hpp"
 
 #ifdef WITH_CUDA
-#include <opencv2/core/cuda.hpp>
+#include <cuda_runtime.h>
 #endif
 
 namespace perceive::cuda
 {
 void init_cuda() noexcept { get_device_count(); }
-bool cuda_is_available() noexcept { return k_cuda_is_available; }
+bool cuda_is_available() noexcept
+{
+   // Compiled with CUDA *and* a usable device is present
+   static const bool available
+       = k_cuda_is_available and (get_device_count() > 0);
+   return available;
+}
 
 #ifdef WITH_CUDA
 
 int get_device_count() noexcept
 {
-   return cv::cuda::getCudaEnabledDeviceCount();
+   int n = 0;
+   if(cudaGetDeviceCount(&n) != cudaSuccess) {
+      cudaGetLastError(); // clear the error state
+      return 0;
+   }
+   return n;
 }
 
-void set_device(int device) noexcept { return cv::cuda::setDevice(device); }
+void set_device(int device) noexcept { cudaSetDevice(device); }
 
-int get_device() noexcept { return cv::cuda::getDevice(); }
+int get_device() noexcept
+{
+   int device = -1;
+   if(cudaGetDevice(&device) != cudaSuccess) return -1;
+   return device;
+}
 
 DeviceInfo get_device_info() noexcept { return get_device_info(get_device()); }
 
@@ -30,12 +46,15 @@ DeviceInfo get_device_info(int device_id) noexcept
    DeviceInfo di{};
    if(device_id < 0 or device_id >= get_device_count()) return di;
 
-   cv::cuda::DeviceInfo o{device_id};
+   cudaDeviceProp prop{};
+   if(cudaGetDeviceProperties(&prop, device_id) != cudaSuccess) return di;
    di.device_id     = device_id;
-   di.name          = o.name();
-   di.major_version = o.majorVersion();
-   di.minor_version = o.minorVersion();
-   di.is_compatible = o.isCompatible();
+   di.name          = prop.name;
+   di.major_version = prop.major;
+   di.minor_version = prop.minor;
+   // Compatible if the kernels can run on this device (cudaFuncGetAttributes
+   // would be exact; checking for a usable device is close enough here)
+   di.is_compatible = (prop.major > 0) and (prop.computeMode != cudaComputeModeProhibited);
    return di;
 }
 
