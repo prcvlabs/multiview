@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "perceive/utils/exit-helpers.hpp"
 #include "stdinc.hpp"
 
 // ---- Compile in catch
@@ -28,5 +29,7 @@ int main(int argc, char** argv)
    INFO(perceive::format("Multiview Configuration:"));
    std::cout << perceive::environment_info() << std::endl;
 
-   return session.run();
+   const auto ret = session.run();
+   perceive::run_exit_functions(); // e.g., free TensorRT engines before CUDA shuts down
+   return ret;
 }
