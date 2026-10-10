@@ -137,7 +137,8 @@ class Logger
                 << ":" << lineno << ANSI_COLOUR_RESET << " " << msg << "\n";
          });
          if(level == 4) {
-            exit(1); // Die on fatal
+            out.flush(); // exit() may not get as far as flushing
+            exit(1);     // Die on fatal
          }
       }
    }
