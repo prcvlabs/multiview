@@ -6,14 +6,24 @@
 #   DIR defaults to $MULTIVIEW_HYPERPOSE_DIR, else ~/multiview-data/hyperpose.
 #   Models go to DIR/models; run multiview with MULTIVIEW_HYPERPOSE_DIR=DIR.
 #
-# The models are hosted on Google Drive by the HyperPose project
-# (hyperpose/scripts/downloader.py). Some links have gone dead upstream;
-# those are reported and skipped.
+# The models come from the project's archive of them,
+# hyperpose-models.tar.bz2 (as used by install-files/build-scripts/
+# build-hyperpose.sh), looked for in $HYPERPOSE_MODELS_ARCHIVE, else
+# $MULTIVIEW_ASSET_DIR/install-files. Models not found there are downloaded
+# from the HyperPose project's Google Drive links (hyperpose/scripts/
+# downloader.py), some of which have gone dead upstream.
 
 set -euo pipefail
 
 DEST="${1:-${MULTIVIEW_HYPERPOSE_DIR:-$HOME/multiview-data/hyperpose}}"
 mkdir -p "$DEST/models"
+
+ARCHIVE="${HYPERPOSE_MODELS_ARCHIVE:-${MULTIVIEW_ASSET_DIR:-}/install-files/hyperpose-models.tar.bz2}"
+ARCHIVE_MD5=ac13e4b62e7733198a15eacb8e448501
+if [ -f "$ARCHIVE" ] ; then
+    echo "$ARCHIVE_MD5  $ARCHIVE" | md5sum -c -
+    tar -xjf "$ARCHIVE" -C "$DEST" --wildcards 'models/*.onnx'
+fi
 
 # name  google-drive-id  md5
 MODELS="
