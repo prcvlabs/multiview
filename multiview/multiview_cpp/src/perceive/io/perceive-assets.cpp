@@ -426,6 +426,7 @@ void store(const CachingUndistortInverse& data,
          if(buffer.size() != fread(&buffer[0], 1, buffer.size(), fp))
             throw std::runtime_error("failed to write file");
          fclose(fp);
+         fp = nullptr; // data_source_store may throw: don't fclose twice
 
          data_source_store(buffer, AssetType::CACHE_FILE, key, source);
       } catch(std::exception& e) {

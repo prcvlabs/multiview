@@ -61,9 +61,9 @@ void test_remap()
 
    if(true) {
       INFO("REPORT");
-      cout << format("D0 = {{}, {}}", D0.x, D0.y) << endl;
-      cout << format("U0 = {{}, {}}", U0.x, U0.y) << endl;
-      cout << format("D1 = {{}, {}}", D1.x, D1.y) << endl;
+      cout << format("D0 = {{{}, {}}}", D0.x, D0.y) << endl;
+      cout << format("U0 = {{{}, {}}}", U0.x, U0.y) << endl;
+      cout << format("D1 = {{{}, {}}}", D1.x, D1.y) << endl;
 
       INFO(format("cu-load took {}s", s));
       cout << format("cu.fmt = {:s}", str(cu.working_format())) << endl;
