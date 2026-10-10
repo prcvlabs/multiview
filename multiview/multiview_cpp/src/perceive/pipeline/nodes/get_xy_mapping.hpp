@@ -4,6 +4,7 @@
 #include "stdinc.hpp"
 
 #include "bcam_init.hpp"
+#include "cuda/perceive/graphics/remap.hpp"
 #include "load_scene_description.hpp"
 #include "perceive/io/json-io.hpp"
 #include "perceive/pipeline/pipeline-task.hpp"
@@ -33,9 +34,7 @@ struct Result
 
    cv::Mat mapx, mapy; // rectification maps for sensor
 
-#ifdef WITH_OPENCV_CUDA
-   cv::cuda::GpuMat mapx_gpu, mapy_gpu; // rectification maps in GPU memory
-#endif
+   cuda::RemapMaps mapxy_gpu; // the same maps in GPU memory (if available)
 
    const SceneDescription& scene_desc() const
    {

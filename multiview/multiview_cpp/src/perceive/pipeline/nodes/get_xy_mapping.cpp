@@ -3,6 +3,7 @@
 #include "get_xy_mapping.hpp"
 #include "input_images.hpp"
 #include "perceive/pipeline/detail/helpers.hpp"
+#include "perceive/utils/cuda-spec.hpp"
 #include <opencv2/opencv.hpp>
 
 namespace perceive::pipeline::get_xy_mapping
@@ -57,10 +58,7 @@ Task::execute(const RunData& data,
    auto s{time_thunk([&] {
       if(is_cancelled()) return;
       bino_cam.get_sensor_mapxy(unsigned(bcam_sensor), ret->mapx, ret->mapy);
-#ifdef WITH_OPENCV_CUDA
-      ret->mapx_gpu.upload(ret->mapx);
-      ret->mapy_gpu.upload(ret->mapy);
-#endif
+      if(cuda::cuda_is_available()) ret->mapxy_gpu.upload(ret->mapx, ret->mapy);
    })};
 
    if(params.feedback) {

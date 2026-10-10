@@ -95,30 +95,19 @@ Task::execute(const RunData& data,
    const cv::Mat& in = ret->image_result->equal;
 
    if(!in.empty()) {
-      // GPU remap needs OpenCV's cudawarping module; otherwise use the CPU
-      constexpr bool k_has_gpu_remap =
-#ifdef WITH_OPENCV_CUDA
-          true;
-#else
-          false;
-#endif
-      if(k_has_gpu_remap and params.use_cuda_if_available
-         and cuda::cuda_is_available()) {
-#ifdef WITH_OPENCV_CUDA
-         ret->rectified = cuda_remapper.remap(ret->rectified,
-                                              ret->mapping_result->mapx_gpu,
-                                              ret->mapping_result->mapy_gpu,
-                                              int(params.interpolation_method));
-#else
-         LOG_ERR("Cuda is not available, rectified not done!");
-         return nullptr;
-#endif
+      const auto interpolation = int(params.interpolation_method);
+      if(params.use_cuda_if_available and cuda::cuda_is_available()
+         and cuda::Remapper::supports(in, interpolation)) {
+         ret->rectified = cuda_remapper.remap(in,
+                                              ret->mapping_result->mapxy_gpu,
+                                              interpolation,
+                                              cv::Scalar(255, 255, 255));
       } else {
          cv::remap(in,
                    ret->rectified,
                    ret->mapping_result->mapx,
                    ret->mapping_result->mapy,
-                   int(params.interpolation_method),
+                   interpolation,
                    cv::BORDER_CONSTANT,
                    cv::Scalar(255, 255, 255));
       }
