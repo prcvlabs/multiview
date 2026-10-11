@@ -18,6 +18,13 @@ from pathlib import Path
 
 
 # --------------------------------------------------------------- arguments
+k_strengths = {  # (pixelation block, gaussian sigma) for head masks
+    "light": (1, 6.0),
+    "release": (10, 6.0),
+    "heavy": (14, 9.0),
+}
+
+
 def add_detect_args(p):
     p.add_argument("--pose", default="yolo11x-pose.pt", help="pose weights (.pt)")
     p.add_argument("--face", default="yolov11l-face.pt", help="face weights (.pt)")
@@ -30,8 +37,10 @@ def add_detect_args(p):
 def add_render_args(p):
     p.add_argument("--op", default="blur", choices=("blur", "pixelate", "fill"))
     p.add_argument("--region", default="heads", choices=("heads", "bodies"))
-    p.add_argument("--pix", type=int, default=10, help="pixelation block before blurring")
-    p.add_argument("--sigma", type=float, default=6.0, help="gaussian sigma")
+    p.add_argument("--strength", default="light", choices=sorted(k_strengths),
+                   help="blur preset: light = gaussian only, release = the first dataset release, heavy")
+    p.add_argument("--pix", type=int, help="pixelation block before blurring (overrides --strength)")
+    p.add_argument("--sigma", type=float, help="gaussian sigma (overrides --strength)")
     p.add_argument("--window", type=int, default=3, help="union masks over +/- frames")
     p.add_argument("--static", help="JSON of fixed boxes {L: [...], R: [...]} (or keyed by --static-key)")
     p.add_argument("--static-key")
@@ -99,7 +108,12 @@ def parse(argv):
     p.add_argument("dst")
     p.add_argument("--width", type=int, default=1792)
     p.add_argument("--height", type=int, default=672)
-    return ap.parse_args(argv)
+    args = ap.parse_args(argv)
+    if hasattr(args, "strength"):
+        pix, sigma = k_strengths[args.strength]
+        args.pix = pix if args.pix is None else args.pix
+        args.sigma = sigma if args.sigma is None else args.sigma
+    return args
 
 
 # --------------------------------------------------------------------- main

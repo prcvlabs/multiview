@@ -24,6 +24,14 @@ Because detections are cached, comparing treatments (`--op blur|pixelate|fill`,
 `--region heads|bodies`, `--pix`, `--sigma`) costs one decode and encode per
 video.
 
+## License note
+
+This tool calls Ultralytics YOLO and loads its YOLO11 weights, which are
+AGPL-3.0, as is the YOLOv11 face model built with it. multiview itself is
+Apache-2.0 and does not link or bundle them: `tools/privacy` is a separate
+tool that imports `ultralytics` at run time and downloads the weights on
+first use. Anyone redistributing or serving it should check the AGPL terms.
+
 ## Setup
 
 Python 3.10+ with `torch` (CUDA), `ultralytics`, `opencv-python`, `numpy`,
@@ -60,6 +68,11 @@ python -m mvprivacy detect qa/*.mp4 -o dets1/ --stride 1
 python -m mvprivacy sparse-eval dets1/*.dets.npz --strides 1,2,4,8
 ```
 
+Blur strength: `--strength light` (default; gaussian sigma 6, no pixelation),
+`release` (pixelate 10 then sigma 6, the first dataset release) or `heavy`
+(pixelate 14, sigma 9). `--pix` and `--sigma` override the preset. Static
+signage boxes are always pixelated 10, sigma 10.
+
 Static boxes are `{"L": [[x0, y0, x1, y1], ...], "R": [...]}` in eye pixels,
 or a file of those keyed by `--static-key`.
 
@@ -84,8 +97,9 @@ Naming, manifests and anonymised site ids are assigned outside this tool.
 
 ## Measurements
 
-RTX 3090, Ryzen 5 3600, 600 frames of a 1792x672 15 fps clip, PyTorch FP16,
-batch 16 stereo frames (32 eye images):
+RTX 3090, Ryzen 5 3600, 600 frames of a 1792x672 15 fps clip, batch 16
+stereo frames (32 eye images). Detection with `--engine` (TensorRT 11 FP16):
+33.9 fps at 1280 px, 103 fps at 640 px. PyTorch FP16:
 
 | Stage | fps |
 |---|---|
