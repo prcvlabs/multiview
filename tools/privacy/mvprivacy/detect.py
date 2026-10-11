@@ -91,6 +91,14 @@ class Detections:
         keep = lambda d: {k: v for k, v in d.items() if k[0] % stride == 0}
         return Detections(self.nframes, stride, self.eye_width, keep(self.pose_), keep(self.faces_), self.meta)
 
+    def slice(self, start, end):
+        """Detections of frames [start, end), renumbered from 0."""
+        if start % self.stride:
+            raise ValueError(f"start {start} is not a multiple of the stride {self.stride}")
+        end = min(end, self.nframes)
+        cut = lambda d: {(t - start, e): v for (t, e), v in d.items() if start <= t < end}
+        return Detections(end - start, self.stride, self.eye_width, cut(self.pose_), cut(self.faces_), self.meta)
+
     def save(self, path):
         def flat(d, n):
             keys = sorted(k for k, v in d.items() if len(v[0]))

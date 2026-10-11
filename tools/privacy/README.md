@@ -93,6 +93,12 @@ python -m mvprivacy ingest-pngs /scratch/dump/frames videos/ --fps 15
 python -m mvprivacy crop render.mp4 stereo.mp4 --width 1792 --height 672
 ```
 
+Long recordings can be trimmed to the stretches with people in them:
+`mvprivacy.activity.segments(dets_list, fps)` returns frame ranges shared by
+all cameras of a scene (a person seen by any camera, ignoring static
+person-like boxes; gaps under 20 s merged; 5 s padding), and
+`Detections.slice(start, end)` cuts cached detections to match.
+
 Naming, manifests and anonymised site ids are assigned outside this tool.
 
 ## Measurements
