@@ -91,6 +91,11 @@ struct Params final : public MetaCompatible
    OpenposeParams op_params;
    HyperposeParams hp_params;
 
+   // Load 2D poses saved by an earlier run with `feedback` set (one
+   // pose-2d_<frame>_<sensor>.json per frame and sensor) instead of running
+   // a pose network. Empty means run the network.
+   string replay_dir = ""s;
+
    bool feedback = false;
 };
 
