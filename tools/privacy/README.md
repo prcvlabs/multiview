@@ -115,3 +115,24 @@ stereo frames (32 eye images). Detection with `--engine` (TensorRT 11 FP16):
 
 Detection dominates; `--stride` divides its cost (stride 4 at 1280 px is
 about 58 fps), and TensorRT engines raise the per-frame rate.
+
+## Tracking on anonymised video with the original poses
+
+Blurring faces removes the face keypoints HyperPose anchors skeletons on,
+so tracking recall drops on anonymised video (#5). Instead, publish the 2D
+poses found on the originals and replay them:
+
+1. Run the pipeline on the original video with
+   `task_params.frame_params.pose_skeleton_init.op_params.feedback = true`.
+   It writes `pose-2d_<frame>_<sensor>.json` (one array of `Skeleton2D`
+   per frame and sensor) into the output directory.
+2. Ship those files with the anonymised video, e.g.
+   `tar -czf poses-2d.tar.gz pose-2d_*.json` (007: 2,994 files, 1.2 MB).
+3. Run the pipeline on the anonymised video with `op_params.replay_dir` set
+   to the directory holding the files; no pose network runs.
+
+On 007_site03_sparse_tracks (`--no-stereo`, `pose-svm-lite_v0`), blurred
+video with replayed poses scores exactly what the original video does (F1
+0.6139, 0 ID switches, identical TP distance and IoU); with HyperPose on the
+blurred video, recall was 0.149. Remaining differences in the output are
+the colour-appearance scores of the blurred heads.
