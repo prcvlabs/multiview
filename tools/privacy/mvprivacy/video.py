@@ -97,7 +97,7 @@ class Reader:
     """Iterates raw frames of a video. `every` > 1 keeps frames 0, N, 2N, ...
     (the decoder still decodes all of them; only the pipe is thinned)."""
 
-    def __init__(self, info, hwaccel=True, every=1, limit=0, threads=4, prefetch=64):
+    def __init__(self, info, hwaccel=False, every=1, limit=0, threads=4, prefetch=64):
         self.info = info
         self.every = every
         cmd = ["ffmpeg", "-v", "error", "-nostdin", "-threads", str(threads)]
@@ -149,8 +149,10 @@ class Reader:
 
 
 # ----------------------------------------------------------------------- Writer
-def encoder_args(info, encoder, quality):
+def encoder_args(info, encoder, quality=None):
     """Codec arguments for an H.264 output matching `info`'s pixel format."""
+    if quality is None:
+        quality = 19 if encoder == "nvenc" else 16
     if encoder == "nvenc":
         profile = "high444p" if info.layout == "yuv444p" else "high"
         return ["-c:v", "h264_nvenc", "-preset", "p6", "-tune", "hq", "-profile:v", profile,
@@ -162,7 +164,7 @@ class Writer:
     """Encodes raw frames to H.264 with the input's frame rate, timescale and
     pixel format, so frame count and per-frame pts match the source."""
 
-    def __init__(self, info, dst, encoder="x264", quality=16, threads=4, queue_size=64):
+    def __init__(self, info, dst, encoder="nvenc", quality=None, threads=4, queue_size=64):
         cmd = ["ffmpeg", "-v", "error", "-nostdin", "-y",
                "-f", "rawvideo", "-pix_fmt", info.layout, "-s", f"{info.width}x{info.height}",
                "-r", info.rate, "-i", "-", "-threads", str(threads)]

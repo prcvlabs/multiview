@@ -60,8 +60,8 @@ def bench(path, frames=900, batch=16, imgsizes=(1280, 640), engine=False, pose="
     res = []
     dev = torch.device("cuda:0")
 
-    stage(res, "decode-cpu", n, lambda: sum(1 for _ in Reader(info, hwaccel=False, limit=n)))
-    bufs = stage(res, "decode-nvdec", n, lambda: list(Reader(info, hwaccel=True, limit=n)))
+    bufs = stage(res, "decode-cpu", n, lambda: list(Reader(info, hwaccel=False, limit=n)))
+    stage(res, "decode-nvdec", n, lambda: sum(1 for _ in Reader(info, hwaccel=True, limit=n)))
     n = len(bufs)
 
     def upload():
@@ -106,7 +106,7 @@ def bench(path, frames=900, batch=16, imgsizes=(1280, 640), engine=False, pose="
     with tempfile.TemporaryDirectory() as tmp:
         for enc in encoders:
             def encode():
-                w = Writer(info, os.path.join(tmp, f"{enc}.mp4"), encoder=enc, quality=19 if enc == "nvenc" else 16)
+                w = Writer(info, os.path.join(tmp, f"{enc}.mp4"), encoder=enc)
                 for b in bufs:
                     w.write(b)
                 return w.close()

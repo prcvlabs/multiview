@@ -35,14 +35,15 @@ def add_render_args(p):
     p.add_argument("--window", type=int, default=3, help="union masks over +/- frames")
     p.add_argument("--static", help="JSON of fixed boxes {L: [...], R: [...]} (or keyed by --static-key)")
     p.add_argument("--static-key")
-    p.add_argument("--encoder", default="x264", choices=("x264", "nvenc"))
-    p.add_argument("--quality", type=int, default=16, help="x264 CRF / NVENC CQ")
+    p.add_argument("--encoder", default="nvenc", choices=("nvenc", "x264"), help="x264 matches the first release")
+    p.add_argument("--quality", type=int, help="NVENC CQ (default 19) / x264 CRF (default 16)")
 
 
 def parse(argv):
     ap = argparse.ArgumentParser(prog="mvprivacy", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--no-hwaccel", dest="hwaccel", action="store_false", help="decode on the CPU")
+    ap.add_argument("--hwaccel", action="store_true",
+                    help="decode with NVDEC (slower than CPU decode when frames go through a pipe)")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("run", help="both passes over a job list")

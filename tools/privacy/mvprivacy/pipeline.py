@@ -22,8 +22,8 @@ from .video import Reader, Writer, probe
 
 
 # ------------------------------------------------------------- render_video
-def render_video(info, dets, dst, renderer, masker, encoder="x264", quality=16,
-                 hwaccel=True, batch=16, workers=6, timings=None):
+def render_video(info, dets, dst, renderer, masker, encoder="nvenc", quality=None,
+                 hwaccel=False, batch=16, workers=6, timings=None):
     """Masks every frame of `info` and encodes it to `dst`. Returns the
     number of frames written, which must equal the detections' count."""
     nframes = dets.nframes

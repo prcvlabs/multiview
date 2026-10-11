@@ -208,7 +208,7 @@ def upload_batch(bufs, info, device):
 
 
 # -------------------------------------------------------------- detect_video
-def detect_video(info, detector, stride=4, hwaccel=True, timings=None):
+def detect_video(info, detector, stride=4, hwaccel=False, timings=None):
     """Runs the detector on frames 0, stride, 2 stride, ... of a video."""
     pose, faces = {}, {}
     t = 0
