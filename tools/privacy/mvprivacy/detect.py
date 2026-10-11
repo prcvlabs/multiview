@@ -131,6 +131,38 @@ class Detections:
         )
 
 
+# --------------------------------------------------------------- build_engine
+def build_engine(onnx_file, out, shape, meta, workspace_gb=8):
+    """Strongly typed TensorRT engine for batches 1..shape[0] at a fixed
+    image size, with the metadata header ultralytics' AutoBackend reads."""
+    import json
+
+    import tensorrt as trt
+
+    logger = trt.Logger(trt.Logger.WARNING)
+    builder = trt.Builder(logger)
+    network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.STRONGLY_TYPED))
+    parser = trt.OnnxParser(network, logger)
+    if not parser.parse_from_file(str(onnx_file)):
+        raise RuntimeError(f"cannot parse {onnx_file}: {parser.get_error(0)}")
+    config = builder.create_builder_config()
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, workspace_gb << 30)
+    profile = builder.create_optimization_profile()
+    name = network.get_input(0).name
+    profile.set_shape(name, min=(1, *shape[1:]), opt=shape, max=shape)
+    config.add_optimization_profile(profile)
+    engine = builder.build_serialized_network(network, config)
+    if engine is None:
+        raise RuntimeError(f"TensorRT build failed for {onnx_file}")
+    header = json.dumps(meta).encode()
+    tmp = str(out) + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(len(header).to_bytes(4, byteorder="little", signed=True))
+        f.write(header)
+        f.write(engine)
+    os.replace(tmp, out)
+
+
 # ------------------------------------------------------------------ Detector
 class Detector:
     """Batched pose + face detection on stereo frames already on the GPU."""
@@ -172,7 +204,6 @@ class Detector:
         from modelopt.onnx import autocast
         from ultralytics import YOLO
         from ultralytics.utils import ASSETS
-        from ultralytics.utils.export.engine import onnx2engine
 
         f32 = YOLO(pt).export(format="onnx", dynamic=True, batch=1, imgsz=(self.in_h, self.in_w), verbose=False)
         model = onnx.load(f32)
@@ -182,9 +213,7 @@ class Detector:
         f16 = str(Path(f32).with_suffix(".fp16.onnx"))
         onnx.save(autocast.convert_to_mixed_precision(f32, low_precision_type="fp16", keep_io_types=True,
                                                       calibration_data={model.graph.input[0].name: im}), f16)
-        tmp = str(out) + ".tmp"
-        onnx2engine(f16, tmp, dynamic=True, shape=(2 * self.batch, 3, self.in_h, self.in_w), metadata=meta)
-        os.replace(tmp, out)
+        build_engine(f16, out, (2 * self.batch, 3, self.in_h, self.in_w), meta)
         for f in (f32, f16):
             os.remove(f)
 
