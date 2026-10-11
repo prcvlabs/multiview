@@ -16,11 +16,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from .video import Reader, split_planes
+from .video import Reader, probe, split_planes
 
 k_model_dir = Path(os.environ.get("MULTIVIEW_PRIVACY_MODELS", Path.home() / ".cache/multiview-privacy/models"))
 k_model_urls = {
-    "yolov11l-face.pt": "https://github.com/akanametov/yolo-face/releases/download/v0.0.0/yolov11l-face.pt",
+    "yolo11x-pose.pt": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11x-pose.pt",
+    "yolov11l-face.pt": "https://github.com/akanametov/yolo-face/releases/download/1.0.0/yolov11l-face.pt",
 }
 k_pose_args = dict(conf=0.10, iou=0.6, max_det=60)
 k_face_args = dict(conf=0.15, iou=0.5, max_det=100)
@@ -28,8 +29,7 @@ k_face_args = dict(conf=0.15, iou=0.5, max_det=100)
 
 # --------------------------------------------------------------- model_path
 def model_path(name):
-    """Local path of a model weight file, downloading it on first use.
-    Ultralytics' own models (yolo11x-pose.pt) are fetched by ultralytics."""
+    """Local path of a model weight file, downloading it on first use."""
     p = Path(name)
     if p.exists():
         return str(p)
@@ -232,6 +232,8 @@ def detect_video(info, detector, stride=4, hwaccel=True, timings=None):
     if reader.close() != 0:
         raise RuntimeError(f"decode failed: {info.path}")
     nframes = info.nframes
+    if not (t - 1) * stride < nframes <= t * stride:
+        nframes = probe(info.path, exact=True).nframes
     if not (t - 1) * stride < nframes <= t * stride:
         raise RuntimeError(f"{info.path}: probed {nframes} frames, decoded {t} at stride {stride}")
     return Detections(nframes, stride, info.width // 2, pose, faces, detector.meta)

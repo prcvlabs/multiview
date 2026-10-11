@@ -49,22 +49,22 @@ class VideoInfo:
         return self.width * self.height + 2 * (self.width // sx) * (self.height // sy)
 
 
-def probe(path, count=False):
-    """Stream geometry and timing; `count` decodes packet headers when the
-    container does not store nb_frames."""
+def probe(path, exact=False):
+    """Stream geometry and timing. `exact` decodes the stream to count the
+    frames a decoder outputs (edit lists can discard leading packets)."""
     cmd = ["ffprobe", "-v", "error", "-select_streams", "v:0"]
-    if count:
-        cmd += ["-count_packets"]
+    if exact:
+        cmd += ["-count_frames"]
     cmd += [
         "-show_entries",
-        "stream=width,height,pix_fmt,r_frame_rate,time_base,nb_frames,nb_read_packets,profile,color_range",
+        "stream=width,height,pix_fmt,r_frame_rate,time_base,nb_frames,nb_read_frames,profile,color_range",
         "-of", "json", path,
     ]
     s = json.loads(subprocess.check_output(cmd))["streams"][0]
-    n = s.get("nb_read_packets") or s.get("nb_frames")
+    n = s.get("nb_read_frames") or s.get("nb_frames")
     if not n or n == "N/A":
-        if not count:
-            return probe(path, count=True)
+        if not exact:
+            return probe(path, exact=True)
         n = 0
     return VideoInfo(
         path=path,

@@ -25,9 +25,8 @@ from .video import Reader, Writer, probe
 def render_video(info, dets, dst, renderer, masker, encoder="x264", quality=16,
                  hwaccel=True, batch=16, workers=6, timings=None):
     """Masks every frame of `info` and encodes it to `dst`. Returns the
-    number of frames written."""
-    if dets.nframes != info.nframes:
-        raise RuntimeError(f"{info.path}: {info.nframes} frames, detections cover {dets.nframes}")
+    number of frames written, which must equal the detections' count."""
+    nframes = dets.nframes
     tm = timings if timings is not None else {}
     add = lambda k, dt: tm.__setitem__(k, tm.get(k, 0.0) + dt)
     device = masker.device
@@ -37,7 +36,7 @@ def render_video(info, dets, dst, renderer, masker, encoder="x264", quality=16,
     reader = Reader(info, hwaccel=hwaccel)
     writer = Writer(info, tmp, encoder=encoder, quality=quality)
     pool = ThreadPoolExecutor(workers)
-    submit = lambda t0, n: [pool.submit(renderer.frame, t) for t in range(t0, min(t0 + n, info.nframes))]
+    submit = lambda t0, n: [pool.submit(renderer.frame, t) for t in range(t0, min(t0 + n, nframes))]
     t = 0
     pending = submit(0, batch)
     try:
@@ -60,8 +59,8 @@ def render_video(info, dets, dst, renderer, masker, encoder="x264", quality=16,
         pool.shutdown(cancel_futures=True)
         rc_dec = reader.close()
         rc_enc = writer.close()
-    if rc_dec != 0 or rc_enc != 0 or t != info.nframes:
-        raise RuntimeError(f"{info.path}: wrote {t} of {info.nframes} frames (decode rc {rc_dec}, encode rc {rc_enc})")
+    if rc_dec != 0 or rc_enc != 0 or t != nframes:
+        raise RuntimeError(f"{info.path}: wrote {t} of {nframes} frames (decode rc {rc_dec}, encode rc {rc_enc})")
     os.replace(tmp, dst)
     return t
 
