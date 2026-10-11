@@ -69,11 +69,13 @@ def encode_camera_(job):
         return np.hstack([cv2.imread(str(frames[t][s]), cv2.IMREAD_COLOR) for s in (0, 1)])
 
     last_img = load(t0)
+    chunk = 8 * threads  # frames decoded ahead; a whole camera would not fit in memory
     with ThreadPoolExecutor(threads) as pool:
-        for img in pool.map(load, range(first, last + 1)):
-            img = last_img if img is None else img  # a gap repeats the previous frame
-            enc.stdin.write(img.tobytes())
-            last_img = img
+        for c0 in range(first, last + 1, chunk):
+            for img in pool.map(load, range(c0, min(c0 + chunk, last + 1))):
+                img = last_img if img is None else img  # a gap repeats the previous frame
+                enc.stdin.write(img.tobytes())
+                last_img = img
     enc.stdin.close()
     if enc.wait() != 0:
         raise RuntimeError(f"encode failed: {dst}")

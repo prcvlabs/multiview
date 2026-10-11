@@ -155,14 +155,38 @@ class Detector:
         """The .pt itself, or a cached TensorRT engine exported from it."""
         if not engine:
             return pt
-        from ultralytics import YOLO
-
         out = Path(pt).with_name(f"{Path(pt).stem}-b{2 * self.batch}-{self.in_h}x{self.in_w}-fp16.engine")
         if not out.exists():
-            src = YOLO(pt).export(format="engine", half=True, batch=2 * self.batch,
-                                  imgsz=(self.in_h, self.in_w), device=0, verbose=False)
-            os.replace(src, out)
+            self.export_engine_(pt, out)
         return str(out)
+
+    def export_engine_(self, pt, out):
+        """FP16 engine with a dynamic batch of up to 2 x batch eye images.
+        TensorRT 11 is strongly typed, so FP16 is baked into the ONNX graph by
+        ModelOpt AutoCast first. AutoCast keeps every activation of its
+        calibration input in host memory: calibrated at the full batch, as
+        `YOLO.export(format="engine")` does, that is over 50 GB, so it is
+        calibrated here on a single image."""
+        import cv2
+        import onnx
+        from modelopt.onnx import autocast
+        from ultralytics import YOLO
+        from ultralytics.utils import ASSETS
+        from ultralytics.utils.export.engine import onnx2engine
+
+        f32 = YOLO(pt).export(format="onnx", dynamic=True, batch=1, imgsz=(self.in_h, self.in_w), verbose=False)
+        model = onnx.load(f32)
+        meta = {p.key: p.value for p in model.metadata_props}
+        im = cv2.resize(cv2.imread(str(ASSETS / "bus.jpg")), (self.in_w, self.in_h))
+        im = np.ascontiguousarray(im[..., ::-1].transpose(2, 0, 1)[None], np.float32) / 255.0
+        f16 = str(Path(f32).with_suffix(".fp16.onnx"))
+        onnx.save(autocast.convert_to_mixed_precision(f32, low_precision_type="fp16", keep_io_types=True,
+                                                      calibration_data={model.graph.input[0].name: im}), f16)
+        tmp = str(out) + ".tmp"
+        onnx2engine(f16, tmp, dynamic=True, shape=(2 * self.batch, 3, self.in_h, self.in_w), metadata=meta)
+        os.replace(tmp, out)
+        for f in (f32, f16):
+            os.remove(f)
 
     # ------------------------------------------------------------------ prepare
     def prepare(self, y, u, v, full_range=False):
@@ -179,8 +203,6 @@ class Detector:
         """Network input (2B,3,in_h,in_w) -> per eye-image (pose, faces) in
         eye pixels."""
         n = x.shape[0]
-        if self.engine and n < 2 * self.batch:  # engines have a static batch
-            x = torch.cat([x, x.new_zeros((2 * self.batch - n,) + x.shape[1:])])
         sx, sy = self.in_w / self.eye_w, self.in_h / self.eye_h
         scale = torch.tensor([sx, sy, sx, sy], device=x.device)
         rp = self.pose_.predict(x, half=True, verbose=False, **k_pose_args)[:n]
