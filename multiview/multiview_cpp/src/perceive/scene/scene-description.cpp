@@ -375,7 +375,7 @@ vector<cv::Mat> This::grab_video_frame_(int scene_frame_no) const noexcept
       try {
          if(is_video[i]) {
             Expects(P.videos[i]);
-            if(false && advance_one) {
+            if(advance_one) {
                *P.videos[i] >> ret[i];
             } else {
                int fnum = movie_frame_no + P.movie_frame_offsets[i];
