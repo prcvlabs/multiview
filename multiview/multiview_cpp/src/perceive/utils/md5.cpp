@@ -370,6 +370,7 @@ std::string md5(const void* data, const size_t size) noexcept
 {
    MD5 md5;
    md5.update(data, unsigned(size));
+   md5.finalize();
    return md5.hexdigest();
 }
 

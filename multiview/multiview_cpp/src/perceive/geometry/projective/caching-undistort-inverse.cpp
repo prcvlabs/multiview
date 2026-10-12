@@ -697,8 +697,9 @@ void read(CachingUndistortInverse& data, FILE* fp) noexcept(false)
       throw std::runtime_error(format(
           "read {} elements, but expected to read {}", n, buffer.size()));
 
+   // Files written before `md5(data, size)` finalized its digest store ""
    const auto calc_hash = md5(&buffer[0], buffer.size() * sizeof(uint32_t));
-   if(hash != calc_hash) {
+   if(!hash.empty() and hash != calc_hash) {
       throw std::runtime_error(
           format("hash sum failed: got {}, but expected {}", calc_hash, hash));
    }
