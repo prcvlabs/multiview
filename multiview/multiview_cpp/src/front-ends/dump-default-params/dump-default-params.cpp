@@ -4,6 +4,10 @@
 #include "dump-default-params-inc.hpp"
 
 #include "perceive/pipeline/frame-results.hpp"
+#include "perceive/pipeline/nodes/tracklet-task.hpp"
+#include "perceive/pipeline/nodes/tracks-task.hpp"
+#include "perceive/pipeline/pipeline-input.hpp"
+#include "perceive/pipeline/tracker/tracker-results.hpp"
 #include "perceive/utils/cli-utils.hpp"
 
 namespace perceive::dump_default_params
@@ -33,6 +37,7 @@ void show_help(string argv0)
    Usage: {:s} [OPTIONS...] <manifest-filename>
 
       -d <dirname>       Directory to save products to. Default is '{:s}'.
+                         Writes 'default-params.json', a file for `pipeline -p`.
 
    Example:
  
@@ -136,12 +141,21 @@ int run_main(int argc, char** argv)
    // ---- Action
    bool success = false;
    try {
+      // The same keys that `pipeline -p <filename>` reads back
       pipeline::FrameResults frame_results{scene_desc, true};
+      pipeline::tracklet::Task tracklet_task;
+      pipeline::tracks::Task tracks_task;
+      PostProcessParams post_process_params;
+
+      pipeline::PipelineInput input;
+      input.task_params                     = Json::Value{Json::objectValue};
+      input.task_params["frame_params"]     = frame_results.params_to_json();
+      input.task_params["tracklet_params"]  = tracklet_task.params().to_json();
+      input.task_params["tracks_params"]    = tracks_task.params().to_json();
+      input.task_params["post_process"]     = post_process_params.to_json();
 
       const string fname = format("{:s}/default-params.json", config.outdir);
-      Json::Value o      = Json::Value{Json::objectValue};
-      o["frame_params"]  = frame_results.params_to_json();
-      file_put_contents(fname, str(o));
+      file_put_contents(fname, input.to_json_string());
       INFO(format("output parameters saved to '{:s}'", fname));
       success = true;
    } catch(std::exception& e) {

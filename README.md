@@ -257,11 +257,14 @@ build/dev.sh smoke                     # 120 frames of 007 with replayed poses, 
 build/dev.sh check                     # build + test + smoke
 ```
 
-Rebuilds are incremental across commits and worktrees: the git version string
-is compiled into `config.cpp` only, and ccache is configured with a base
-directory, so touching one file rebuilds one object. Consecutive frames are
-decoded sequentially (the videos have a keyframe every 250 frames, so seeking
-to each frame used to dominate the per-frame cost).
+Rebuilds are incremental across commits: the git version string is compiled
+into `config.cpp` only, so touching one file rebuilds one object. A fresh
+worktree compiles once (about 4 minutes; the precompiled header embeds the
+checkout path, so ccache cannot share objects between worktrees). Consecutive
+frames are decoded sequentially (the videos have a keyframe every 250 frames,
+so seeking to each frame used to dominate the per-frame cost), and the floor
+grids used by the debug movie are calculated on first use instead of at
+start-up, which used to hold every run for minutes at exit.
 
 Code follows Aaron's conventions in
 [`doc/coding-style.notes`](doc/coding-style.notes) and the repository's

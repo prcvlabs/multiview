@@ -1,8 +1,8 @@
 #!/bin/bash
 # Development loop for multiview: build, unit tests and a pipeline smoke test,
 # from any git worktree of the repository. Builds and heavy runs are
-# serialised across worktrees with file locks, run at low priority, and share
-# one ccache, so several branches can iterate on one machine.
+# serialised across worktrees with file locks and run at low priority, so
+# several branches can iterate on one machine.
 #
 # Usage: build/dev.sh <command> [args...]
 #
@@ -138,14 +138,13 @@ smoke_params() # smoke_params <replay-dir> <out-file>
     python3 - "$tmp/default-params.json" "$1" "$2" <<'EOF'
 import json, sys
 params_file, replay_dir, out_file = sys.argv[1:]
-# dump_default_params writes {"frame_params": ...}; `pipeline -p` reads
-# {"task_params": {"frame_params": ..., ...}, "fowlkes_params": ...}
+# `pipeline -p` reads {"task_params": {"frame_params": ...}, "fowlkes_params": ...}
 p = json.load(open(params_file))
 tasks = p["task_params"] if "task_params" in p else p
 pose = tasks["frame_params"]["pose_skeleton_init"]["op_params"]
 pose["replay_dir"] = replay_dir
 pose["use_hyperpose"] = True
-json.dump({"task_params": tasks}, open(out_file, "w"), indent=1)
+json.dump(p if "task_params" in p else {"task_params": tasks}, open(out_file, "w"), indent=1)
 EOF
     rm -rf "$tmp"
 }
@@ -258,7 +257,7 @@ tasks = p["task_params"] if "task_params" in p else p
 pose = tasks["frame_params"]["pose_skeleton_init"]["op_params"]
 pose["feedback"] = True
 pose["use_hyperpose"] = True
-json.dump({"task_params": tasks}, open(sys.argv[2], "w"), indent=1)
+json.dump(p if "task_params" in p else {"task_params": tasks}, open(sys.argv[2], "w"), indent=1)
 EOF
     rm -rf "$tmp"
     echo "replay: writing pose-2d files for $SMOKE_TC to $replay (frames: $frames)"

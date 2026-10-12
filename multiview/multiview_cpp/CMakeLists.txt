@@ -37,8 +37,9 @@ if(MULTIVIEW_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache)
   if(CCACHE_PROGRAM)
     # The sloppiness lets ccache cache sources compiled with the PCH. The
-    # base directory makes paths relative in the hash, so git worktrees of
-    # the repository share one cache.
+    # base directory keeps the hashes independent of the checkout path;
+    # objects are still not shared between worktrees, because the generated
+    # PCH header names the checkout's absolute path.
     get_filename_component(MV_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../.. ABSOLUTE)
     set(MV_LAUNCHER ${CMAKE_COMMAND} -E env
       CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
