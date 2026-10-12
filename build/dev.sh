@@ -163,13 +163,13 @@ keys = {"true positives": "tp", "false positives": "fp", "false negatives": "fn"
         "precision": "precision", "recall": "recall"}
 out = {}
 for line in text.splitlines():
-    m = re.match(r"\|\s*([a-z\- ]+?):\s+([0-9.]+)", line)
+    m = re.match(r"\|\s*([a-z0-9\- ]+?):\s+([0-9.]+)", line)
     if m and m.group(1).strip() in keys:
         out[keys[m.group(1).strip()]] = float(m.group(2))
 m = re.search(r"pipeline-seconds:\s+([0-9.]+)s", text)
 if m: out["pipeline_seconds"] = float(m.group(1))
-m = re.search(r"n-frames:\s+([0-9]+)", text)
-if m: out["n_frames"] = int(m.group(1))
+frames = re.findall(r"n-frames:\s+([0-9]+)", text)
+if frames: out["n_frames"] = int(frames[-1])
 out["success"] = "pipeline-execute done." in text
 print(json.dumps(out, sort_keys=True))
 EOF
