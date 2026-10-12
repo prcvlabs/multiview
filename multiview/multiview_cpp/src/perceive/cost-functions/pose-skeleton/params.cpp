@@ -145,6 +145,7 @@ const vector<MemberMetaData>& Params::meta_data() const noexcept
       m.push_back(MAKE_META(ThisParams, BOOL, use_hyperpose, true));
       m.push_back(MAKE_META(ThisParams, COMPATIBLE_OBJECT, op_params, true));
       m.push_back(MAKE_META(ThisParams, COMPATIBLE_OBJECT, hp_params, true));
+      m.push_back(MAKE_META(ThisParams, STRING, replay_dir, false));
       m.push_back(MAKE_META(ThisParams, BOOL, feedback, false));
       return m;
    };

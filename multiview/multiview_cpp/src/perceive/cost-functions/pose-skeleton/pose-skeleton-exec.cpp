@@ -96,6 +96,40 @@ This::This()
 
 This::~This() = default;
 
+// ----------------------------------------------------------------- load_poses_
+//
+template<typename F>
+static vector<vector<shared_ptr<const Skeleton2D>>>
+load_poses_(const string_view dir,
+            const int frame_no,
+            const unsigned n_sensors,
+            F get_image_ptr) noexcept
+{
+   vector<vector<shared_ptr<const Skeleton2D>>> out(n_sensors);
+   for(auto i = 0u; i < n_sensors; ++i) {
+      if(get_image_ptr(int(i)) == nullptr) continue;
+      const auto fname
+          = format("{}/pose-2d_{:06d}_{:02d}.json", dir, frame_no, i);
+      if(!is_regular_file(fname)) {
+         WARN(format("pose replay: missing '{}'", fname));
+         continue;
+      }
+      try {
+         const auto a = parse_json(file_get_contents(fname));
+         for(const auto& o : a) {
+            auto pose = make_shared<Skeleton2D>();
+            pose->read(o);
+            out[i].push_back(std::move(pose));
+         }
+      } catch(std::exception& e) {
+         LOG_ERR(format(
+             "pose replay: failed to read '{}': {}", fname, e.what()));
+         out[i].clear();
+      }
+   }
+   return out;
+}
+
 // ------------------------------------------------------------------ This::run_
 //
 This::Result This::run_(const SceneDescription* scene_desc_ptr,
@@ -129,7 +163,10 @@ This::Result This::run_(const SceneDescription* scene_desc_ptr,
    bool use_hyperpose
        = (p.use_hyperpose && k_has_hyperpose) || (!k_has_openpose);
 
-   if(use_hyperpose) {
+   if(!p.replay_dir.empty()) {
+      ret.pimpl_->poses_
+          = load_poses_(p.replay_dir, frame_no, n_sensors, get_image_ptr);
+   } else if(use_hyperpose) {
       ret.pimpl_->poses_ = pimpl_->hp_wrapper.run(scene_desc_ptr,
                                                   frame_no,
                                                   int(n_sensors),
