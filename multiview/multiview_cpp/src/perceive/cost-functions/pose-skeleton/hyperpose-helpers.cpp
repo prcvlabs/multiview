@@ -223,7 +223,7 @@ static Point2 calc_network_resolution(Point2 x, string_view name) noexcept
 
 static cv::Size to_cv_size(const Point2 x) noexcept { return {x.y, x.x}; }
 
-static SpinLock padlock_;
+static std::mutex padlock_;
 
 struct HyperposeModelRegistry
 {
@@ -323,7 +323,7 @@ struct HyperposeModelRegistry
                                  const int n_images,
                                  const string_view outdir) noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       auto ii = registry_.find(p.model_name);
 
       const bool exists  = !(ii == cend(registry_));
@@ -341,13 +341,13 @@ struct HyperposeModelRegistry
 
    void clear_engine(const string& name) noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       registry_.erase(name);
    }
 
    void reset() noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       registry_.clear();
    }
 };
@@ -389,13 +389,7 @@ This::run(const SceneDescription* scene_desc_ptr,
    vector<vector<shared_ptr<const Skeleton2D>>> out;
    auto& parsers = pimpl_->parsers;
 
-   const auto s0 = time_thunk([&]() { // Grab the engine
-      engine_ptr
-          = HyperposeModelRegistry::instance().get_engine(p, n_images, outdir);
-      Expects(engine_ptr != nullptr);
-   });
-
-   const auto s1 = time_thunk([&]() { // Prepare the input
+   const auto s0 = time_thunk([&]() { // Prepare the input
       images.reserve(size_t(n_images));
       indices.reserve(size_t(n_images));
       for(int i = 0; i < n_images; ++i) {
@@ -427,8 +421,14 @@ This::run(const SceneDescription* scene_desc_ptr,
       }
    });
 
+   const auto s1 = time_thunk([&]() { // Grab the engine, sized for `images`
+      engine_ptr = HyperposeModelRegistry::instance().get_engine(
+          p, int(images.size()), outdir);
+      Expects(engine_ptr != nullptr);
+   });
+
    const auto s2 = time_thunk([&]() { // Run the engine
-      lock_guard lock(padlock_);      //
+      std::lock_guard<std::mutex> lock(padlock_);
       raw = engine_ptr->inference(images);
 
    });
@@ -482,8 +482,8 @@ This::run(const SceneDescription* scene_desc_ptr,
       TRACE(format("hyperpose inference timings, with {} images:",
                    images.size()));
       cout << format(R"V0G0N(    
-   load engine:    {:5.3f}ms
    prepare input:  {:5.3f}ms
+   load engine:    {:5.3f}ms
    run engine:     {:5.3f}ms
    parse features: {:5.3f}ms
    unpack poses:   {:5.3f}ms
