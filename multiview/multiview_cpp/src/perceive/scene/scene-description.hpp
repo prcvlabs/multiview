@@ -31,20 +31,6 @@ namespace perceive
 struct SceneDescription
 {
  private:
-   // The floor grids are calculated by a scheduled job that uses `this`, so
-   // it must finish before `this` is moved or destroyed. This is the first
-   // member, so that the moves wait before anything else is moved.
-   struct FloorGridsJob
-   {
-      std::atomic<bool> pending = false;
-
-      FloorGridsJob() = default;
-      FloorGridsJob(FloorGridsJob&& o) noexcept;
-      FloorGridsJob& operator=(FloorGridsJob&& o) noexcept;
-      void wait() const noexcept;
-   };
-   FloorGridsJob floor_grids_job_;
-
    struct Pimpl;
    unique_ptr<Pimpl> pimpl_;
    void unpack_raw_images(bool is_advance_one_frame, int scene_frame_no);
