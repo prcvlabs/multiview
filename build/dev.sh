@@ -18,8 +18,11 @@
 #       compare the metrics with the stored reference. Needs the replay files
 #       in $MULTIVIEW_POSE_REPLAY/007_site03_sparse_tracks (see `replay`).
 #   replay [--frames N]
-#       Generate the replay files for 007 (--no-stereo, like `smoke`) with the
-#       HyperPose build: a one-off GPU run over the whole testcase.
+#       Generate replay files for 007 (--no-stereo, like `smoke`) with the
+#       HyperPose build: a one-off GPU run over the whole testcase. Note that
+#       the public videos have blurred faces, on which HyperPose finds few
+#       people (recall 0.15); the poses found on the original videos are the
+#       better replay set (F1 0.61), see tools/privacy/README.md.
 #   pipeline [--hyperpose] <multiview-cli pipeline args...>
 #       Run `multiview-cli pipeline ...` under the GPU lock at low priority.
 #   cli [--hyperpose] <multiview-cli args...>

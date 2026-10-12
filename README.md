@@ -252,7 +252,7 @@ the repository, so several branches can be built and tested on one machine:
 ```
 build/dev.sh build [--hyperpose]       # build this worktree (one build at a time, shared ccache)
 build/dev.sh test "[tracks]"           # unit tests, optionally one Catch tag
-build/dev.sh replay                    # once: 2D poses of testcase 007 from HyperPose, for `smoke`
+build/dev.sh replay                    # once: 2D poses of testcase 007 for `smoke` (better: the poses of the original videos, see tools/privacy/README.md)
 build/dev.sh smoke                     # 120 frames of 007 with replayed poses, scored against the reference
 build/dev.sh check                     # build + test + smoke
 ```
