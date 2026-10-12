@@ -20,6 +20,14 @@
 
 namespace perceive
 {
+// ------------------------------------------------------------ build constants
+
+const char* const k_installation_root  = INSTALLATION_ROOT;
+const char* const k_multiview_data_dir = MULTIVIEW_DATA_DIR;
+const char* const k_version            = MULTIVIEW_VERSION;
+
+// ------------------------------------------------------ EnvironmentVariables
+
 struct EnvironmentVariables
 {
    bool is_init                       = false;
