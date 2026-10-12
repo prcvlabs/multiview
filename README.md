@@ -158,6 +158,12 @@ when CMake configures. To reuse an already downloaded TensorRT wheel, set
 `TRT_WHEEL_FILE`; to use another TensorRT install, set `TENSORRT_ROOT`. The
 `[hyperpose]` testcase runs when `MULTIVIEW_HYPERPOSE_TEST_IMAGE` points to an
 image with a person in it.
+
+The TensorRT engine is built from the ONNX model on first use (40-70 s) and
+cached in `$MULTIVIEW_CACHE_DIR/trt` for the model, batch size, precision,
+TensorRT version and GPU; later runs load it in about two seconds. Delete that
+directory to rebuild. `hp_params.precision` in params.json is `"fp32"` (the
+default) or `"fp16"`, which about halves the inference time.
 </details>
 
 <details>

@@ -76,6 +76,7 @@ struct HyperposeParams final : public MetaCompatible
 
    string model_name         = "openpose-coco-V2-HW=368x656.onnx"s;
    Point2 network_resolution = {-1, -1}; // extract resolution from name
+   string precision          = "fp32"s;  // or "fp16"
 
    bool feedback = false;
 };
