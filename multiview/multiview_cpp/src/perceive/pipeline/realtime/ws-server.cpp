@@ -297,8 +297,7 @@ struct WsServer::Pimpl::StreamSession
    }
 };
 
-// --------------------------------------------------------------------
-// do-accept
+// ------------------------------------------------------------------- do-accept
 //
 void WsServer::Pimpl::do_accept() noexcept
 {
@@ -321,8 +320,7 @@ void WsServer::Pimpl::do_accept() noexcept
    });
 }
 
-// --------------------------------------------------------------------
-// on-stream
+// ------------------------------------------------------------------- on-stream
 //
 void WsServer::Pimpl::on_stream(tcp::socket&& socket,
                                 request_type&& req) noexcept
@@ -338,8 +336,7 @@ void WsServer::Pimpl::on_stream(tcp::socket&& socket,
    }
 }
 
-// ----------------------------------------------------------------------
-// deliver
+// --------------------------------------------------------------------- deliver
 //
 void WsServer::Pimpl::deliver(const line_ptr& line) noexcept
 {
@@ -351,8 +348,7 @@ void WsServer::Pimpl::deliver(const line_ptr& line) noexcept
       if(auto session = weak.lock(); session != nullptr) session->deliver(line);
 }
 
-// --------------------------------------------------------------------
-// close-all
+// ------------------------------------------------------------------- close-all
 //
 void WsServer::Pimpl::close_all() noexcept
 {
@@ -364,8 +360,7 @@ void WsServer::Pimpl::close_all() noexcept
       if(auto session = weak.lock(); session != nullptr) session->close();
 }
 
-// ------------------------------------------------------------------
-// client-gone
+// ----------------------------------------------------------------- client-gone
 //
 void WsServer::Pimpl::client_gone() noexcept
 {
@@ -376,8 +371,7 @@ void WsServer::Pimpl::client_gone() noexcept
    no_clients.notify_all();
 }
 
-// --------------------------------------------------------------------------
-// run The server's thread
+// ----------------------------------------------------- run The server's thread
 //
 void WsServer::Pimpl::run() noexcept
 {
