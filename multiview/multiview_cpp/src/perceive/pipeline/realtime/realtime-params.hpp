@@ -30,6 +30,7 @@ struct RealtimeParams final : public MetaCompatible
    real max_seconds             = 0.0;     // stop after this long; 0: never
    real missing_timeout_s       = 5.0;     // give up on a frame (drop newest)
    bool publish_provisional     = true;    // write `frame` lines
+   unsigned ws_port             = 0;       // WebSocket and HTTP; 0: none
 
    // Not a parameter of the run: print the frame mapping and exit
    bool print_frame_mapping = false;

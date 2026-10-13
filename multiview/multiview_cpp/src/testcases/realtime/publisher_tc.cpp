@@ -31,13 +31,13 @@ CATCH_TEST_CASE("Publisher", "[realtime_publish]")
       std::mutex padlock;
       vector<string> lines;
       vector<string> copies;
-      auto slow_sink = [&](const string& line) {
+      auto slow_sink = [&](const TrackMessage&, const string& line) {
          std::this_thread::sleep_for(100us);
          std::lock_guard<std::mutex> lock(padlock);
          lines.push_back(line);
          return true;
       };
-      auto copy_sink = [&](const string& line) {
+      auto copy_sink = [&](const TrackMessage&, const string& line) {
          std::lock_guard<std::mutex> lock(padlock);
          copies.push_back(line);
          return true;
@@ -67,7 +67,7 @@ CATCH_TEST_CASE("Publisher", "[realtime_publish]")
    {
       std::mutex padlock;
       vector<string> types;
-      auto sink = [&](const string& line) {
+      auto sink = [&](const TrackMessage&, const string& line) {
          const auto o = parse_json(line);
          std::lock_guard<std::mutex> lock(padlock);
          types.push_back(o["type"].asString());
@@ -100,7 +100,9 @@ CATCH_TEST_CASE("Publisher", "[realtime_publish]")
    CATCH_SECTION("sink-errors-are-counted")
    {
       int n_calls = 0;
-      auto sink   = [&](const string&) { return ++n_calls % 2 == 0; };
+      auto sink   = [&](const TrackMessage&, const string&) {
+         return ++n_calls % 2 == 0;
+      };
       Publisher publisher(Publisher::Params{}, {sink}, {});
       CATCH_REQUIRE(publisher.start());
       for(int i = 0; i < 10; ++i) publisher.publish(frame_message(i));

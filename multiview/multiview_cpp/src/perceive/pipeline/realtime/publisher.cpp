@@ -61,7 +61,7 @@ void Publisher::write_(const TrackMessage& msg) noexcept
 {
    const auto line = to_ndjson_line(msg);
    for(const auto& sink : sinks_) {
-      if(sink(line)) continue;
+      if(sink(msg, line)) continue;
       if(n_errors_++ == 0)
          LOG_ERR(format("failed to write a '{}' line", message_type(msg)));
    }

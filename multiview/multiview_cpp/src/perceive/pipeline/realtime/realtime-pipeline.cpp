@@ -10,6 +10,7 @@
 #include "publisher.hpp"
 #include "reorder-buffer.hpp"
 #include "track-messages.hpp"
+#include "ws-server.hpp"
 
 #include "perceive/cost-functions/localization/localization-data.hpp"
 #include "perceive/io/json-io.hpp"
@@ -98,11 +99,13 @@ struct RealtimeRun
    unique_ptr<FrameSlotPool> slots;
    OnlineTracker::Params tracker_params;
    unique_ptr<OnlineTracker> tracker;
+   unique_ptr<WsServer> server;
    unique_ptr<Publisher> publisher;
    std::thread dispatcher;
    std::thread reorder_thread;
    std::atomic<bool> stop_requested  = false;
    std::atomic<bool> dispatcher_done = false;
+   std::atomic<bool> is_streaming    = false; // `stats` exists
    bool is_shut_down                 = false;
    time_point t_start                = {};
    time_point t_end                  = {};
@@ -123,6 +126,7 @@ struct RealtimeRun
    {
       shutdown();
       if(publisher) publisher->close();
+      if(server) server->stop();
       if(out_fp != nullptr) fclose(out_fp);
    }
 
@@ -135,6 +139,8 @@ struct RealtimeRun
    void publish(TrackMessage&& msg) noexcept;
    void check_header(const LocalizationData& loc) noexcept;
    StatsMessage make_stats(time_point now) noexcept;
+   Json::Value health_json() const noexcept;
+   string metrics_text() const noexcept;
    void emit(const FrameRecord& record) noexcept;
    void emit_and_track(FrameRecord&& record) noexcept;
    void on_slot_done(FrameRecord&& record) noexcept;
@@ -281,12 +287,38 @@ bool RealtimeRun::init() noexcept(false)
       return false;
    }
 
+   // ----------------------------------------------- The WebSocket/HTTP server
+   if(rp.ws_port > 0) {
+      WsServer::Params wp;
+      wp.port = uint16_t(rp.ws_port);
+      server  = make_unique<WsServer>(
+          wp,
+          [this]() { return health_json(); },
+          [this]() { return metrics_text(); });
+      if(!server->start()) return false;
+      INFO(format("realtime: serving ws://{}:{}/v1/stream, GET /v1/health "
+                  "and GET /v1/metrics",
+                  wp.address,
+                  server->port()));
+   }
+
    // ------------------------------------------------------------ The publisher
    {
       vector<Publisher::sink_fn> sinks;
-      sinks.push_back([fp = out_fp](const string& line) {
+      sinks.push_back([fp = out_fp](const TrackMessage&, const string& line) {
          return fputs(line.c_str(), fp) >= 0 and fflush(fp) == 0;
       });
+      if(server) // one message per line, without the newline
+         sinks.push_back(
+             [ws = server.get()](const TrackMessage& msg, const string& line) {
+                auto text = string_view(line);
+                if(!text.empty() and text.back() == '\n') text.remove_suffix(1);
+                if(std::holds_alternative<HeaderMessage>(msg))
+                   ws->set_greeting(text);
+                else
+                   ws->broadcast(text);
+                return true;
+             });
       Publisher::Params pp;
       pp.stats_period_s = rp.stats_period_s;
       publisher         = make_unique<Publisher>(
@@ -353,8 +385,9 @@ bool RealtimeRun::init() noexcept(false)
 //
 void RealtimeRun::start() noexcept(false)
 {
-   t_start = steady_clock::now();
-   stats   = make_unique<RealtimeStats>(t_start);
+   t_start      = steady_clock::now();
+   stats        = make_unique<RealtimeStats>(t_start);
+   is_streaming = true;
    publish(header);
    tracker = make_unique<OnlineTracker>(
        scene,
@@ -458,6 +491,28 @@ StatsMessage RealtimeRun::make_stats(time_point now) noexcept
    StatsMessage msg;
    msg.stats = stats->to_json(now);
    return msg;
+}
+
+// ----------------------------------------------------------------- health-json
+// GET /v1/health (server thread)
+//
+Json::Value RealtimeRun::health_json() const noexcept
+{
+   if(!is_streaming) {
+      Json::Value o{Json::objectValue};
+      o["status"] = "starting";
+      return o;
+   }
+   return stats->to_health_json(steady_clock::now());
+}
+
+// ---------------------------------------------------------------- metrics-text
+// GET /v1/metrics (server thread)
+//
+string RealtimeRun::metrics_text() const noexcept
+{
+   if(!is_streaming) return "# starting\n"s;
+   return stats->to_prometheus(steady_clock::now());
 }
 
 // ------------------------------------------------------------------------ emit
@@ -659,6 +714,11 @@ Json::Value RealtimeRun::summary_json() const noexcept
    o["raw_tracks"]         = int(tracker->raw_result().seqs.size());
    o["kept_tracks"]        = int(tracker->final_result().tracks.size());
    o["output"]             = output_filename;
+   o["lines"]              = Json::UInt64(publisher->n_lines());
+   o["line_errors"]        = Json::UInt64(publisher->n_errors());
+   o["ws_port"]            = server ? int(server->port()) : 0;
+   o["ws_sent"]            = server ? Json::UInt64(server->n_sent()) : 0;
+   o["ws_dropped"]         = server ? Json::UInt64(server->n_dropped()) : 0;
 
    Json::Value timings{Json::arrayValue};
    for(unsigned i = 0; i < slots->n_slots(); ++i) {
@@ -735,6 +795,7 @@ bool RealtimeRun::finish() noexcept
    end_msg.output  = output_filename;
    publish(std::move(end_msg));
    publisher->close();
+   if(server) server->stop();
 
    try {
       const auto summary = summary_json();

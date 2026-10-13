@@ -24,8 +24,10 @@ class Publisher
  public:
    using time_point = std::chrono::steady_clock::time_point;
 
-   // Called on the publisher thread; false on error. Must not throw.
-   using sink_fn  = std::function<bool(const string& line)>;
+   // Called on the publisher thread with a message and its line; false on
+   // error. Must not throw.
+   using sink_fn
+       = std::function<bool(const TrackMessage& msg, const string& line)>;
    using stats_fn = std::function<StatsMessage(time_point now)>;
 
    struct Params

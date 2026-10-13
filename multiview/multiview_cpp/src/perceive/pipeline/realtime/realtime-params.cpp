@@ -24,6 +24,7 @@ const vector<MemberMetaData>& RealtimeParams::meta_data() const noexcept
       m.push_back(MAKE_META(ThisParams, REAL, max_seconds, true));
       m.push_back(MAKE_META(ThisParams, REAL, missing_timeout_s, true));
       m.push_back(MAKE_META(ThisParams, BOOL, publish_provisional, false));
+      m.push_back(MAKE_META(ThisParams, UNSIGNED, ws_port, false));
       return m;
    };
    static vector<MemberMetaData> meta_ = make_meta();
@@ -74,6 +75,7 @@ string RealtimeParams::validate() const noexcept
    if(!(max_seconds >= 0.0)) errors.push_back("--max-seconds must be >= 0"s);
    if(!(missing_timeout_s > 0.0))
       errors.push_back("--missing-timeout must be > 0"s);
+   if(ws_port > 65535) errors.push_back("--ws-port must be in [0, 65535]"s);
    return implode(cbegin(errors), cend(errors), "; ");
 }
 
@@ -109,6 +111,8 @@ bool parse_realtime_arg(RealtimeParams& p,
       p.max_seconds = cli::safe_arg_real(argc, argv, i);
    } else if(arg == "--missing-timeout"s) {
       p.missing_timeout_s = cli::safe_arg_real(argc, argv, i);
+   } else if(arg == "--ws-port"s) {
+      p.ws_port = unsigned(std::max(0, cli::safe_arg_int(argc, argv, i)));
    } else if(arg == "--no-provisional"s) {
       p.publish_provisional = false;
    } else if(arg == "--print-frame-mapping"s) {
@@ -144,6 +148,9 @@ string realtime_args_help() noexcept
       --missing-timeout <s>  Give up on a frame after this long (drop newest
                              only). Default: {}.
       --no-provisional       Do not write 'frame' lines.
+      --ws-port <port>       Serve the stream (WebSocket /v1/stream), and
+                             GET /v1/health and /v1/metrics, on this port
+                             (0: no server). Default: {}.
       --print-frame-mapping  Print 'k movie-frame' for every scene frame k
                              (see --target-fps), and exit.
 )V0G0N",
@@ -155,7 +162,8 @@ string realtime_args_help() noexcept
                  o.match_radius,
                  o.stats_period_s,
                  o.max_seconds,
-                 o.missing_timeout_s);
+                 o.missing_timeout_s,
+                 o.ws_port);
 }
 
 } // namespace perceive::pipeline::realtime
