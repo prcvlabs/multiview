@@ -86,7 +86,7 @@ CATCH_TEST_CASE("S3EnvironmentVariables", "[s3]")
    }
 }
 
-// ----------------------------------------------------------------- s3-live-io
+// ------------------------------------------------------------------ s3-live-io
 //
 // Needs a bucket: MULTIVIEW_S3_TEST_PREFIX=s3://<bucket>/<prefix>, with the
 // endpoint in MULTIVIEW_S3_ENDPOINT and the keys in AWS_ACCESS_KEY_ID and
