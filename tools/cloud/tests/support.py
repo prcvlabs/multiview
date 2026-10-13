@@ -5,6 +5,7 @@ fake multiview-cli. Run the tests with
 """
 
 import json
+import logging
 import os
 import stat
 import sys
@@ -13,6 +14,9 @@ k_tests_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(k_tests_dir), "agent"))
 
 from mvcloud import storage  # noqa: E402
+
+if not os.environ.get("MVCLOUD_TEST_LOG"):
+    logging.getLogger("mvcloud").addHandler(logging.NullHandler())
 
 
 # ------------------------------------------------------------------- make_scene
