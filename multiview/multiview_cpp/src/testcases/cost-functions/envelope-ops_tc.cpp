@@ -4,6 +4,7 @@
 #include "perceive/contrib/catch.hpp"
 #include "perceive/cost-functions/localization/envelope-ops.hpp"
 #include "perceive/utils/file-system.hpp"
+#include "testcases/testcase-data.hpp"
 
 namespace perceive::ldata
 {
@@ -281,11 +282,8 @@ CATCH_TEST_CASE("EnvelopeInfo", "[ldata]")
 //
 CATCH_TEST_CASE("CatEnvelopesTestcase007", "[ldata]")
 {
-   const char* data_dir = getenv("MULTIVIEW_TESTCASE_DATA");
-   const string fname   = format(
-       "{}/cloud-golden/007/ref-120.data",
-       data_dir != nullptr ? string(data_dir)
-                             : format("{}/multiview-data", getenv("HOME")));
+   const string fname = format("{}/cloud-golden/007/ref-120.data",
+                               test::testcase_data_dir());
    if(!is_regular_file(fname)) {
       WARN(format("file '{}' not found (tools/cloud/tests/make_reference.sh "
                   "writes it), skipping test",

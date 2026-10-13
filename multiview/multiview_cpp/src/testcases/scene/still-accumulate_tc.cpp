@@ -5,23 +5,21 @@
 #include "perceive/io/json-io.hpp"
 #include "perceive/scene/scene-description.hpp"
 #include "perceive/utils/file-system.hpp"
+#include "testcases/testcase-data.hpp"
 
 namespace perceive
 {
-// ------------------------------------------------------- testcase-manifest
+// ----------------------------------------------------------- testcase-manifest
 // The manifest of testcase 007, if it has been fetched
 // (build/fetch-testcases.sh 7).
 
 static string testcase_manifest_filename() noexcept
 {
-   const char* data_dir = getenv("MULTIVIEW_TESTCASE_DATA");
-   const string root    = (data_dir != nullptr)
-                              ? string(data_dir)
-                              : format("{}/multiview-data", getenv("HOME"));
-   return format("{}/testcases/007_site03_sparse_tracks/manifest.json", root);
+   return format("{}/testcases/007_site03_sparse_tracks/manifest.json",
+                 test::testcase_data_dir());
 }
 
-// ----------------------------------------------------------------- testcase
+// -------------------------------------------------------------------- testcase
 // Hidden: initialising a scene decodes a frame of every camera, and loads
 // (or, when they are not cached, regenerates for minutes) the undistort
 // maps of every sensor. Run it by name: multiview-testcases "[.still]"
