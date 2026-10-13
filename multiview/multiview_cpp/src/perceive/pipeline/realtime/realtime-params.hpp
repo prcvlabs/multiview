@@ -20,7 +20,7 @@ struct RealtimeParams final : public MetaCompatible
    real replay_rate = -1.0;
 
    string drop_policy           = "auto"s; // "newest", "none", or "auto"
-   unsigned n_slots             = 2;       // frames in flight
+   unsigned n_slots             = 1;       // frames in flight
    unsigned ring_size           = 0;       // decoded frames; 0: n_slots + 4
    unsigned still_sample_period = 15;      // frames between still samples
    unsigned still_max_frames    = 900;     // per sensor; 0: no limit
