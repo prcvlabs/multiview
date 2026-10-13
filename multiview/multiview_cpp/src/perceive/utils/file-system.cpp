@@ -151,6 +151,21 @@ error_code file_put_contents(const std::string_view fname,
    return file_put_contents(fname, std::string_view(&dat[0], dat.size()));
 }
 
+// ---------------------------------------------------- file-put-contents-atomic
+
+error_code file_put_contents_atomic(const std::string_view fname,
+                                    const std::string_view dat) noexcept
+{
+   const std::string filename  = std::string(fname);
+   const std::string tmp_fname = filename + ".tmp";
+
+   error_code ec = file_put_contents(tmp_fname, dat);
+   if(!ec and std::rename(tmp_fname.c_str(), filename.c_str()) != 0)
+      ec = std::make_error_code(std::errc(errno));
+   if(ec) delete_file(tmp_fname);
+   return ec;
+}
+
 // --------------------------------------------------- basename/dirname/file_ext
 
 /**

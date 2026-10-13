@@ -30,6 +30,12 @@ error_code file_put_contents(const std::string_view fname,
 error_code file_put_contents(const std::string_view fname,
                              const std::vector<char>& dat) noexcept;
 
+// Writes `fname.tmp`, then renames it to `fname`. Readers never see a
+// partially written `fname`, and on failure the old `fname` (if any) is left
+// untouched and the temporary is removed.
+error_code file_put_contents_atomic(const std::string_view fname,
+                                    const std::string_view dat) noexcept;
+
 inline void file_put_contents(const std::string_view fname,
                               const char* dat) noexcept(false)
 {
