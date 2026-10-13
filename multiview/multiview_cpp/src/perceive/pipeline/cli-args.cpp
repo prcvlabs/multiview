@@ -112,9 +112,9 @@ void show_help(string argv0) noexcept
                             frames, and are NOT saved to disk.
       --still-warmup <int>  Decode the <int> frames before --start, adding
                             them to the still only. Default is 0.
-      --no-still            Do not accumulate the still. Localization data
-                            does not change with --no-stereo, but the tracks
-                            do: the pose classifier reads the still.
+      --no-still            Do not accumulate the still. With --no-stereo
+                            the localization data does not change; the tracks
+                            do, because the pose classifier reads the still.
 
       --verbosity <integer> 0, 1, or 2, with '2' being most verbose.
                             Default is {}.
@@ -446,6 +446,11 @@ CliArgs parse_command_line(
       and !config.pose_classifier.empty()) {
       WARN(format("--no-still changes the pose classifier's input, and so the "
                   "pose labels of the tracks"));
+   }
+
+   if(config.no_still and !config.no_stereo) {
+      WARN(format("--no-still without --no-stereo changes the localization "
+                  "data: the floor histogram weighs points by the still"));
    }
 
    if(config.require_aligned and !config.generate_tracks) {
