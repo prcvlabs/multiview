@@ -62,8 +62,10 @@ string RealtimeParams::validate() const noexcept
       errors.push_back(format("--slots must be in [1, {}]", k_max_slots));
    if(drop_policy != "auto"s and drop_policy != "newest"s
       and drop_policy != "none"s)
-      errors.push_back(
-          format("--drop must be 'newest' or 'none', not '{}'", drop_policy));
+      errors.push_back(format(
+          "--drop must be 'auto', 'newest' or 'none', not '{}'", drop_policy));
+   if(drop_policy == "newest"s and replay_rate == 0.0)
+      errors.push_back("--drop newest needs a paced --replay-rate"s);
    if(!std::isfinite(replay_rate))
       errors.push_back("--replay-rate must be a number"s);
    if(ndjson_path.empty()) errors.push_back("--out must not be empty"s);
@@ -125,9 +127,10 @@ string realtime_args_help() noexcept
 
       --replay-rate <fps>    Replay the videos at this rate. 0 is as fast as
                              frames are taken (no drops). Default: scene fps.
-      --drop <newest|none>   When every slot is busy: drop the frames waiting
-                             and take the newest, or wait. Default: newest
-                             when paced, none when unpaced.
+      --drop <auto|newest|none>
+                             When every slot is busy: drop the frames waiting
+                             and take the newest, or wait. 'auto' (default)
+                             is newest when paced, none when unpaced.
       --slots <n>            Frames in flight, 1..{}. Default: {}.
       --ring <n>             Decoded frames held. Default: slots + 4.
       --still-every <n>      Add every n-th frame to the still. Default: {}.

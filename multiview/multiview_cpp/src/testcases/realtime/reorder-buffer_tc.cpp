@@ -85,6 +85,31 @@ CATCH_TEST_CASE("ReorderBuffer", "[realtime_reorder]")
       CATCH_REQUIRE(buffer.next_frame_no() == 12);
    }
 
+   CATCH_SECTION("overlapping-drop-ranges")
+   {
+      // [5, 10] then [7, 8] and [3, 12] for other reasons: every frame is
+      // returned once, with the reason of the first range that had it
+      ReorderBuffer buffer(3);
+      buffer.push_drop(5, 10, DropReason::NO_FREE_SLOT, t0);
+      buffer.push_drop(7, 8, DropReason::TRACKER_BEHIND, t0);
+      buffer.push_drop(3, 12, DropReason::SOURCE_BEHIND, t0);
+      buffer.push_drop(9, 14, DropReason::SOURCE_BEHIND, t0);
+      CATCH_REQUIRE(buffer.push(make_record(15), t0));
+      const auto out = pop_all(buffer, t0);
+      CATCH_REQUIRE(
+          frame_nos(out)
+          == vector<int>{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+      for(int k = 3; k <= 14; ++k) {
+         const auto& record = out[size_t(k - 3)];
+         CATCH_REQUIRE(record.is_dropped());
+         const auto expected = (k >= 5 and k <= 10) ? DropReason::NO_FREE_SLOT
+                                                    : DropReason::SOURCE_BEHIND;
+         CATCH_REQUIRE(record.drop_reason == expected);
+      }
+      CATCH_REQUIRE(!out.back().is_dropped());
+      CATCH_REQUIRE(buffer.next_frame_no() == 16);
+   }
+
    CATCH_SECTION("missing-timeout")
    {
       ReorderBuffer buffer(0, 5s);

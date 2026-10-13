@@ -141,8 +141,8 @@ vector<LiveTrack> live_tracks(const Tracks& window) noexcept
    vector<LiveTrack> out;
    try {
       auto to_X = [&window](const tracks::Node& node) {
-         return Vector2(real(node.xy().x) * window.hist_sz + window.aabb.left,
-                        real(node.xy().y) * window.hist_sz + window.aabb.top);
+         return FloorHistogram::unproject_hist_xy(
+             node.xy(), window.aabb.top_left(), window.hist_sz);
       };
 
       for(const auto& seq : window.seqs) {

@@ -204,8 +204,14 @@ bool RealtimeRun::init() noexcept(false)
       const auto& fp = in_params.params.fowlkes_params;
       const KzFilter filter(int(fp.smooth_kz_filter_m),
                             int(fp.smooth_kz_filter_k));
+      // As `floor_hist` does; with no area it would FATAL on a pool thread
       AABB bounds = scene->scene_info.hist_bounds;
       if(!bounds.is_finite()) bounds = AABB{-5.0, -5.0, 5.0, 5.0};
+      if(!(bounds.area() > 0.0)) {
+         LOG_ERR(format("the scene's histogram bounds have no area: {}",
+                        str(bounds)));
+         return false;
+      }
       header.scene       = scene->scene_info.scene_key;
       header.n_cameras   = scene->n_cameras();
       header.fps         = scene->scene_fps;

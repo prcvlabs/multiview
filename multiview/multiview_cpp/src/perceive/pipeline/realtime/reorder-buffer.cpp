@@ -130,7 +130,30 @@ bool ReorderBuffer::push(FrameRecord&& record, time_point now) noexcept
    return true;
 }
 
+// ----------------------------------------------------------------- insert-drop
+// The caller holds `padlock_`, and no range has a frame in [from, to].
+//
+void ReorderBuffer::insert_drop_(int from, int to, DropReason reason) noexcept
+{
+   // Coalesce with a range that ends just before, for the same reason
+   auto ii = drops_.upper_bound(from);
+   if(ii != cbegin(drops_)) {
+      auto& prev = std::prev(ii)->second;
+      if(prev.reason == reason and prev.to + 1 == from) {
+         prev.to = to;
+         return;
+      }
+   }
+
+   DropRange range;
+   range.to     = to;
+   range.reason = reason;
+   drops_[from] = range;
+}
+
 // ------------------------------------------------------------------- push-drop
+// Frames already in a range keep its reason; the rest of [from, to] go into
+// new ranges, so that ranges never overlap.
 //
 void ReorderBuffer::push_drop(int from,
                               int to,
@@ -141,21 +164,19 @@ void ReorderBuffer::push_drop(int from,
    from = std::max(from, next_frame_no_);
    if(to < from) return;
 
-   // Coalesce with a range that ends just before, for the same reason
-   auto ii = drops_.upper_bound(from);
-   if(ii != cbegin(drops_)) {
-      auto& prev = *std::prev(ii);
-      if(prev.second.reason == reason and prev.second.to + 1 >= from) {
-         prev.second.to = std::max(prev.second.to, to);
-         update_blocked_(now);
-         return;
+   while(true) {
+      const auto drop_ptr = find_drop_(from);
+      int last            = to; // [from, last] is all in a range, or in none
+      if(drop_ptr != nullptr) {
+         last = std::min(to, drop_ptr->to);
+      } else {
+         const auto next = drops_.upper_bound(from);
+         if(next != cend(drops_)) last = std::min(to, next->first - 1);
+         insert_drop_(from, last, reason);
       }
+      if(last == to) break;
+      from = last + 1;
    }
-
-   DropRange range;
-   range.to     = to;
-   range.reason = reason;
-   drops_[from] = range;
    update_blocked_(now);
 }
 

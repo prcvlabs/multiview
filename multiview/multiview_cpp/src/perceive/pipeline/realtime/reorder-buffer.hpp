@@ -43,6 +43,7 @@ class ReorderBuffer
    uint64_t n_expired_       = 0;
 
    const DropRange* find_drop_(int frame_no) const noexcept;
+   void insert_drop_(int from, int to, DropReason reason) noexcept;
    bool has_later_(int frame_no) const noexcept;
    void update_blocked_(time_point now) noexcept;
    FrameRecord pop_next_() noexcept;
@@ -65,7 +66,8 @@ class ReorderBuffer
    // False if the record is late, and was discarded
    bool push(FrameRecord&& record, time_point now) noexcept;
 
-   // Frames [from, to] were dropped for `reason`
+   // Frames [from, to] were dropped for `reason`. A frame that is already in
+   // a dropped range keeps the reason it has.
    void push_drop(int from, int to, DropReason reason, time_point now) noexcept;
 
    // The next frame in order, if it is in, or has expired at `now`
