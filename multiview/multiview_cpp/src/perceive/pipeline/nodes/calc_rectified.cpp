@@ -92,9 +92,11 @@ Task::execute(const RunData& data,
 
    if(is_cancelled()) return nullptr;
 
+   // With no stereo, nothing reads the rectified image: `disp_init` makes
+   // empty point clouds, and `FloorHistogram` stops before it uses them
    const cv::Mat& in = ret->image_result->equal;
 
-   if(!in.empty()) {
+   if(!in.empty() and !scene_desc.is_no_stereo()) {
       const auto interpolation = int(params.interpolation_method);
       const auto& maps         = ret->mapping_result->mapxy_gpu;
       if(params.use_cuda_if_available and cuda::cuda_is_available()
