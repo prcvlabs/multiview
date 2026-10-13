@@ -84,6 +84,12 @@ struct SceneDescription
    int current_frame_no() const noexcept;
    int n_frames() const noexcept;
 
+   // The input videos, one per camera; frame counts are 0 for still images
+   real movie_fps() const noexcept;
+   int n_movie_frames() const noexcept; // after the offsets
+   int movie_frame_count(int cam_no) const noexcept;
+   int movie_frame_offset(int cam_no) const noexcept;
+
    string to_string() const noexcept;
 
    bool advance_one_frame_();      // thread-safe with 'get_images_for_frame'

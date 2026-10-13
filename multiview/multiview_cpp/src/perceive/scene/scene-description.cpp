@@ -282,6 +282,20 @@ int This::current_frame_no() const noexcept
 }
 
 int This::n_frames() const noexcept { return pimpl_->n_scene_frames; }
+real This::movie_fps() const noexcept { return pimpl_->movie_fps; }
+int This::n_movie_frames() const noexcept { return pimpl_->n_movie_frames; }
+
+int This::movie_frame_count(int cam_no) const noexcept
+{
+   Expects(size_t(cam_no) < pimpl_->movie_frame_counts.size());
+   return pimpl_->movie_frame_counts[size_t(cam_no)];
+}
+
+int This::movie_frame_offset(int cam_no) const noexcept
+{
+   Expects(size_t(cam_no) < pimpl_->movie_frame_offsets.size());
+   return pimpl_->movie_frame_offsets[size_t(cam_no)];
+}
 
 bool This::has_current_frame() const noexcept
 {
