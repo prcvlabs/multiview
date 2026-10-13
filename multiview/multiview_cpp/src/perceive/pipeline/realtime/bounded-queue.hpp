@@ -155,9 +155,8 @@ template<typename T> bool BoundedQueue<T>::push(T value)
    {
       std::unique_lock<std::mutex> lock(padlock_);
       if(!drop_oldest_)
-         not_full_.wait(lock, [this]() {
-            return is_closed_ || size_ < capacity_;
-         });
+         not_full_.wait(lock,
+                        [this]() { return is_closed_ || size_ < capacity_; });
       if(is_closed_) return false;
       push_locked_(std::move(value));
    }
@@ -230,9 +229,8 @@ template<typename T> std::optional<T> BoundedQueue<T>::try_pop() noexcept
 template<typename T> bool BoundedQueue<T>::wait_for_room(size_t n) const
 {
    std::unique_lock<std::mutex> lock(padlock_);
-   not_full_.wait(lock, [this, n]() {
-      return is_closed_ || size_ + n <= capacity_;
-   });
+   not_full_.wait(lock,
+                  [this, n]() { return is_closed_ || size_ + n <= capacity_; });
    return !is_closed_;
 }
 

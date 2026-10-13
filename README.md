@@ -205,6 +205,7 @@ Run `multiview-cli -h` for the list of commands, and
       distortion_calib             Distortion calibration.
       phase_camera_extrinsic       Method for positioning cameras in 3D space.
       pipeline                     The multiview pipeline!
+      realtime                     The pipeline on frames as they arrive, to NDJSON.
       position_scene_cameras       global camera position optimization.
       render_floor_map             Create a floor map from the 3D point cloud.
       sprite_main                  front-end for viewing 3D models using the `assimp` library.
@@ -244,6 +245,26 @@ with the same layout (e.g. `calibration/scenes/<scene-key>.json`), set
 Cached data, such as undistortion maps, is written to `MULTIVIEW_CACHE_DIR`
 (default `~/.cache/multiview-data/cache`), never to the asset directory.
 
+### Real-time tracking
+
+`multiview-cli realtime` takes the same flags as `pipeline` and processes the
+frames as they arrive: the videos are replayed at a wall-clock rate, each frame
+goes through the per-frame pipeline in one of `--slots` copies, dropped when
+none is free, and the tracker publishes provisional positions per frame, then
+tracks per 10-frame window, as one JSON object per line:
+
+```
+$CLI realtime -m $TC/manifest.json -p params.json -d /tmp/rt -y --no-stereo \
+    --pose-classifier pose-svm-lite_v0 --out /tmp/rt/stream.ndjson
+```
+
+Unpaced and without drops (`--replay-rate 0 --drop none`) its
+`pipeline-output.json` equals the batch output exactly. On this repository's
+test machine (RTX 3090, 12 threads) it processes about 1 frame per second on
+9 cameras, so a 15 fps feed is mostly dropped; see
+[doc/realtime.md](doc/realtime.md) for the protocol, the measurements and
+what limits the rate.
+
 ## 5. Developing
 
 ```
@@ -260,7 +281,8 @@ build/dev.sh build [--hyperpose]       # build this worktree (one build at a tim
 build/dev.sh test "[tracks]"           # unit tests, optionally one Catch tag
 build/dev.sh replay                    # once: 2D poses of testcase 007 for `smoke` (better: the poses of the original videos, see tools/privacy/README.md)
 build/dev.sh smoke                     # 120 frames of 007 with replayed poses, scored against the reference
-build/dev.sh check                     # build + test + smoke
+build/dev.sh rt-smoke                  # the same through `realtime`, which must equal the batch output exactly
+build/dev.sh check                     # build + test + smoke + rt-smoke
 ```
 
 Rebuilds are incremental across commits: the git version string is compiled
