@@ -7,7 +7,10 @@
 #
 # Usage: tools/cloud/docker/build-image.sh [-t tag] [--commit rev | --worktree]
 #                                          [--cuda-archs "86;89"] [--jobs N]
-#   default tag mvcloud:dev; other arguments go to `docker build`.
+#   default tag mvcloud:dev, 4 compile jobs; other arguments go to
+#   `docker build`. The compile runs inside dockerd, outside nice and capped,
+#   so the build is held to --memory 24g (an OOM there must not reach the
+#   desktop session).
 
 set -euo pipefail
 
@@ -17,7 +20,7 @@ TAG=mvcloud:dev
 COMMIT=HEAD
 WORKTREE=0
 CUDA_ARCHS="86;89"
-JOBS=6
+JOBS=4
 EXTRA=()
 while [ "$#" -gt 0 ] ; do
     case "$1" in
@@ -49,6 +52,6 @@ context()
         git -C "$ROOT" archive --format=tar "$COMMIT"
     fi
 }
-context | docker build -f tools/cloud/docker/Dockerfile -t "$TAG" \
+context | docker build -f tools/cloud/docker/Dockerfile -t "$TAG" --memory 24g \
         --build-arg CUDA_ARCHS="$CUDA_ARCHS" --build-arg JOBS="$JOBS" \
         --build-arg MULTIVIEW_VERSION="$VERSION" "${EXTRA[@]}" -

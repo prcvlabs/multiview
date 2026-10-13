@@ -3,9 +3,11 @@
 `tools/cloud` runs the C++ tracking pipeline over long scenes and many scenes by
 cutting each scene into time windows ("loc shards") that any GPU machine can
 compute, then running the tracker once per scene over the concatenated
-results ("the tracks job"). With `--no-stereo` and replayed 2D poses the result
-is byte-identical to one batch run of the same frames; that equality, not a
-score, is the acceptance test.
+results ("the tracks job"). With `--no-stereo` and replayed 2D poses the
+shards' localization data is byte-identical to one batch run's, and the tracks
+job's track results and score equal the batch run's except `fp_info.lab_p`,
+which depends on the still image (accumulated over different frames); that
+equality, not a score against ground truth, is the acceptance test.
 
 | Piece | Where | State |
 |---|---|---|
@@ -114,7 +116,7 @@ manifests only.
 ### The container
 
 ```
-tools/cloud/docker/build-image.sh [-t mvcloud:dev] [--commit HEAD | --worktree] [--cuda-archs "86;89"] [--jobs 6]
+tools/cloud/docker/build-image.sh [-t mvcloud:dev] [--commit HEAD | --worktree] [--cuda-archs "86;89"] [--jobs 4]
 docker run --gpus all --memory 24g -v mvcloud-cache:/cache -v /data/root:/data/root \
     mvcloud:dev --control fs:///data/root --drain
 ```
@@ -134,7 +136,10 @@ runs the shard uncapped): use `docker run --memory`.
 
 What was tried here (`tools/cloud/tests/t8_container.sh`): the image is
 4.8 GB (the pruned micromamba env is 4.7 GB of it) and builds in 16-18
-minutes with 4 compile jobs on this machine. Without a GPU (no
+minutes with 4 compile jobs on this machine. The compile runs inside dockerd,
+not niced and not under `capped`, so `build-image.sh` passes
+`docker build --memory 24g`; the legacy builder (Docker 29 without buildx,
+as here) applies it to every `RUN` step, BuildKit does not. Without a GPU (no
 nvidia-container-toolkit here), a 20-frame 007 loc shard with replayed
 poses and `use_slic_cuda_if_available` false runs in 29.5 s and its
 envelope equals the GPU-built reference byte for byte. A fresh `/cache`
@@ -193,8 +198,8 @@ scenes/<scene_id>/<camera>.mp4
 scenes/<scene_id>/params.json              a reference run's params.json; the agent sets replay_dir / use_hyperpose
 scenes/<scene_id>/poses.tar                pose-2d_<frame:06d>_<sensor:02d>.json (replay mode), uncompressed
 scenes/<scene_id>/ground-truth.json        optional (scoring)
-scenes/<scene_id>/scene-info.json          `multiview-cli scene_info -p params.json` at upload time (frames, sensors, K)
-cache/undistort/<basename>.mdata           inverse_<sensor>_*.mdata, ~40 MB each, so fresh workers skip regenerating them
+scenes/<scene_id>/scene-info.json          `multiview-cli scene_info -p params.json` at upload time (frames, sensors, K) (planned; not built)
+cache/undistort/<basename>.mdata           inverse_<sensor>_*.mdata, ~40 MB each, so fresh workers skip regenerating them (planned; not built)
 engines/<digest>.plan, <digest>.json       TensorRT plans per GPU type (deferred: workers keep them in /cache)
 jobs/<job_id>/job.json
 jobs/<job_id>/shards/loc-0003/a2/{localization.data, params.json, run-object.json, stdout.log, poses.tar?, done.json}
@@ -279,5 +284,5 @@ why the HyperPose smoke (T6) records its agreement instead of a score.
 | Budget for cloud GPUs, or the local machine plus occasional spot? | The local 3090 is the first worker (the agent shares the GPU lock with development work). Rent spot/community GPUs only to shorten a pass; the cost is small (section 4) and the image is meant to run anywhere with `--gpus all` (its GPU path is untested here). |
 | R2 primary with Hugging Face as a mirror, or Hugging Face only? | R2 as the working store (S3 API, no egress fees, presigned URLs for workers), Hugging Face as the public mirror and dataset card. The C++ client reaches R2 with `MULTIVIEW_S3_ENDPOINT`. |
 | Licensing for a hosted service (AGPL-3.0 Ultralytics models in `tools/privacy`) | No hosted service until the detector licences are settled: besides the AGPL detectors, the OpenPose-derived COCO weights used through HyperPose carry CMU's non-commercial licence (to verify). Running the corpus on our own hardware is unaffected. |
-| Does a windowed run score within noise of a full run? | With `--no-stereo` it is identical, byte for byte, by construction: loc shards share no state, and one tracks job runs the unchanged tracker over all frames. Stereo needs the warm-up calibration (T9), not done yet. |
+| Does a windowed run score within noise of a full run? | With `--no-stereo` it scores the same, by construction: loc shards share no state, so their localization data is byte-identical to a full run's, and one tracks job runs the unchanged tracker over all frames, so its tracks and score equal the full run's except `fp_info.lab_p`, which depends on the still. Stereo needs the warm-up calibration (T9), not done yet. |
 | Crash rate x fan-out | Shards are idempotent and retried (3 attempts), and the agent's watchdog kills a hung child. The crash rate itself is not measured (the plan's T7/T7b runs were not done). One observation: a `FATAL` on a pool thread (a missing HyperPose model) aborted twice and hung once until killed, which is issue #13's exit-from-worker hazard; its fixes stay a prerequisite for a 1,000-shard pass. |

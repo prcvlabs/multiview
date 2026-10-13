@@ -250,9 +250,11 @@ A long scene can be cut into time windows that separate processes or
 machines compute, followed by one tracker run over the whole scene:
 `pipeline --start S --n-frames N --save-loc-data --no-tracks` writes a window's
 localization data, and `pipeline --load-loc-data <file>...` (repeatable) with
-`--require-aligned` tracks the concatenation; with `--no-stereo` the result is
-byte-identical to one run over all frames. `--no-still` skips the still image
-in no-stereo windows, and `--still-warmup W` warms it up in stereo ones.
+`--require-aligned` tracks the concatenation; with `--no-stereo` the windows'
+localization data is byte-identical to one run over all frames, and the tracks
+and score equal that run's except `fp_info.lab_p`, which depends on the still.
+`--no-still` skips the still image in no-stereo windows, and
+`--still-warmup W` warms it up in stereo ones.
 `multiview-cli ldata` inspects, concatenates and compares localization-data
 files, `score` scores a `pipeline-output.json` against ground truth or another
 run, and `scene_info` prints a scene's frame count, sensors and tracker window.

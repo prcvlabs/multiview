@@ -73,7 +73,8 @@ trap cleanup EXIT
 export AWS_ACCESS_KEY_ID=mvcloud AWS_SECRET_ACCESS_KEY=mvcloud-t10-secret
 export MULTIVIEW_S3_ENDPOINT="http://127.0.0.1:$PORT"
 docker rm -f -v "$NAME" > /dev/null 2>&1 || true
-if ! docker pull -q "$IMAGE" > "$OUT/pull.log" 2>&1 ; then
+if ! docker image inspect "$IMAGE" > /dev/null 2>&1 \
+        && ! docker pull -q "$IMAGE" > "$OUT/pull.log" 2>&1 ; then
     echo "t10: SKIP: cannot pull $IMAGE ($(tail -n 1 "$OUT/pull.log"))"
     exit 0
 fi
