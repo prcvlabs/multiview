@@ -83,7 +83,7 @@ calc_id_remap(const vector<NodeSequence>& before,
 //
 struct OnlineTracker::Pimpl
 {
-   // ------------------------------------------------------------ Construction
+   // ------------------------------------------------------------- Construction
    shared_ptr<const SceneDescription> scene;
    Params p;
    publish_fn publish;
@@ -102,7 +102,7 @@ struct OnlineTracker::Pimpl
    std::atomic<int> n_windows  = 0;
    bool is_finished            = false;
 
-   // ----------------------------------------------------- Tracker thread only
+   // ------------------------------------------------------ Tracker thread only
    bool is_failed = false;
    int next_frame = 0;
    bool has_good  = false;
@@ -116,7 +116,7 @@ struct OnlineTracker::Pimpl
    TrackStream stream;
    TrackerResult header; // what `calc_fp_info` reads besides the sequence
 
-   // ----------------------------------------------------------------- Results
+   // ------------------------------------------------------------------ Results
    int n_frames_pushed = 0;
    TrackerResult raw;
    FowlkesResult presmooth;
@@ -178,20 +178,24 @@ struct OnlineTracker::Pimpl
       return std::min((frame_no / K + 1) * K, p.end_frame) - 1;
    }
 
-   // ------------------------------------------------------------------ fail
+   // --------------------------------------------------------------------- fail
    //
    void fail(int window_idx, const string& reason) noexcept
    {
-      LOG_ERR(format("tracking window {}: {}", window_idx, reason));
       is_failed = true;
       has_error = true;
-      WindowErrorMessage msg;
-      msg.window = window_idx;
-      msg.reason = reason;
-      publish(std::move(msg));
+      try {
+         LOG_ERR(format("tracking window {}: {}", window_idx, reason));
+         WindowErrorMessage msg;
+         msg.window = window_idx;
+         msg.reason = reason;
+         publish(std::move(msg));
+      } catch(std::exception& e) {
+         LOG_ERR(format("exception reporting a tracking error: {}", e.what()));
+      }
    }
 
-   // ---------------------------------------------------------------- fp-info
+   // ------------------------------------------------------------------ fp-info
    // The batch keep/drop rule on the sequence so far; not a true positive if
    // a node has no `prob_fp` (where `calc_fp_info` would not return)
    TrackFalsePositiveInfo fp_info(const NodeSequence& seq) const
@@ -204,7 +208,7 @@ struct OnlineTracker::Pimpl
                       : TrackFalsePositiveInfo{};
    }
 
-   // ----------------------------------------------------------------- to-X
+   // --------------------------------------------------------------------- to-X
    //
    Vector2 to_X(const Vector2f& xy) const noexcept
    {
@@ -212,7 +216,7 @@ struct OnlineTracker::Pimpl
           xy, header.top_left, header.hist_sz);
    }
 
-   // --------------------------------------------------------- frame-points
+   // ------------------------------------------------------------- frame-points
    // The nodes of `seqs` at frames [start, start + n), by frame
    vector<vector<TrackPoint>>
    frame_points(const vector<NodeSequence>& seqs,
@@ -247,7 +251,7 @@ struct OnlineTracker::Pimpl
       return out;
    }
 
-   // ------------------------------------------------------- publish-tracked
+   // ---------------------------------------------------------- publish-tracked
    // Revision 0 of the newest window
    void publish_tracked(const Tracks& tracks,
                         const vector<FrameTimeline>& frame_timelines)
@@ -288,7 +292,7 @@ struct OnlineTracker::Pimpl
       }
    }
 
-   // ------------------------------------------------------- publish-revised
+   // ---------------------------------------------------------- publish-revised
    // Revision 1 of `revised`, which `newest` has just rewritten (`newest`
    // is null at the end of the stream), with the smoothed points and the
    // tracks that ended
@@ -367,7 +371,7 @@ struct OnlineTracker::Pimpl
       }
    }
 
-   // --------------------------------------------------------------- validate
+   // ----------------------------------------------------------------- validate
    // Empty if the window in `frames` may be given to the window code;
    // otherwise why not. These are the window code's preconditions.
    string validate(int t0, int n) const
@@ -427,7 +431,7 @@ struct OnlineTracker::Pimpl
       return ""s;
    }
 
-   // ----------------------------------------------------------- fill-gaps
+   // ---------------------------------------------------------------- fill-gaps
    // Gives every dropped frame of `frames` an empty localization and the
    // images of the last good frame (or, before any, of the window's first
    // good frame). False if there is no good frame to borrow from.
@@ -462,7 +466,7 @@ struct OnlineTracker::Pimpl
       return true;
    }
 
-   // ----------------------------------------------------------- close-window
+   // ------------------------------------------------------------- close-window
    //
    void close_window()
    {
@@ -545,7 +549,7 @@ struct OnlineTracker::Pimpl
       publish_tracked(windows.back(), timelines.back());
    }
 
-   // -------------------------------------------------------------- on-record
+   // ---------------------------------------------------------------- on-record
    //
    void on_record(FrameRecord&& record)
    {
@@ -564,7 +568,7 @@ struct OnlineTracker::Pimpl
       if(frame_no == window_last(frame_no)) close_window();
    }
 
-   // ----------------------------------------------------------------- on-end
+   // ------------------------------------------------------------------- on-end
    // The last (maybe partial) window, and its revision
    void on_end()
    {
@@ -573,7 +577,7 @@ struct OnlineTracker::Pimpl
          publish_revised(windows.back(), nullptr, {}, timelines.back());
    }
 
-   // -------------------------------------------------------------------- run
+   // ---------------------------------------------------------------------- run
    //
    void run() noexcept
    {
@@ -599,7 +603,7 @@ struct OnlineTracker::Pimpl
       }
    }
 
-   // ------------------------------------------------------------------- stop
+   // --------------------------------------------------------------------- stop
    //
    void stop() noexcept
    {
@@ -704,19 +708,28 @@ void OnlineTracker::finish() noexcept
    P.stop();
 
    P.n_frames_pushed = P.next_frame - P.p.start_frame;
-   if(P.windows.empty()) return;
 
-   vector<const Tracks*> windows;
-   windows.reserve(P.windows.size());
-   for(const auto& tracks : P.windows) windows.push_back(&tracks);
-   P.raw          = make_tracker_result(windows,
-                               P.p.start_frame,
-                               P.n_frames_pushed,
-                               P.header.top_left,
-                               P.header.hist_sz,
-                               P.p.frame_duration);
-   P.final_result = finalise_tracks(
-       P.raw, P.p.post_process, P.p.fowlkes_params, &P.presmooth);
+   // A failed window may have rewritten the one before it in place, so the
+   // chain is not concatenated after an error
+   if(P.windows.empty() or P.has_error) return;
+
+   try {
+      vector<const Tracks*> windows;
+      windows.reserve(P.windows.size());
+      for(const auto& tracks : P.windows) windows.push_back(&tracks);
+      P.raw          = make_tracker_result(windows,
+                                  P.p.start_frame,
+                                  P.n_frames_pushed,
+                                  P.header.top_left,
+                                  P.header.hist_sz,
+                                  P.p.frame_duration);
+      P.final_result = finalise_tracks(
+          P.raw, P.p.post_process, P.p.fowlkes_params, &P.presmooth);
+   } catch(std::exception& e) {
+      LOG_ERR(
+          format("exception concatenating the tracking windows: {}", e.what()));
+      P.has_error = true;
+   }
 }
 
 } // namespace perceive::pipeline::realtime

@@ -246,8 +246,7 @@ bool RealtimeRun::init() noexcept(false)
       header.version = k_version;
    }
 
-   // -------------------------------------- The tracker: what the batch would
-   // use
+   // --------------------------------------- The tracker, with the batch params
    {
       auto& tp           = tracker_params;
       tp.tracklet_params = movie->tracklet_task.params().tracklet_params;
@@ -744,6 +743,10 @@ bool RealtimeRun::write_tracks() noexcept
       WARN(format("no tracking window ran; there is no pipeline-output.json"));
       return true;
    }
+   if(tracker->has_error()) {
+      LOG_ERR(format("the tracker failed; there is no pipeline-output.json"));
+      return false;
+   }
 
    try {
       const auto& p = movie->params();
@@ -756,9 +759,17 @@ bool RealtimeRun::write_tracks() noexcept
       save(outdata, p.config.pipeline_output_filename);
       output_filename = p.config.pipeline_output_filename;
 
-      if(p.config.run_pipeline_testcase) {
-         const auto& calc = tracker->final_result();
-         const auto& gt   = p.ground_truth;
+      const auto& calc     = tracker->final_result();
+      const auto& gt       = p.ground_truth;
+      const bool is_scored = p.config.run_pipeline_testcase;
+      if(is_scored and start_frame != 0
+         and std::fabs(gt.frame_duration - calc.frame_duration) > 1e-3) {
+         // `TestOutput::init` would FATAL: it scores other frame rates only
+         // from frame 0
+         LOG_ERR(format("not scoring the testcase: --start {} with a frame "
+                        "rate other than the ground truth's",
+                        start_frame));
+      } else if(is_scored) {
          const auto result
              = compare_tracker_output(unsigned(start_frame),
                                       unsigned(calc.frames),

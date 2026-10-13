@@ -47,7 +47,7 @@ class TrackStream
    bool is_smoothing_ = false;
    std::map<int, Stream> streams_;
 
-   SmoothedUpdate make_update_(Stream& stream, int final_upto_t) noexcept;
+   SmoothedUpdate make_update_(Stream& stream, int final_upto_t);
 
  public:
    // No smoothing if `kz_m` or `kz_k` is not positive, as `smooth_tracks`

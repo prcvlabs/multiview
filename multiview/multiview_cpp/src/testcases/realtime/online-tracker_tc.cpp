@@ -24,7 +24,7 @@ namespace tracker_test
    constexpr int k_hist_w    = 40;
    constexpr int k_hist_h    = 30;
 
-   // ------------------------------------------------------------- make-scene
+   // --------------------------------------------------------------- make-scene
    // A scene with sensors and cameras, and no calibration: enough for
    // `Tracklet::execute`, which reads only the counts
    static shared_ptr<const SceneDescription> make_scene()
@@ -37,7 +37,7 @@ namespace tracker_test
       return scene;
    }
 
-   // ----------------------------------------------------------- make-record
+   // -------------------------------------------------------------- make-record
    //
    static FrameRecord make_record(int frame_no)
    {
@@ -69,7 +69,7 @@ namespace tracker_test
       return FrameRecord::make_dropped(timeline, DropReason::NO_FREE_SLOT);
    }
 
-   // -------------------------------------------------------------- make-node
+   // ---------------------------------------------------------------- make-node
    //
    static Node make_node(int t, float x, float y, int detection_base)
    {
@@ -83,7 +83,7 @@ namespace tracker_test
       return node;
    }
 
-   // -------------------------------------------------------------- the world
+   // ---------------------------------------------------------------- the world
    // Three people. A (id 0) walks through every frame; C (id 3) is there for
    // frames [0, 5]; B is there for [10, 25], with id 7 until the window after
    // its first one renames it to 5. A revision moves every node by 0.25.
@@ -106,7 +106,7 @@ namespace tracker_test
       return out;
    }
 
-   // ----------------------------------------------------------- world-window
+   // ------------------------------------------------------------- world-window
    // A window function in the shape of `finalize_result_`
    static Tracks world_window(const Tracklet* tracklet,
                               const Tracklet* prev_tracklet,
@@ -127,7 +127,7 @@ namespace tracker_test
       return out;
    }
 
-   // ----------------------------------------------------------- make-params
+   // -------------------------------------------------------------- make-params
    //
    static OnlineTracker::Params make_params(int start, int end)
    {
@@ -138,7 +138,7 @@ namespace tracker_test
       return p;
    }
 
-   // --------------------------------------------------------------- Captured
+   // ----------------------------------------------------------------- Captured
    // The messages a tracker published, and the windows its function saw
    struct Captured
    {
@@ -196,7 +196,7 @@ namespace tracker_test
       }
    };
 
-   // ------------------------------------------------------------------- run
+   // ---------------------------------------------------------------------- run
    // Pushes `records` through a tracker, and finishes it
    static void run(OnlineTracker& tracker, vector<FrameRecord>&& records)
    {
@@ -205,9 +205,9 @@ namespace tracker_test
       tracker.finish();
    }
 
-   // ---------------------------------------------------- oracle-concatenate
-   // The concatenation of `TrackCalculator::get_tracker_result` before it
-   // moved into `make_tracker_result`
+   // ------------------------------------------------------- oracle-concatenate
+   // The window concatenation of `TrackCalculator::get_tracker_result`,
+   // written out independently of `make_tracker_result`
    static vector<NodeSequence>
    oracle_concatenate(const std::deque<Tracks>& windows)
    {
@@ -232,7 +232,7 @@ namespace tracker_test
       return seqs;
    }
 
-   // -------------------------------------------------------------- same-seqs
+   // ---------------------------------------------------------------- same-seqs
    //
    static bool same_seqs(const vector<NodeSequence>& a,
                          const vector<NodeSequence>& b)
@@ -249,7 +249,7 @@ namespace tracker_test
       return true;
    }
 
-   // ------------------------------------------------------- make-sinusoid
+   // ------------------------------------------------------------ make-sinusoid
    //
    static NodeSequence make_sinusoid(int id, int t0, int t1)
    {
@@ -371,6 +371,24 @@ CATCH_TEST_CASE("OnlineTracker", "[realtime_tracker]")
       CATCH_REQUIRE(raw.hist_w == k_hist_w);
       CATCH_REQUIRE(same_seqs(raw.seqs, oracle_concatenate(windows)));
       CATCH_REQUIRE(raw.seqs.size() == 3);
+
+      // `confirmed` on `track_end` is the batch keep/drop rule on the track
+      TrackerResult tr;
+      tr.top_left       = Vector2(-2.0, -1.0);
+      tr.hist_sz        = 0.1;
+      tr.frame_duration = 1.0 / 15.0;
+      const auto seqs   = oracle_concatenate(windows);
+      for(const auto& msg : ends) {
+         const auto ii
+             = std::find_if(cbegin(seqs), cend(seqs), [&](const auto& o) {
+                  return o.id() == msg.id;
+               });
+         CATCH_REQUIRE(ii != cend(seqs));
+         CATCH_REQUIRE(msg.last_t == ii->nodes().back().t());
+         CATCH_REQUIRE(
+             msg.confirmed
+             == calc_fp_info(tr, PostProcessParams{}, &*ii).is_true_positive);
+      }
    }
 
    CATCH_SECTION("gap-is-empty-with-borrowed-images")
@@ -620,6 +638,20 @@ CATCH_TEST_CASE("OnlineTracker", "[realtime_tracker]")
       CATCH_REQUIRE(tracker.raw_result().seqs.empty());
       CATCH_REQUIRE(tracker.final_result().tracks.empty());
       CATCH_REQUIRE(cap.all<TracksMessage>().size() == 40);
+
+      // A good window, then a window of dropped frames that `fill_gaps`
+      // makes from the last good one
+      Captured cap2;
+      OnlineTracker tracker2(scene, p, cap2.publisher());
+      vector<FrameRecord> records2;
+      for(int t = 0; t < 20; ++t)
+         records2.push_back((t < 10) ? make_gap_record(t) : make_drop(t));
+      run(tracker2, std::move(records2));
+
+      CATCH_REQUIRE(!tracker2.has_error());
+      CATCH_REQUIRE(tracker2.n_windows() == 2);
+      CATCH_REQUIRE(cap2.all<TracksMessage>().size() == 40);
+      CATCH_REQUIRE(cap2.all<WindowErrorMessage>().empty());
    }
 }
 

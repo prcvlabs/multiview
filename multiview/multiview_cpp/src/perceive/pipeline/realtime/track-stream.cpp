@@ -48,8 +48,7 @@ bool TrackStream::is_ended(int id) const noexcept
 // samples within `delta_t` of it, so the tail gives the same values as the
 // whole track.
 //
-SmoothedUpdate TrackStream::make_update_(Stream& stream,
-                                         int final_upto_t) noexcept
+SmoothedUpdate TrackStream::make_update_(Stream& stream, int final_upto_t)
 {
    const auto& nodes = stream.seq.nodes();
 

@@ -17,7 +17,7 @@
 #       (no pose network, little GPU), score it against the ground truth, and
 #       compare the metrics with the stored reference. Needs the replay files
 #       in $MULTIVIEW_POSE_REPLAY/007_site03_sparse_tracks (see `replay`).
-#       The run's pipeline-output.json is stored next to the reference
+#       A passing run's pipeline-output.json is stored next to the reference
 #       (reference-<N>f-output.json) when there is none, or on --update-reference.
 #   rt-smoke [--hyperpose] [--frames N]
 #       Run `realtime` unpaced, without drops, on the configuration of `smoke`,
@@ -245,17 +245,17 @@ do_smoke()
         cp "$out/metrics.json" "$ref"
         echo "smoke: reference written to $ref"
     fi
+    if ! compare_metrics "$out/metrics.json" "$ref" ; then
+        echo "smoke: FAIL (log: $out/stdout, errors: $out/stderr)"
+        return 1
+    fi
+    # Only a passing run becomes the output that rt-smoke compares against
     local ref_output="$replay/reference-${frames}f-output.json"
     if [ -f "$out/pipeline-output.json" ] && { [ "$update" = "1" ] || [ ! -f "$ref_output" ] ; } ; then
         cp "$out/pipeline-output.json" "$ref_output"
         echo "smoke: reference output written to $ref_output"
     fi
-    if compare_metrics "$out/metrics.json" "$ref" ; then
-        echo "smoke: PASS (log: $out/stdout)"
-    else
-        echo "smoke: FAIL (log: $out/stdout, errors: $out/stderr)"
-        return 1
-    fi
+    echo "smoke: PASS (log: $out/stdout)"
 }
 
 do_rt_smoke()
