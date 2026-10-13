@@ -4,6 +4,7 @@
 #include "bounded-queue.hpp"
 #include "frame-slot-pool.hpp"
 #include "latency-stats.hpp"
+#include "online-tracker.hpp"
 #include "paced-frame-source.hpp"
 #include "provisional-localizer.hpp"
 #include "reorder-buffer.hpp"
@@ -16,6 +17,8 @@
 #include "perceive/pipeline/detail/task-timings.hpp"
 #include "perceive/pipeline/movie-results.hpp"
 #include "perceive/pipeline/pipeline-input.hpp"
+#include "perceive/pipeline/pipeline-output.hpp"
+#include "perceive/pipeline/test-output.hpp"
 #include "perceive/utils/file-system.hpp"
 
 #include <csignal>
@@ -80,7 +83,9 @@ struct RealtimeRun
    real warm_up_s = 0.0;
 
    // ------------------------------------------------------------------- Output
-   FILE* out_fp = nullptr;
+   std::mutex out_padlock; // the reorder and tracker threads both write
+   FILE* out_fp           = nullptr;
+   string output_filename = ""s; // pipeline-output.json, once written
 
    // ------------------------------------------------------------------- Stages
    unique_ptr<RealtimeStats> stats;
@@ -91,6 +96,8 @@ struct RealtimeRun
    unique_ptr<ReorderBuffer> reorder;
    unique_ptr<ProvisionalLabeller> labeller;
    unique_ptr<FrameSlotPool> slots;
+   OnlineTracker::Params tracker_params;
+   unique_ptr<OnlineTracker> tracker;
    std::thread dispatcher;
    std::thread reorder_thread;
    std::atomic<bool> stop_requested  = false;
@@ -121,17 +128,19 @@ struct RealtimeRun
    void start() noexcept(false);
    void wait() noexcept;
    void shutdown() noexcept;
-   void finish() noexcept;
+   bool finish() noexcept;
 
    void write_line(const TrackMessage& msg) noexcept;
    void check_header(const LocalizationData& loc) noexcept;
    void write_stats(time_point now) noexcept;
    void emit(const FrameRecord& record) noexcept;
+   void emit_and_track(FrameRecord&& record) noexcept;
    void on_slot_done(FrameRecord&& record) noexcept;
    void push_drop(int frame_no, DropReason reason) noexcept;
    void run_dispatcher() noexcept;
    void run_reorder() noexcept;
    Json::Value summary_json() const noexcept;
+   bool write_tracks() noexcept;
 };
 
 // ------------------------------------------------------------------------ init
@@ -229,6 +238,35 @@ bool RealtimeRun::init() noexcept(false)
       header.version = k_version;
    }
 
+   // -------------------------------------- The tracker: what the batch would
+   // use
+   {
+      auto& tp           = tracker_params;
+      tp.tracklet_params = movie->tracklet_task.params().tracklet_params;
+      tp.tracks_params   = movie->tracks_task.params().tracks_params;
+      tp.post_process    = movie->params().post_process_params;
+      tp.fowlkes_params  = in_params.params.fowlkes_params;
+      tp.loc_params      = master.localization.params().localization_params;
+      tp.start_frame     = start_frame;
+      tp.end_frame       = end_frame;
+      tp.frame_duration  = scene->frame_duration();
+      tp.outdir          = config.outdir;
+
+      const int K = int(tp.tracklet_params.max_frames_per_tracklet);
+      if(K <= 0) {
+         LOG_ERR(format("max_frames_per_tracklet must be positive"));
+         return false;
+      }
+      if(start_frame % K != 0
+         or (end_frame % K != 0 and end_frame != scene->n_frames()))
+         WARN(format("frames [{}, {}) do not start and end on tracking windows "
+                     "of {} frames: the first or last window is shorter than "
+                     "the batch's",
+                     start_frame,
+                     end_frame,
+                     K));
+   }
+
    // --------------------------------------------------------------- The output
    if(rp.ndjson_path == "-"s) {
       const int fd = dup(STDOUT_FILENO);
@@ -302,6 +340,17 @@ void RealtimeRun::start() noexcept(false)
    t_start = steady_clock::now();
    stats   = make_unique<RealtimeStats>(t_start);
    write_line(header);
+   tracker = make_unique<OnlineTracker>(
+       scene,
+       tracker_params,
+       [this](TrackMessage&& msg) { write_line(msg); },
+       OnlineTracker::window_fn{},
+       [this](const Tracks& newest) {
+          labeller->set_tracks(live_tracks(newest));
+       },
+       stats.get());
+   if(!tracker->start())
+      throw std::runtime_error("failed to start the tracker thread");
    source->start();
    dispatcher     = std::thread([this]() { run_dispatcher(); });
    reorder_thread = std::thread([this]() { run_reorder(); });
@@ -316,6 +365,10 @@ void RealtimeRun::wait() noexcept
       std::this_thread::sleep_for(50ms);
       if(interrupted_) {
          INFO(format("realtime: interrupted, stopping"));
+         break;
+      }
+      if(tracker->has_error()) {
+         LOG_ERR(format("realtime: the tracker failed, stopping"));
          break;
       }
       const real elapsed = ms_between(t_start, steady_clock::now()) / 1000.0;
@@ -339,6 +392,7 @@ void RealtimeRun::shutdown() noexcept
    if(slots) slots->drain();
    if(loc_q) loc_q->close();
    if(reorder_thread.joinable()) reorder_thread.join();
+   if(tracker) tracker->finish();
 }
 
 // ------------------------------------------------------------------ write-line
@@ -346,6 +400,7 @@ void RealtimeRun::shutdown() noexcept
 void RealtimeRun::write_line(const TrackMessage& msg) noexcept
 {
    const auto line = to_ndjson_line(msg);
+   std::lock_guard<std::mutex> lock(out_padlock);
    if(fputs(line.c_str(), out_fp) < 0 or fflush(out_fp) != 0)
       LOG_ERR(format("failed to write a '{}' line", message_type(msg)));
 }
@@ -379,6 +434,7 @@ void RealtimeRun::check_header(const LocalizationData& loc) noexcept
 void RealtimeRun::write_stats(time_point now) noexcept
 {
    stats->set_queue_depth(RealtimeStats::Queue::LOC, loc_q->size());
+   stats->set_queue_depth(RealtimeStats::Queue::TRACKER, tracker->queue_size());
    stats->set_slots_busy(slots->n_busy());
    StatsMessage msg;
    msg.stats = stats->to_json(now);
@@ -433,6 +489,16 @@ void RealtimeRun::emit(const FrameRecord& record) noexcept
    stats->add_latency(RealtimeStats::Latency::PROVISIONAL, msg.latency_ms);
    dag_ms.add(ms_between(timeline.t_dispatch, timeline.t_dag_done));
    wait_ms.add(ms_between(timeline.t_arrival, timeline.t_dispatch));
+}
+
+// -------------------------------------------------------------- emit-and-track
+// One frame, in frame order, to the stream and then to the tracker, which
+// blocks while the tracker is a window behind (reorder thread)
+//
+void RealtimeRun::emit_and_track(FrameRecord&& record) noexcept
+{
+   emit(record);
+   tracker->push(std::move(record));
 }
 
 // ---------------------------------------------------------------- on-slot-done
@@ -534,7 +600,8 @@ void RealtimeRun::run_reorder() noexcept
       auto record    = loc_q->pop_for(10ms);
       const auto now = steady_clock::now();
       if(record) reorder->push(std::move(*record), now);
-      while(auto ready = reorder->pop_ready(now)) emit(*ready);
+      while(auto ready = reorder->pop_ready(now))
+         emit_and_track(std::move(*ready));
       if(now >= next_stats) {
          write_stats(now);
          next_stats += period;
@@ -543,7 +610,7 @@ void RealtimeRun::run_reorder() noexcept
       if(!record and loc_q->is_closed() and loc_q->size() == 0) break;
    }
 
-   for(const auto& record : reorder->flush()) emit(record);
+   for(auto& record : reorder->flush()) emit_and_track(std::move(record));
    t_end = steady_clock::now();
 }
 
@@ -577,6 +644,12 @@ Json::Value RealtimeRun::summary_json() const noexcept
    o["source_decode_errs"] = Json::UInt64(src.decode_errors);
    o["source_evicted"]     = Json::UInt64(src.evicted);
    o["stats"]              = stats->to_json(t_end);
+   o["tracker_windows"]    = tracker->n_windows();
+   o["tracker_frames"]     = tracker->n_frames();
+   o["tracker_error"]      = tracker->has_error();
+   o["raw_tracks"]         = int(tracker->raw_result().seqs.size());
+   o["kept_tracks"]        = int(tracker->final_result().tracks.size());
+   o["output"]             = output_filename;
 
    Json::Value timings{Json::arrayValue};
    for(unsigned i = 0; i < slots->n_slots(); ++i) {
@@ -591,15 +664,66 @@ Json::Value RealtimeRun::summary_json() const noexcept
    return o;
 }
 
-// ---------------------------------------------------------------------- finish
-// After `shutdown`: the last lines, and the summary files
+// ---------------------------------------------------------------- write-tracks
+// After `shutdown`: `pipeline-output.json` as `pipeline` writes it, the same
+// before smoothing (`pipeline-output-presmooth.json`), and the testcase
+// scores. False on error.
 //
-void RealtimeRun::finish() noexcept
+bool RealtimeRun::write_tracks() noexcept
 {
+   if(tracker->n_windows() == 0) {
+      WARN(format("no tracking window ran; there is no pipeline-output.json"));
+      return true;
+   }
+
+   try {
+      const auto& p = movie->params();
+      PipelineOutput outdata;
+      outdata.config        = p.config;
+      outdata.params        = p.params.to_json();
+      outdata.track_results = tracker->presmooth_result().to_json();
+      save(outdata, format("{}/pipeline-output-presmooth.json", config.outdir));
+      outdata.track_results = tracker->final_result().to_json();
+      save(outdata, p.config.pipeline_output_filename);
+      output_filename = p.config.pipeline_output_filename;
+
+      if(p.config.run_pipeline_testcase) {
+         const auto& calc = tracker->final_result();
+         const auto& gt   = p.ground_truth;
+         const auto result
+             = compare_tracker_output(unsigned(start_frame),
+                                      unsigned(calc.frames),
+                                      gt.tracks,
+                                      gt.frame_duration,
+                                      calc.tracks,
+                                      calc.frame_duration,
+                                      calc.bounds(),
+                                      calc.hist_sz,
+                                      lookup_person_radius(outdata.params),
+                                      to_radians(45.0));
+         INFO("testcase results:");
+         cout << str(result) << endl;
+      }
+      return true;
+   } catch(std::exception& e) {
+      LOG_ERR(format("exception writing the tracks: {}", e.what()));
+   }
+   return false;
+}
+
+// ---------------------------------------------------------------------- finish
+// After `shutdown`: the tracks, the last lines, and the summary files. False
+// if the tracker failed or the tracks could not be written.
+//
+bool RealtimeRun::finish() noexcept
+{
+   const bool has_tracks = write_tracks();
+
    write_stats(t_end);
    EndMessage end_msg;
    end_msg.frames  = n_frames;
    end_msg.dropped = n_dropped;
+   end_msg.output  = output_filename;
    write_line(end_msg);
 
    try {
@@ -615,6 +739,15 @@ void RealtimeRun::finish() noexcept
           summary["run_seconds"].asDouble(),
           summary["stats"]["latency_ms"]["provisional"]["p50"].asDouble(),
           summary["stats"]["latency_ms"]["provisional"]["p95"].asDouble()));
+      INFO(format("realtime: {} tracking windows; latency p50/p95 tracked "
+                  "{}/{} ms, revised {}/{} ms, final {}/{} ms",
+                  tracker->n_windows(),
+                  summary["stats"]["latency_ms"]["tracked"]["p50"].asDouble(),
+                  summary["stats"]["latency_ms"]["tracked"]["p95"].asDouble(),
+                  summary["stats"]["latency_ms"]["revised"]["p50"].asDouble(),
+                  summary["stats"]["latency_ms"]["revised"]["p95"].asDouble(),
+                  summary["stats"]["latency_ms"]["final"]["p50"].asDouble(),
+                  summary["stats"]["latency_ms"]["final"]["p95"].asDouble()));
 
       if(config.generate_timings)
          for(unsigned i = 0; i < slots->n_slots(); ++i)
@@ -624,6 +757,8 @@ void RealtimeRun::finish() noexcept
    } catch(std::exception& e) {
       LOG_ERR(format("exception writing the run's summary: {}", e.what()));
    }
+
+   return has_tracks and !tracker->has_error();
 }
 
 // ---------------------------------------------------------------- run-realtime
@@ -640,14 +775,14 @@ bool run_realtime(const CliArgs& config, const RealtimeParams& rp) noexcept
          run.start();
          run.wait();
          run.shutdown();
-         run.finish();
-         success = true;
+         success = run.finish();
       }
    } catch(std::exception& e) {
       LOG_ERR(format("realtime: {}", e.what()));
    }
 
    std::signal(SIGINT, old_signal);
+   if(success) INFO(format("realtime-execute done."));
    return success;
 }
 

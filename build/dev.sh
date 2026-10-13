@@ -17,6 +17,14 @@
 #       (no pose network, little GPU), score it against the ground truth, and
 #       compare the metrics with the stored reference. Needs the replay files
 #       in $MULTIVIEW_POSE_REPLAY/007_site03_sparse_tracks (see `replay`).
+#       The run's pipeline-output.json is stored next to the reference
+#       (reference-<N>f-output.json) when there is none, or on --update-reference.
+#   rt-smoke [--hyperpose] [--frames N]
+#       Run `realtime` unpaced, without drops, on the configuration of `smoke`,
+#       and require its pipeline-output.json to equal the stored batch output
+#       exactly (bin/compare-tracks.py --exact: ids, (x, y, t), fp_info but
+#       lab_p), its NDJSON stream to be complete and consistent with it
+#       (--stream, --revised), then compare the metrics with the reference.
 #   replay [--frames N]
 #       Generate replay files for 007 (--no-stereo, like `smoke`) with the
 #       HyperPose build: a one-off GPU run over the whole testcase. Note that
@@ -30,7 +38,7 @@
 #   cli [--hyperpose] <multiview-cli args...>
 #       Run multiview-cli with any subcommand (no lock).
 #   check
-#       build + test + smoke, the pre-commit check for a branch.
+#       build + test + smoke + rt-smoke, the pre-commit check for a branch.
 #
 # Environment:
 #   MULTIVIEW_TESTCASE_DATA   default ~/multiview-data  (videos, see fetch-testcases.sh)
@@ -52,7 +60,7 @@ BUILD_LOCK=/tmp/multiview-dev-build.lock
 GPU_LOCK=/tmp/multiview-dev-gpu.lock
 SMOKE_TC=007_site03_sparse_tracks
 
-usage() { sed -n '2,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 # ------------------------------------------------------------------ helpers
 
@@ -178,7 +186,7 @@ m = re.search(r"pipeline-seconds:\s+([0-9.]+)s", text)
 if m: out["pipeline_seconds"] = float(m.group(1))
 frames = re.findall(r"n-frames:\s+([0-9]+)", text)
 if frames: out["n_frames"] = int(frames[-1])
-out["success"] = "pipeline-execute done." in text
+out["success"] = bool(re.search(r"(pipeline|realtime)-execute done\.", text))
 print(json.dumps(out, sort_keys=True))
 EOF
 }
@@ -237,10 +245,62 @@ do_smoke()
         cp "$out/metrics.json" "$ref"
         echo "smoke: reference written to $ref"
     fi
+    local ref_output="$replay/reference-${frames}f-output.json"
+    if [ -f "$out/pipeline-output.json" ] && { [ "$update" = "1" ] || [ ! -f "$ref_output" ] ; } ; then
+        cp "$out/pipeline-output.json" "$ref_output"
+        echo "smoke: reference output written to $ref_output"
+    fi
     if compare_metrics "$out/metrics.json" "$ref" ; then
         echo "smoke: PASS (log: $out/stdout)"
     else
         echo "smoke: FAIL (log: $out/stdout, errors: $out/stderr)"
+        return 1
+    fi
+}
+
+do_rt_smoke()
+{
+    ensure_built
+    local frames=120
+    while [ "$#" -gt 0 ] ; do
+        case "$1" in
+            --frames) shift ; frames="$1" ;;
+            *) echo "rt-smoke: unknown argument '$1'" ; exit 1 ;;
+        esac
+        shift
+    done
+    local tc="$DATA_D/testcases/$SMOKE_TC" replay="$REPLAY_D/$SMOKE_TC"
+    local ref_output="$replay/reference-${frames}f-output.json"
+    [ -f "$tc/manifest.json" ] || { echo "rt-smoke: fetch the testcase first: build/fetch-testcases.sh 7" ; exit 1 ; }
+    [ -f "$ref_output" ] || { echo "rt-smoke: no batch output $ref_output; run: build/dev.sh smoke --frames $frames" ; exit 1 ; }
+    local out="${TMPDIR:-/tmp}/multiview-rt-smoke-$(basename "$ROOT")-$$"
+    mkdir -p "$out"
+    smoke_params "$replay" "$out/smoke-params.json"
+    echo "rt-smoke: $SMOKE_TC, $frames frames, realtime unpaced without drops -> $out"
+    local start ; start="$(date +%s)"
+    with_lock "$GPU_LOCK" gpu \
+        nice -n "$NICE" "$(cli_bin)" realtime -m "$tc/manifest.json" -p "$out/smoke-params.json" -d "$out" -y \
+            --no-stereo --start 0 --n-frames "$frames" --pose-classifier pose-svm-lite_v0 \
+            --tracks-file "$tc/ground-truth.json" --pipeline-testcase --verbosity 0 \
+            --replay-rate 0 --drop none --slots 2 --out "$out/stream.ndjson" \
+            > "$out/stdout" 2> "$out/stderr" || echo "rt-smoke: multiview-cli exited with status $?"
+    echo "rt-smoke: realtime took $(( $(date +%s) - start ))s"
+    local cmp="$ROOT/bin/compare-tracks.py" failed=0
+    [ -f "$out/pipeline-output.json" ] || { echo "rt-smoke: FAIL, no pipeline-output.json (log: $out/stderr)" ; return 1 ; }
+    local removed
+    removed="$(python3 -c 'import json, sys; s = json.load(open(sys.argv[1])); print(s["raw_tracks"] - s["kept_tracks"])' "$out/realtime-stats.json")"
+    python3 "$cmp" --exact "$out/pipeline-output.json" "$ref_output" || failed=1
+    python3 "$cmp" --stream "$out/stream.ndjson" --frames "$frames" \
+        --output "$out/pipeline-output.json" --removed "$removed" || failed=1
+    python3 "$cmp" --revised "$out/stream.ndjson" "$out/pipeline-output-presmooth.json" || failed=1
+    cat "$out/stdout" "$out/stderr" > "$out/log"
+    extract_metrics "$out/log" > "$out/metrics.json"
+    cat "$out/metrics.json"
+    compare_metrics "$out/metrics.json" "$replay/reference-${frames}f.json" || failed=1
+    if [ "$failed" = "0" ] ; then
+        echo "rt-smoke: PASS (log: $out/stderr)"
+    else
+        echo "rt-smoke: FAIL (log: $out/stderr)"
         return 1
     fi
 }
@@ -292,11 +352,12 @@ case "$CMD" in
     build)    do_build "$@" ;;
     test)     do_test "$@" ;;
     smoke)    do_smoke "$@" ;;
+    rt-smoke) do_rt_smoke "$@" ;;
     replay)   do_replay "$@" ;;
     pipeline) ensure_built ; with_lock "$GPU_LOCK" gpu nice -n "$NICE" "$(cli_bin)" pipeline "$@" ;;
     realtime) ensure_built ; with_lock "$GPU_LOCK" gpu nice -n "$NICE" "$(cli_bin)" realtime "$@" ;;
     cli)      ensure_built ; nice -n "$NICE" "$(cli_bin)" "$@" ;;
-    check)    do_build && do_test && do_smoke ;;
+    check)    do_build && do_test && do_smoke && do_rt_smoke ;;
     -h|--help|help) usage ;;
     *) echo "dev.sh: unknown command '$CMD'" ; usage ; exit 1 ;;
 esac
