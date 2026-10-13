@@ -508,11 +508,13 @@ This::FrameImages This::get_images_for_frame(int scene_frame_no) const noexcept
             ret.sensor_images[size_t(ind1)] = empty_mat;
          }
 
-         P.accumulate_sensor(
-             ret.sensor_images[size_t(ind0)], scene_frame_no, ind0);
-         if(!P.init_opts.no_stereo)
+         if(P.init_opts.accumulate_still) {
             P.accumulate_sensor(
-                ret.sensor_images[size_t(ind1)], scene_frame_no, ind1);
+                ret.sensor_images[size_t(ind0)], scene_frame_no, ind0);
+            if(!P.init_opts.no_stereo)
+               P.accumulate_sensor(
+                   ret.sensor_images[size_t(ind1)], scene_frame_no, ind1);
+         }
       };
 
       for(auto i = 0; i < n_cameras(); ++i)

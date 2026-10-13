@@ -45,6 +45,7 @@ const vector<MemberMetaData>& This::meta_data() const noexcept
       m.push_back(MAKE_META(This, BOOL, no_stereo, false));
       m.push_back(MAKE_META(This, BOOL, require_aligned, false));
       m.push_back(MAKE_META(This, INT, still_warmup_frames, false));
+      m.push_back(MAKE_META(This, BOOL, no_still, false));
       m.push_back(MAKE_META(This, BOOL, export_training_data, false));
       m.push_back(MAKE_META(This, STRING, export_training_data_prefix, false));
       m.push_back(MAKE_META(This, STRING, pose_classifier, false));
@@ -111,6 +112,8 @@ void show_help(string argv0) noexcept
                             frames, and are NOT saved to disk.
       --still-warmup <int>  Decode the <int> frames before --start, adding
                             them to the still only. Default is 0.
+      --no-still            Do not accumulate the still. Only the tracks'
+                            'lab_p' changes, unless stereo is on.
 
       --verbosity <integer> 0, 1, or 2, with '2' being most verbose.
                             Default is {}.
@@ -264,6 +267,8 @@ CliArgs parse_command_line(
             config.require_aligned = true;
          } else if(arg == "--still-warmup"s) {
             config.still_warmup_frames = cli::safe_arg_int(argc, argv, i);
+         } else if(arg == "--no-still"s) {
+            config.no_still = true;
          } else if(arg == "--debug-video"s) {
             config.debug_video_output = true;
          } else if(arg == "--present-video"s) {
@@ -428,6 +433,9 @@ CliArgs parse_command_line(
    if(config.still_warmup_frames < 0) {
       LOG_ERR(format("--still-warmup must be >= 0, but it is {}",
                      config.still_warmup_frames));
+      has_error = true;
+   } else if(config.still_warmup_frames > 0 and config.no_still) {
+      LOG_ERR(format("cannot use --still-warmup with --no-still"));
       has_error = true;
    } else if(config.still_warmup_frames > 0 and config.ldata_env_ptr) {
       WARN(format("--still-warmup is ignored with --load-loc-data"));
@@ -601,6 +609,12 @@ CliArgs parse_command_line(
    if(config.export_training_data && config.tracks_filename.empty()) {
       LOG_ERR(
           format("must specify `--tracks-file` when exporting training data"));
+      has_error = true;
+   }
+
+   if(config.export_training_data and config.no_still) {
+      LOG_ERR(format("cannot use --no-still with --export-training-data: the "
+                     "training-data export reads the still"));
       has_error = true;
    }
 

@@ -59,6 +59,7 @@ struct SceneDescription
       string optional_search_path = ""s;
       bool on_the_fly_still       = false;
       bool no_stereo              = false;
+      bool accumulate_still       = true; // else 'accum_blurred_LAB' is empty
       bool verbose                = false;
    };
 

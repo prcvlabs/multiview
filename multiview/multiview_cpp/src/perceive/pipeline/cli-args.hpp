@@ -57,6 +57,7 @@ struct CliArgs : public MetaCompatible
    bool no_stereo{false};
    bool require_aligned{false}; // tracks jobs: see 'shard_alignment_error'
    int still_warmup_frames{0};  // accumulate the still over frames before start
+   bool no_still{false};        // do not accumulate the still at all
    bool export_training_data{false};
    string export_training_data_prefix
        = ""s; // should be set to the testcase name

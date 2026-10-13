@@ -116,6 +116,33 @@ CATCH_TEST_CASE("CliArgsShards", "[cli-args]")
           parse({"pipeline", "-d", tmpd, "--still-warmup", "-1"}).has_error);
    }
 
+   CATCH_SECTION("--no-still")
+   {
+      const auto config = parse({"pipeline", "-d", tmpd, "--no-still"});
+      CATCH_REQUIRE(!config.has_error);
+      CATCH_REQUIRE(config.no_still);
+      CATCH_REQUIRE(!parse({"pipeline", "-d", tmpd}).no_still);
+
+      CATCH_REQUIRE(
+          parse({"pipeline", "-d", tmpd, "--no-still", "--still-warmup", "5"})
+              .has_error);
+
+      // The training-data export reads the still
+      const string tracks = format("{}/tracks.json", tmpd);
+      file_put_contents(tracks, "{}"s);
+      const vector<string> export_args = {"pipeline",
+                                          "-d",
+                                          tmpd,
+                                          "--tracks-file",
+                                          tracks,
+                                          "--export-training-data",
+                                          "tc"};
+      CATCH_REQUIRE(!parse(export_args).has_error);
+      auto no_still_args = export_args;
+      no_still_args.push_back("--no-still");
+      CATCH_REQUIRE(parse(no_still_args).has_error);
+   }
+
    remove_all(tmpd);
 }
 
