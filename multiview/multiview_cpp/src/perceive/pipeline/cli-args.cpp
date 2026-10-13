@@ -112,8 +112,9 @@ void show_help(string argv0) noexcept
                             frames, and are NOT saved to disk.
       --still-warmup <int>  Decode the <int> frames before --start, adding
                             them to the still only. Default is 0.
-      --no-still            Do not accumulate the still. Only the tracks'
-                            'lab_p' changes, unless stereo is on.
+      --no-still            Do not accumulate the still. Localization data
+                            does not change with --no-stereo, but the tracks
+                            do: the pose classifier reads the still.
 
       --verbosity <integer> 0, 1, or 2, with '2' being most verbose.
                             Default is {}.
@@ -439,6 +440,12 @@ CliArgs parse_command_line(
       has_error = true;
    } else if(config.still_warmup_frames > 0 and config.ldata_env_ptr) {
       WARN(format("--still-warmup is ignored with --load-loc-data"));
+   }
+
+   if(config.no_still and config.generate_tracks
+      and !config.pose_classifier.empty()) {
+      WARN(format("--no-still changes the pose classifier's input, and so the "
+                  "pose labels of the tracks"));
    }
 
    if(config.require_aligned and !config.generate_tracks) {
