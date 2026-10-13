@@ -1,3 +1,4 @@
+
 #define CATCH_CONFIG_PREFIX_ALL
 #include "perceive/contrib/catch.hpp"
 
@@ -95,6 +96,33 @@ CATCH_TEST_CASE("Publisher", "[realtime_publish]")
       CATCH_REQUIRE(types.back() == "end");
       for(size_t i = 1; i + 1 < types.size(); ++i)
          CATCH_REQUIRE(types[i] == "stats");
+   }
+
+   CATCH_SECTION("close-writes-end")
+   {
+      // `close` right after `end`, while the thread wakes every millisecond
+      // to publish stats: `end` is always written, and last
+      constexpr int n = 2000;
+      int n_missing   = 0;
+      for(int i = 0; i < n; ++i) {
+         vector<string> types;
+         auto sink = [&](const TrackMessage& msg, const string&) {
+            types.push_back(message_type(msg));
+            return true;
+         };
+         auto make_stats = [](Publisher::time_point) { return StatsMessage{}; };
+
+         Publisher::Params params;
+         params.stats_period_s = 0.001;
+         Publisher publisher(params, {sink}, make_stats);
+         CATCH_REQUIRE(publisher.start());
+         std::this_thread::sleep_for(
+             std::chrono::microseconds((i * 37) % 2000));
+         CATCH_REQUIRE(publisher.publish(EndMessage{}));
+         publisher.close();
+         if(types.empty() or types.back() != "end"s) ++n_missing;
+      }
+      CATCH_REQUIRE(n_missing == 0);
    }
 
    CATCH_SECTION("sink-errors-are-counted")

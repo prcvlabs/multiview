@@ -86,7 +86,7 @@ void Publisher::run_() noexcept
       if(msg) {
          is_ended = is_ended or std::holds_alternative<EndMessage>(*msg);
          write_(*msg);
-      } else if(out_q_.is_closed()) {
+      } else if(out_q_.is_closed() and out_q_.size() == 0) {
          break;
       }
 
