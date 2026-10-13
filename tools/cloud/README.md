@@ -217,10 +217,10 @@ so wall times are upper bounds); 007 has 6 cameras, 008 has 9.
 | Loc shard with the still (needed for stereo) | 1.31 s | ~12 s | C1 |
 | Tracks job (fast path, still kept) | 1.03-1.06 s | ~12 s | C2 (120 and 499 frames), C3 |
 | Batch run, replayed poses (for comparison) | 1.28 s (499 frames: 638 s) | | C1 golden R1 |
-| Loc shard, live HyperPose FP32, 008 (9 cameras) | 1.24 s (149 frames in one process); 1.40 s over the two shards with their fixed costs | ~12 s + 2.4-2.6 s engine load | T6 |
+| Loc shard, live HyperPose FP32, 008 (9 cameras) | 1.24 s (149 frames in one process); 1.40 s over the two shards with their fixed costs | ~12 s + 2.4-2.7 s engine load | T6 |
 | Tracks job, 008 (9 cameras) | 1.59 s (237 s for 149 frames) | | T6 |
 | Full 007 as 2 x 250 + tracks (T4) | loc 0.79-0.83 s, tracks 1.05 s: 929 s of GPU time against 638 s for the batch run | | T4 |
-| TensorRT engine: build (cache miss) / load (hit) | | 60-82 s / 2.4-2.6 s | measurements.md; T6 |
+| TensorRT engine: build (cache miss) / load (hit) | | 60-82 s / 2.4-2.7 s | measurements.md; T6 |
 
 Envelopes are 161-199 KB per frame on 007 (80.5 MB for 499 frames) and 497 KB
 per frame on 008 (74 MB for 149 frames, 9 cameras); busier scenes will be
