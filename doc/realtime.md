@@ -11,7 +11,10 @@ it does not read cameras yet.
 
 Without drops, the output is the batch output: `realtime --replay-rate 0
 --drop none` writes the same `pipeline-output.json` as `pipeline`, point for
-point (`build/dev.sh rt-smoke` checks it on every `check`).
+point, except `lab_p` (the tracks' appearance score), which depends on the
+still that `--still-every` samples (`build/dev.sh rt-smoke` checks it on
+every `check`, with `bin/compare-tracks.py --exact`, which leaves `lab_p`
+out).
 
 **Contents**
 
@@ -87,6 +90,7 @@ bin/pose-replay-remap.py map-7.5.txt ~/multiview-data/pose-replay/007_site03_spa
 and `replay_dir` set to `/tmp/replay-7.5`. The mapping is the one the batch
 uses (`scene_frame_to_movie_frame_mapping`); it is not a fixed stride (at
 7.5 fps on 15 fps videos the steps are 1, 2 or 3 movie frames).
+`bin/test-pose-replay-remap.py` tests the script.
 
 ## 2. What it writes
 
@@ -113,7 +117,9 @@ the line being written.
   the nearest live track within `--match-radius`, or -1.
 - `dropped`: a frame that was not processed. Reasons: `no_free_slot` (the
   dispatcher took a newer frame), `tracker_behind` (no room downstream),
-  `source_behind` (the decoders were late), `decode_error`, `dag_error`. The
+  `source_behind` (the decoders were late), `decode_error`, `dag_error` (the
+  per-frame pipeline returned no result), `late` (the result did not come
+  back within `--missing-timeout`). The
   tracker sees a dropped frame as a frame without evidence.
 - `tracks`, revision 0 (`tracked`): the frame's tracks when its window
   closes. Revision 1 (`revised`): after the next window has rewritten it;
@@ -168,60 +174,87 @@ shared the machine (expect about 10 % noise). Testcase 008 has 9 cameras and
 without drops (`--replay-rate 0 --drop none`); latencies are from a frame's
 arrival.
 
-**Pose detection, 9 images per call (HyperPose `run engine`, ms).**
+**Pose detection, 9 images per call (HyperPose `run engine`, ms, 1 slot).**
+The first four rows ran with the shared LAB converter, the last with the
+per-node converter that this branch ships.
 
 | Model, precision | Alone (first call) | In the pipeline, p50 | p90 | TensorRT build (once) | Tracks against FP32 |
 |---|---|---|---|---|---|
-| openpose-coco 368x656, FP32 | 215 | 806 | 844 | 50 s | - |
-| openpose-coco 368x656, FP16 | 102 | 462 | 552 | 79 s | same 2 tracks, within 2 cm |
-| openpose-thin 368x432, FP32 | 259 | 440 | 538 | 49 s | one person found 68 frames later, 0.6 m off |
-| openpose-thin 368x432, FP16 | 126 | 435 | 605 | 70 s | as thin FP32 |
+| openpose-coco 368x656, FP32, shared LAB converter | 215 | 806 | 844 | 50 s | - |
+| openpose-coco 368x656, FP16, shared LAB converter | 102 | 462 | 552 | 79 s | same 2 tracks, within 2 cm |
+| openpose-thin 368x432, FP32, shared LAB converter | 259 | 440 | 538 | 49 s | one person found 68 frames later, 0.6 m off |
+| openpose-thin 368x432, FP16, shared LAB converter | 126 | 435 | 605 | 70 s | as thin FP32 |
+| openpose-coco 368x656, FP16, per-node LAB converter | 100 | 832 | 857 | - | as coco FP16 (output identical) |
 
 In the pipeline the network shares the GPU with the per-sensor LAB conversion
 and SLIC of the frames in flight, which makes it 4-8 times slower than alone.
+The per-node converter lets the nine LAB conversions run on the GPU at once,
+which doubles the in-pipeline pose time (FP16 p50 462 -> 832 ms; 942 ms at
+2 slots) while T still rises (next table).
 
 **Throughput on 008 (FP16 unless stated).**
 
 | Slots | T, shared LAB converter | T, per-node LAB converter | DAG p50 / p95 (per-node) | Start-up | RSS |
 |---|---|---|---|---|---|
-| 1 | 0.82 fps (FP32: 0.80) | **0.91 fps** | 1.03 / 1.76 s | 14-24 s | 6.6-7.0 GB |
+| 1 | 0.82 fps (FP32: 0.80) | **0.91 fps** | 1.03 / 1.76 s | 14-48 s | 6.6-7.0 GB |
 | 2 | 0.98 fps (FP32: 0.94) | **1.00 fps** | 1.89 / 3.95 s | 48-54 s | 7.9-8.6 GB |
 | 4 | 1.06 fps | **1.04 fps** | 3.61 / 6.32 s | 106 s | 11 GB |
 
+Start-up is mostly slot warm-up, which varies from 5 to 50 s from one run to
+the next with one or two slots (section 6), so their start-up ranges overlap.
+
 With one slot, each of the 9 sensors spends ~540 ms in `convert_to_lab` and
 ~390 ms in `run_f2d` (SLIC), side by side, then `localization` takes ~70 ms;
-pose (0.5-0.9 s) runs in parallel with them. The
-detector is not what limits the rate: FP16 halves the pose time and raises T
-by 2-4 %. On 007 (6 cameras, poses replayed, 2 slots) T is 1.56 fps.
+pose (0.5-0.9 s) runs in parallel with them. The detector is not what
+limits the rate: with the shared converter FP16 halves the pose time and
+raises T by 2-4 %. On 007 (6 cameras, poses replayed, 2 slots) T is 1.56 fps.
 
 **Levers.**
 
 | Lever | Effect | Status |
 |---|---|---|
-| FP16 (`hp_params.precision`) | pose 806 -> 462 ms in the pipeline, 215 -> 102 ms alone; T +2-4 %; tracks within 2 cm | recommended; the default stays `fp32` (shared with `pipeline`) |
+| FP16 (`hp_params.precision`) | pose 806 -> 462 ms in the pipeline (shared LAB converter), 215 -> 102 ms alone; T +2-4 %; tracks within 2 cm | recommended; the default stays `fp32` (shared with `pipeline`) |
 | `openpose-thin` 368x432 | no faster than coco FP16 in the pipeline; worse tracks | rejected |
 | `--slots` 1 / 2 / 4 | T 0.91 / 1.00 / 1.04, DAG latency 1.0 / 1.9 / 3.6 s | default 1 (section 5) |
 | `--still-every` 1 vs 15 | T 0.53 vs 0.82; `copy_sensor_images` 745 vs 32 ms per frame | default 15 |
 | No rectification in `--no-stereo` | ~22 ms of CPU per sensor per frame; output identical (`lab_p` included) | done, for `pipeline` too |
-| Per-node LAB converter | T +11 % at 1 slot, +2 % at 2; output identical | done, for `pipeline` too |
+| Per-node LAB converter | T +11 % at 1 slot, +2 % at 2; pose 462 -> 832 ms in the pipeline (FP16); output identical | done, for `pipeline` too |
 | Skip SLIC in `--no-stereo` | ~0.23 s per frame on 007 | not done: SLIC feeds the appearance patches (`lab_p` 0.935 -> 0.022 in a test) |
+
+The two levers marked "for `pipeline` too" change the batch pipeline (and so
+the cloud branch) as well, and belong on `build-fast-iteration`: `79bda2d`
+(no rectification in `--no-stereo`) and `a1b58d1` (per-node LAB converter).
+The rectification skip is unconditional in `--no-stereo`, with no flag: the
+output does not change, `lab_p` included.
 
 **Paced runs on 008 (FP16, per-node LAB, drop newest).**
 
 | Rate | Slots | Processed / dropped | Provisional latency p50 / p95 / max | Kept tracks |
 |---|---|---|---|---|
-| 15 fps (live) | 1 | 7 / 142 | 1.41 / 3.14 / 3.14 s | 0 |
-| 15 fps (live) | 2 | 7 / 142 | 3.21 / 5.27 / 5.27 s | 0 |
+| 15 fps (live) [1] | 1 | 7 / 142 | 1.41 / 3.14 / 3.14 s | 0 |
+| 15 fps (live) [1] | 2 | 7 / 142 | 3.21 / 5.27 / 5.27 s | 0 |
+| 15 fps (live), shared LAB | 1 | 8 / 141 | 1.40 / 2.81 / 2.81 s | 0 |
+| 15 fps (live), shared LAB | 2 | 9 / 140 | 2.45 / 5.09 / 5.09 s | 0 |
 | 3 fps (`--target-fps 3`, shared LAB) | 1 | 8 / 23 | 1.48 / 2.53 / 2.53 s | 0 |
 | 0.73 fps (0.8 T, slow motion) | 1 | 146 / 3 | 1.05 / 1.79 / 3.21 s | 2 |
 | 0.8 fps (0.8 T, slow motion) | 2 | 148 / 1 | 1.06 / 2.69 / 4.16 s | 2 |
+
+[1] These two runs had 6 and 14 `source_behind` drops (the rest are
+`no_free_slot`): another worktree's processes ran on the machine outside the
+GPU lock and slowed the decoders. The shared-LAB runs at 15 fps, which had
+none, are shown below them.
 
 At the live rate one frame in twenty is processed, every tracking window is
 mostly gaps, and no track survives. Paced below what the DAG sustains,
 almost nothing is dropped, and the provisional latency is one DAG time
 (about 1 s at p50). A position becomes final 27 (p50) to 34 (p95) frames
 after it arrived, i.e. 1.8-2.3 s at 15 fps plus one window computation
-(0.4-0.8 s).
+(p50 0.43 s, p95 0.81 s): about 3.1 s at p95. These lags were measured at
+0.66 fps (a slow-motion replay) and converted to 15 fps; the windows would
+be computed at 15 fps under more load.
+
+The paced runs leave issue #2's 500 ms provisional-latency target unmet: the
+latency is one DAG time, p50 1.05 s and p95 1.8-2.7 s.
 
 **Tracking at a reduced rate** (007, the whole 33 s, poses replayed and
 remapped, equal to batch):
@@ -242,20 +275,29 @@ measurements:
 |---|---|---|
 | `--slots`: the N with the best T(N)/N among those with T(N) >= 0.8 x T(4) | T = 0.91 / 1.00 / 1.04; 0.8 x T(4) = 0.83 | **1 slot** (also the lowest latency and memory) |
 | `--target-fps`: the largest of 15, 7.5, 5, 3 that is <= 0.8 x T | 0.8 x 0.91 = 0.73 fps | **none**: the default stays the scene rate, and frames the DAG cannot take are dropped |
-| Pose p50 per 9-image call <= 66 ms (15 fps), 133 ms (7.5), 200 ms (5) | 462 ms in the pipeline, ~100 ms alone (FP16) | not met; 15 fps needs a faster detector (issue #10's TensorRT YOLO-pose) |
+| Pose p50 per 9-image call <= 66 ms (15 fps), 133 ms (7.5), 200 ms (5) | 832 ms in the pipeline (per-node LAB converter; 462 ms with the shared one), ~100 ms alone (FP16) | not met; 15 fps needs a faster detector (issue #10's TensorRT YOLO-pose) |
 | Per-frame chain (LAB + SLIC + localization) <= 400 ms | ~0.8-1.0 s | not met; the chain limits the rate as much as the detector |
-| Smoothing lag p95 <= 3 s at 15 fps | 34 frames = 2.3 s + window | met; the shorter KZ filter is not needed |
+| Smoothing lag p95 <= 3 s at 15 fps | 34 frames = 2.27 s + window p95 0.81 s = about 3.1 s (frames counted at 0.66 fps) | at the threshold, slightly over; the shorter KZ filter is the option (below) |
+| Provisional latency <= 500 ms | p50 1.05 s, p95 1.8-2.7 s (paced at 0.8 x T) | not met (one DAG time) |
 
 So on this machine the prototype runs 9 cameras at about 1 frame per second,
 with about 1 s of provisional latency when it is not overloaded. Tracking
 quality holds down to 5 fps (F1 0.61), so a live service needs a sustained
 5 fps or better, about 5.5 times the measured rate. Both halves of the frame
-have to get there: the pose network about 2.3 times faster in the pipeline
-(at FP16 it is fast enough alone, so most of that is the GPU it shares), and
-the per-sensor LAB and SLIC chain about 4 times at one slot. The
+have to get there: the pose network about 4.2 times faster in the pipeline
+(832 -> 200 ms; at FP16 it is fast enough alone, so most of that is the GPU
+it shares), and the per-sensor LAB and SLIC chain about 4 times at one slot.
+The
 architecture does not depend on the rate: with a faster DAG the same flags
 apply, and `--target-fps 5` (which also paces the replay at 5 fps) is the
 configuration to try first.
+
+The smoothing lag is at the 3 s limit. The option, if it has to be shorter,
+is a realtime `fowlkes_params` profile with `smooth_kz_filter_m: 5` and
+`smooth_kz_filter_k: 2`: a 9-frame window (`delta_t` 4 instead of 16), so a
+point is final 14-23 frames after it arrived instead of 26-35 (computed, not
+measured: at most 1.5 s plus a window at 15 fps). It smooths less, and its
+output differs from batch, so it is not the default.
 
 When frames are dropped, the tracker sees them as frames without evidence;
 tracks still form if most frames of a window are processed (a run paced at
@@ -275,7 +317,8 @@ the drop-free output in 1-35 points).
   frame, on a pool thread, as in batch. From the cache this adds 0.5-2.3 s to
   the first frame; with 2 slots it once pushed frame 0 past
   `--missing-timeout`, and that frame is then published as dropped with
-  reason `dag_error` (it was late, not failed).
+  reason `late` (`dag_error` in the runs of section 4, which predate the
+  `late` reason).
 - **Slot warm-up** takes 5-50 s per slot and is not understood (the
   `get_xy_mapping` jobs wait rather than compute).
 - **Issue #13**: the tracker thread still enters the existing helping waits

@@ -259,7 +259,9 @@ $CLI realtime -m $TC/manifest.json -p params.json -d /tmp/rt -y --no-stereo \
 ```
 
 Unpaced and without drops (`--replay-rate 0 --drop none`) its
-`pipeline-output.json` equals the batch output exactly. On this repository's
+`pipeline-output.json` equals the batch output exactly, except `lab_p` (the
+tracks' appearance score), which depends on the still that `--still-every`
+samples. On this repository's
 test machine (RTX 3090, 12 threads) it processes about 1 frame per second on
 9 cameras, so a 15 fps feed is mostly dropped; see
 [doc/realtime.md](doc/realtime.md) for the protocol, the measurements and
