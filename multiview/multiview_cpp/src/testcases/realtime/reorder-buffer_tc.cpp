@@ -119,7 +119,9 @@ CATCH_TEST_CASE("ReorderBuffer", "[realtime_reorder]")
 
       const auto out = pop_all(buffer, t0 + 5s);
       CATCH_REQUIRE(frame_nos(out) == vector<int>{0, 1, 2});
-      CATCH_REQUIRE(out[0].drop_reason == DropReason::DAG_ERROR);
+      CATCH_REQUIRE(out[0].drop_reason == DropReason::LATE);
+      CATCH_REQUIRE(str(out[0].drop_reason) == "late"s);
+      CATCH_REQUIRE(to_drop_reason("late") == DropReason::LATE);
       CATCH_REQUIRE(buffer.n_expired() == 1);
 
       // The lost frame turns up after all: discarded, never returned twice
@@ -131,7 +133,11 @@ CATCH_TEST_CASE("ReorderBuffer", "[realtime_reorder]")
       // The clock starts when the missing frame holds up a later one
       CATCH_REQUIRE(buffer.push(make_record(4), t0 + 100s));
       CATCH_REQUIRE(pop_all(buffer, t0 + 104s).empty());
-      CATCH_REQUIRE(frame_nos(pop_all(buffer, t0 + 105s)) == vector<int>{3, 4});
+      const auto out2 = pop_all(buffer, t0 + 105s);
+      CATCH_REQUIRE(frame_nos(out2) == vector<int>{3, 4});
+      CATCH_REQUIRE(out2[0].drop_reason == DropReason::LATE);
+      CATCH_REQUIRE(!out2[1].is_dropped());
+      CATCH_REQUIRE(buffer.n_expired() == 2);
    }
 
    CATCH_SECTION("no-timeout-waits-forever")

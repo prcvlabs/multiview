@@ -23,10 +23,11 @@ enum class DropReason : int {
    TRACKER_BEHIND, // no room downstream of the slots
    SOURCE_BEHIND,  // the decoders had not finished when the frame was due
    DECODE_ERROR,   // a camera failed to decode the frame
-   DAG_ERROR       // the per-frame pipeline returned no result
+   DAG_ERROR,      // the per-frame pipeline returned no result
+   LATE            // the result did not come back within `--missing-timeout`
 };
 
-constexpr int k_n_drop_reasons = 6;
+constexpr int k_n_drop_reasons = 7;
 
 // ------------------------------------------------------------- str(DropReason)
 //
@@ -39,6 +40,7 @@ inline const char* str(DropReason reason) noexcept
    case DropReason::SOURCE_BEHIND: return "source_behind";
    case DropReason::DECODE_ERROR: return "decode_error";
    case DropReason::DAG_ERROR: return "dag_error";
+   case DropReason::LATE: return "late";
    }
    return "none";
 }

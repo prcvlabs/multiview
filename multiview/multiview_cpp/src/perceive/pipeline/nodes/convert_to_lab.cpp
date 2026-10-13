@@ -55,7 +55,7 @@ shared_ptr<const Result> Task::execute(const RunData& data,
       ret->lab_image = make_shared<const LABImage>(LAB_vec3f_im_to_LAB(
           use_node_conversion ? lab_conversion.convert(argb)
                               : argb_to_LAB_vec3f_im(argb)));
-   } catch(const std::runtime_error& e) {
+   } catch(std::exception& e) {
       LOG_ERR(format("Exception in convert_to_lab: {}", e.what()));
       return nullptr;
    }

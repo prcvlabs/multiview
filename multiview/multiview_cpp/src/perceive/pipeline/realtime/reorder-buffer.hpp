@@ -17,7 +17,7 @@ namespace perceive::pipeline::realtime
 // and counted as late.
 //
 // With a `missing_timeout`, a frame that holds up later frames for that long
-// is given up on and returned as a `DAG_ERROR` drop. Without one (the
+// is given up on and returned as a `LATE` drop. Without one (the
 // `--drop none` mode) the buffer waits forever. Thread-safe.
 //
 class ReorderBuffer
@@ -46,7 +46,7 @@ class ReorderBuffer
    void insert_drop_(int from, int to, DropReason reason) noexcept;
    bool has_later_(int frame_no) const noexcept;
    void update_blocked_(time_point now) noexcept;
-   FrameRecord pop_next_() noexcept;
+   FrameRecord pop_next_(DropReason missing_reason) noexcept;
 
  public:
    explicit ReorderBuffer(int first_frame_no,

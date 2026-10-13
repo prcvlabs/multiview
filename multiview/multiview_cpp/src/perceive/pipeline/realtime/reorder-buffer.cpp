@@ -89,9 +89,10 @@ void ReorderBuffer::update_blocked_(time_point now) noexcept
 }
 
 // -------------------------------------------------------------------- pop-next
-// The caller holds `padlock_`, and the next frame is in.
+// The caller holds `padlock_`. A next frame that is not in is returned as a
+// drop for `missing_reason`.
 //
-FrameRecord ReorderBuffer::pop_next_() noexcept
+FrameRecord ReorderBuffer::pop_next_(DropReason missing_reason) noexcept
 {
    const int frame_no = next_frame_no_++;
    is_blocked_        = false;
@@ -103,9 +104,8 @@ FrameRecord ReorderBuffer::pop_next_() noexcept
       records_.erase(ii);
    } else {
       const auto drop_ptr = find_drop_(frame_no);
-      record              = make_dropped(frame_no,
-                            (drop_ptr == nullptr) ? DropReason::DAG_ERROR
-                                                               : drop_ptr->reason);
+      record              = make_dropped(
+          frame_no, (drop_ptr == nullptr) ? missing_reason : drop_ptr->reason);
    }
 
    // Ranges that are all behind us
@@ -189,7 +189,7 @@ std::optional<FrameRecord> ReorderBuffer::pop_ready(time_point now) noexcept
 
    const bool is_in = records_.count(next_frame_no_) > 0
                       or find_drop_(next_frame_no_) != nullptr;
-   if(is_in) return pop_next_();
+   if(is_in) return pop_next_(DropReason::NONE);
 
    const bool has_timeout = missing_timeout_.count() > 0;
    if(is_blocked_ and has_timeout
@@ -197,7 +197,7 @@ std::optional<FrameRecord> ReorderBuffer::pop_ready(time_point now) noexcept
       LOG_ERR(format("frame {} never came back from the pipeline; dropping it",
                      next_frame_no_));
       ++n_expired_;
-      return pop_next_();
+      return pop_next_(DropReason::LATE);
    }
 
    return std::nullopt;
@@ -209,7 +209,8 @@ vector<FrameRecord> ReorderBuffer::flush() noexcept
 {
    std::lock_guard<std::mutex> lock(padlock_);
    vector<FrameRecord> out;
-   while(has_later_(next_frame_no_ - 1)) out.push_back(pop_next_());
+   while(has_later_(next_frame_no_ - 1))
+      out.push_back(pop_next_(DropReason::DAG_ERROR));
    return out;
 }
 
