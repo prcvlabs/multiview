@@ -12,11 +12,11 @@ equality, not a score against ground truth, is the acceptance test.
 | Piece | Where | State |
 |---|---|---|
 | Loc shards, the tracks job, `ldata`, `score`, `scene_info` | `multiview-cli` (C++) | built, unit-tested, gated by `e2e_fs.sh` |
-| Agent and the filesystem control plane | `agent/mvcloud` (Python 3.12, standard library) | built, 65 unit tests, `e2e_fs.sh` |
+| Agent and the filesystem control plane | `agent/mvcloud` (Python 3.12, standard library) | built, 71 unit tests, `e2e_fs.sh` |
 | S3 client for R2 or MinIO, `s3://` manifests through lazy-s3 | `multiview-cli` (`MULTIVIEW_S3_*`) | built, `[s3]` unit test, `t10_minio.sh` against MinIO |
 | Worker image | `docker/` | built here; CPU smoke `t8_container.sh` passes; the GPU path is untested (no nvidia-container-toolkit on the build machine) |
-| Cloudflare Worker, D1, Workflow, Queue | `worker/` | not written yet (C5); the filesystem backend is the tested control plane |
-| Queue REST pull, presigned R2 URLs, engine upload to R2 | | deferred: need an account |
+| Cloudflare Worker: API, D1 leases, one Workflow per job, R2 blob proxy, status page | `worker/` (TypeScript), agent `httpcontrol.py` | built; vitest (the D1 protocol on `node:sqlite`), `e2e_wrangler.sh` under `wrangler dev`; never deployed (no account) |
+| Queue HTTP pull consumer, presigned R2 URLs, engine upload to R2 | | deferred (M8): need an account; `/v1/pull` on D1 dispatches, blobs go through the Worker |
 
 ## 1. Runbook
 
@@ -72,6 +72,53 @@ Outputs: `<root>/blobs/jobs/<job>/shards/<shard>/a<attempt>/` (the winning
 attempt is the shard row's `output_prefix`); the tracks job's
 `pipeline-output.json` and, with `gt`, `score.json`.
 
+### A job through the Worker (wrangler dev here; Cloudflare when deployed)
+
+The Worker (`tools/cloud/worker`) is the same control plane as the
+filesystem backend, on Cloudflare: D1 holds jobs, shards, attempts and
+workers; one Workflow instance per job plans it, waits for the loc shards,
+promotes the tracks job and finalizes; R2 holds the blobs, which the Worker
+proxies (multipart above `MULTIPART_PART_BYTES`, 64 MiB). Its toolchain
+lives in its own env:
+
+```
+micromamba create -y -f tools/cloud/environment.yml          # Node 22, Python 3.12, pytest
+micromamba run -n mvcloud npm --prefix tools/cloud/worker ci
+cd tools/cloud/worker
+micromamba run -n mvcloud npm test                           # vitest
+micromamba run -n mvcloud npx wrangler d1 migrations apply mvcloud --local --env local
+micromamba run -n mvcloud npx wrangler dev --env local --port 8787 \
+    --var MVCLOUD_ADMIN_TOKEN:<admin> --var MVCLOUD_WORKER_TOKEN:<worker>
+```
+
+Then, with the same `job.json` as above:
+
+```
+export MVCLOUD_ADMIN_TOKEN=<admin> MVCLOUD_WORKER_TOKEN=<worker>
+python3 -m mvcloud submit --control http://127.0.0.1:8787 --cli $CLI job.json   # uploads, then POST /v1/jobs
+python3 -m mvcloud agent  --control http://127.0.0.1:8787 --dispatch api --cli $CLI
+python3 -m mvcloud status --control http://127.0.0.1:8787 <job_id>
+python3 -m mvcloud cancel --control http://127.0.0.1:8787 <job_id>
+```
+
+`submit` uploads the manifest, the videos, the params, the replayed poses (as
+one tar) and the ground truth through the Worker, content-addressed (section
+3), skipping objects already there, and the Worker checks that every input
+exists before it accepts the job. Agents poll `/v1/pull` (`--poll`, 15 s
+with jitter); a job's tracks job appears when its Workflow sees the last loc
+shard done (at once: `complete` wakes it), and expired leases and retries are
+swept every `wait_seconds` (300 by default). The status page is
+`http://127.0.0.1:8787/?token=<admin>`.
+
+API: `POST /v1/jobs` (admin), `GET /v1/jobs[/<id>]`, `POST /v1/jobs/<id>/cancel`
+(admin), `POST /v1/pull | /v1/claim | /v1/heartbeat | /v1/complete | /v1/fail`,
+`GET /v1/workers`, `/v1/blobs/<key>` (a worker writes only under its lease's
+`a<attempt>/` prefix, named by `x-mvcloud-lease`), `GET /v1/health`. Every
+state change of a shard is one conditional D1 `UPDATE` on its state and lease
+token; a late or duplicate call changes nothing. Deploying is in the header
+of `wrangler.jsonc` (create the D1 database, R2 bucket and Queue, apply the
+migration remotely, set the two tokens as secrets); it has not been tried.
+
 ### Tests and references
 
 | Command | What | Time here |
@@ -85,6 +132,8 @@ attempt is the shard row's `output_prefix`); the tracks job's
 | `tools/cloud/tests/t10_minio.sh` | S3 client, storage.py and an `s3://` manifest against MinIO in Docker | 10 min (two 30-frame runs, with GPU lock waits) |
 | `tools/cloud/tests/t8_container.sh` | the worker image on the CPU: one 20-frame loc shard through `mvcloud agent --once` | 1 min (after the image build) |
 | `tools/cloud/tests/check_shard_parity.sh` | the C++ gate without the agent | 8 min |
+| `npm test` in `tools/cloud/worker` (mvcloud env) | vitest: `plan.ts` against `plan-golden.json`, the D1 protocol on the real migration | < 1 s |
+| `tools/cloud/tests/e2e_wrangler.sh` | T2: 007 [0,120) through `wrangler dev` with an agent killed mid-shard (lease expiry, attempt 2), multipart envelopes, (a)-(f) of T1; T2c cancel and T2t timeout with the fake CLI | 4.5 min with the GPU free (271 s), 9.5 min behind another worktree (565 s); T2c + T2t 20 s |
 
 ### Storage on R2 (or any S3 endpoint)
 
@@ -193,12 +242,12 @@ stereo jobs with `W = S` or not at all.
 Bucket `multiview`, one prefix per environment:
 
 ```
-scenes/<scene_id>/manifest.json            video "file" entries are bare names next to the manifest
-scenes/<scene_id>/<camera>.mp4
-scenes/<scene_id>/params.json              a reference run's params.json; the agent sets replay_dir / use_hyperpose
-scenes/<scene_id>/poses.tar                pose-2d_<frame:06d>_<sensor:02d>.json (replay mode), uncompressed
-scenes/<scene_id>/ground-truth.json        optional (scoring)
-scenes/<scene_id>/scene-info.json          `multiview-cli scene_info -p params.json` at upload time (frames, sensors, K) (planned; not built)
+scenes/<scene_id>/<md5>/manifest.json      the agent puts each input into its in/ under the name given; the manifest names videos by bare name
+scenes/<scene_id>/<md5>/<camera>.mp4
+scenes/<scene_id>/<md5>/params.json        a reference run's params.json; the agent sets replay_dir / use_hyperpose
+scenes/<scene_id>/<md5>/poses.tar          pose-2d_<frame:06d>_<sensor:02d>.json (replay mode), uncompressed, no times or owners
+scenes/<scene_id>/<md5>/ground-truth.json  optional (scoring)
+scenes/<scene_id>/scene-info.json          `multiview-cli scene_info -p params.json` at upload time (frames, sensors, K) (planned; not built: `submit` runs scene_info locally)
 cache/undistort/<basename>.mdata           inverse_<sensor>_*.mdata, ~40 MB each, so fresh workers skip regenerating them (planned; not built)
 engines/<digest>.plan, <digest>.json       TensorRT plans per GPU type (deferred: workers keep them in /cache)
 jobs/<job_id>/job.json
@@ -207,9 +256,14 @@ jobs/<job_id>/shards/tracks/a1/{pipeline-output.json, score.json?, stdout.log, d
 jobs/<job_id>/summary.json
 ```
 
-The filesystem backend uses the same `jobs/...` layout under
-`<root>/blobs/`. Every attempt writes under its own `a<attempt>/` prefix, so a
-late or duplicate worker never overwrites the winner.
+Scene inputs are content-addressed (`<md5>` of the file; `mvcloud submit`
+uploads them with their md5, which R2 verifies), so two jobs with different
+params for one scene never overwrite each other's inputs and an unchanged
+file is uploaded once. The filesystem backend uses the same `jobs/...` layout
+under `<root>/blobs/` and reads scene inputs where they are. Every attempt
+writes under its own `a<attempt>/` prefix, so a late or duplicate worker never
+overwrites the winner; the Worker's finalize step deletes the losing
+attempts' objects.
 
 ## 4. Throughput and cost
 
