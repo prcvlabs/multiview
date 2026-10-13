@@ -50,7 +50,7 @@ class FrameSlotPool
                  on_done_type on_done);
    FrameSlotPool(const FrameSlotPool&) = delete;
    FrameSlotPool(FrameSlotPool&&)      = delete;
-   ~FrameSlotPool(); // drain()
+   ~FrameSlotPool(); // drains, then buries the slots (see `bury`)
    FrameSlotPool& operator=(const FrameSlotPool&) = delete;
    FrameSlotPool& operator=(FrameSlotPool&&)      = delete;
 

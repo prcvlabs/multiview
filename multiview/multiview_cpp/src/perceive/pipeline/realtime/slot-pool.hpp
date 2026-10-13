@@ -12,6 +12,7 @@ namespace perceive::pipeline::realtime
 // on the calling thread, which must arrange for `release` to be called exactly
 // once when the slot's work is done (on any thread). A busy slot is never
 // taken back. `drain` waits until every slot is idle; the destructor drains.
+// Pools whose slots hold TaskNodes are given to `bury`, not destroyed.
 //
 // Every wait is a plain condition variable: a thread that waits here never
 // runs a job of the global thread pool. Do not call `dispatch` or `drain` from
@@ -65,6 +66,16 @@ template<typename Slot> class SlotPool
    // Blocks until every slot is idle.
    void drain() noexcept;
 };
+
+// ------------------------------------------------------------------------ bury
+// Drains `pool`, then keeps it, and the TaskNodes of its slots, until the
+// process exits. Jobs that reference the slots' nodes can still be queued
+// after the last result was delivered: `calc_result` schedules a job per
+// missing parent (more than one per parent where the DAG has diamonds), and
+// `calc_part2` reads its node after running the waiters. TaskNode does not
+// count those jobs, so no point after `drain` is known to be safe to free them.
+//
+template<typename Slot> void bury(unique_ptr<SlotPool<Slot>> pool) noexcept;
 
 // ---------------------------------------------------------- set-params-forcing
 // Sets the params of a pipeline task, and cancels it when no registered member
@@ -167,24 +178,28 @@ bool SlotPool<Slot>::dispatch(std::chrono::milliseconds timeout,
       LOG_ERR(format("exception starting slot {}: {}", index, e.what()));
       release(unsigned(index));
       return false;
+   } catch(...) {
+      LOG_ERR(format("unknown exception starting slot {}", index));
+      release(unsigned(index));
+      return false;
    }
    return true;
 }
 
 // --------------------------------------------------------------------- release
+// Notifies under the lock: once `drain` sees no busy slot, the owner may
+// destroy the pool, so no releaser may touch `slot_released_` after that.
 //
 template<typename Slot> void SlotPool<Slot>::release(unsigned index) noexcept
 {
-   {
-      std::lock_guard<std::mutex> lock(padlock_);
-      if(index >= is_busy_.size() or is_busy_[index] == 0) {
-         LOG_ERR(format("slot {} released, but it was not busy", index));
-         return;
-      }
-      is_busy_[index] = 0;
-      --n_busy_;
-      ++n_released_;
+   std::lock_guard<std::mutex> lock(padlock_);
+   if(index >= is_busy_.size() or is_busy_[index] == 0) {
+      LOG_ERR(format("slot {} released, but it was not busy", index));
+      return;
    }
+   is_busy_[index] = 0;
+   --n_busy_;
+   ++n_released_;
    slot_released_.notify_all();
 }
 
@@ -194,6 +209,24 @@ template<typename Slot> void SlotPool<Slot>::drain() noexcept
 {
    std::unique_lock<std::mutex> lock(padlock_);
    slot_released_.wait(lock, [this]() { return n_busy_ == 0; });
+}
+
+// ------------------------------------------------------------------------ bury
+//
+template<typename Slot> void bury(unique_ptr<SlotPool<Slot>> pool) noexcept
+{
+   if(pool == nullptr) return;
+   pool->drain();
+
+   // Never destroyed, so not even at exit, while pool threads may still run
+   static std::mutex padlock;
+   static auto* graveyard = new vector<unique_ptr<SlotPool<Slot>>>;
+   std::lock_guard<std::mutex> lock(padlock);
+   try {
+      graveyard->push_back(std::move(pool));
+   } catch(...) {
+      pool.release(); // leaked: out of memory, and freeing it is not safe
+   }
 }
 
 } // namespace perceive::pipeline::realtime

@@ -6,8 +6,6 @@
 #include "perceive/pipeline/detail/task-timings.hpp"
 #include "perceive/pipeline/frame-results.hpp"
 
-#include <thread>
-
 namespace perceive::pipeline::realtime
 {
 using std::chrono::steady_clock;
@@ -44,7 +42,7 @@ static_assert(FrameSlotPool::k_wait_forever
 struct FrameSlotPool::Pimpl
 {
    on_done_type on_done;
-   unique_ptr<SlotPool<FrameSlot>> pool; // last: drained before the rest goes
+   unique_ptr<SlotPool<FrameSlot>> pool; // buried, never destroyed
 
    // ----------------------------------------------------------------- run-slot
    // A pool job: start computing the slot's frame.
@@ -120,6 +118,9 @@ struct FrameSlotPool::Pimpl
          LOG_ERR(format("exception handing over frame {}: {}",
                         timeline.frame_no,
                         e.what()));
+      } catch(...) {
+         LOG_ERR(format("unknown exception handing over frame {}",
+                        timeline.frame_no));
       }
       pool->release(index);
    }
@@ -165,16 +166,10 @@ FrameSlotPool::FrameSlotPool(const FrameResults& master,
 }
 
 // ----------------------------------------------------------------- Destruction
-// Draining guarantees that every localization callback has run. Jobs that
-// `calc_result` scheduled for a parent whose result already existed can still
-// be queued at that point; they return within microseconds, so wait a moment
-// before the nodes go.
+// Draining guarantees that every localization callback has run, but not that
+// every job referencing the slots' nodes has: the slots are buried, not freed.
 //
-FrameSlotPool::~FrameSlotPool()
-{
-   drain();
-   std::this_thread::sleep_for(std::chrono::milliseconds(50));
-}
+FrameSlotPool::~FrameSlotPool() { bury(std::move(pimpl_->pool)); }
 
 // --------------------------------------------------------------------- n-slots
 //
@@ -223,12 +218,12 @@ bool FrameSlotPool::warm_up() noexcept
    int n_waiting = 0;
    bool success  = true;
 
+   // Notifies under the lock: the last callback lets `warm_up` return, and
+   // with it go `padlock` and `all_done`.
    auto on_result = [&](shared_ptr<const void> ret) {
-      {
-         std::lock_guard<std::mutex> lock(padlock);
-         if(ret == nullptr) success = false;
-         --n_waiting;
-      }
+      std::lock_guard<std::mutex> lock(padlock);
+      if(ret == nullptr) success = false;
+      --n_waiting;
       all_done.notify_all();
    };
 

@@ -17,7 +17,7 @@ using namespace std::chrono_literals;
 
 namespace slot_test
 {
-   // Live `Result` objects, to check that nothing outlives the slots
+   // Live `Result` objects, to check that only the slots' own results remain
    static std::atomic<int> n_live_results = 0;
 
    // Holds `Work` until opened, when a test needs slots to stay busy
@@ -210,11 +210,11 @@ namespace slot_test
       return make_unique<SlotPool<Slot>>(std::move(slots));
    }
 
-   static bool wait_for_no_live_results()
+   static bool wait_for_live_results(int n)
    {
-      for(int i = 0; i < 200 and n_live_results != 0; ++i)
+      for(int i = 0; i < 200 and n_live_results != n; ++i)
          std::this_thread::sleep_for(10ms);
-      return n_live_results == 0;
+      return n_live_results == n;
    }
 
 } // namespace slot_test
@@ -235,6 +235,7 @@ CATCH_TEST_CASE("SlotPool", "[realtime_slots]")
          outputs.push_back(out);
       };
 
+      const int n_before = n_live_results;
       {
          auto pool = make_pool(2);
          for(int k = 0; k < 20; ++k)
@@ -245,8 +246,10 @@ CATCH_TEST_CASE("SlotPool", "[realtime_slots]")
          CATCH_REQUIRE(pool->max_busy() == 2);
          CATCH_REQUIRE(pool->n_dispatched() == 20);
          CATCH_REQUIRE(pool->n_released() == 20);
+         bury(std::move(pool));
       }
-      CATCH_REQUIRE(wait_for_no_live_results());
+      // The memoised result of each node of the two buried slots, no more
+      CATCH_REQUIRE(wait_for_live_results(n_before + 2 * 3));
 
       std::sort(begin(outputs), end(outputs), [](auto& a, auto& b) {
          return a.frame_no < b.frame_no;
@@ -278,6 +281,7 @@ CATCH_TEST_CASE("SlotPool", "[realtime_slots]")
       CATCH_REQUIRE(dispatch(*pool, 2, 2, 0ms, on_done));
       pool->drain();
       CATCH_REQUIRE(n_done == 3);
+      bury(std::move(pool));
    }
 
    CATCH_SECTION("same-frame-number-twice")
@@ -296,6 +300,7 @@ CATCH_TEST_CASE("SlotPool", "[realtime_slots]")
       CATCH_REQUIRE(outputs.size() == 2);
       CATCH_REQUIRE(outputs[0].value == 2);
       CATCH_REQUIRE(outputs[1].value == 14); // not the memoised 2
+      bury(std::move(pool));
    }
 
    CATCH_SECTION("admission-keeps-room-for-every-busy-slot")
@@ -326,6 +331,7 @@ CATCH_TEST_CASE("SlotPool", "[realtime_slots]")
       std::sort(begin(frames), end(frames));
       CATCH_REQUIRE(int(frames.size()) == n_admitted);
       for(int k = 0; k < n_admitted; ++k) CATCH_REQUIRE(frames[size_t(k)] == k);
+      bury(std::move(pool));
    }
 }
 
