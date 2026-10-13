@@ -65,14 +65,14 @@ check() # check <name> <command...>: records a failure, does not stop
 
 cleanup()
 {
-    [ "$KEEP" = "1" ] || docker rm -f "$NAME" > /dev/null 2>&1 || true
+    [ "$KEEP" = "1" ] || docker rm -f -v "$NAME" > /dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 # ---- 1. MinIO
 export AWS_ACCESS_KEY_ID=mvcloud AWS_SECRET_ACCESS_KEY=mvcloud-t10-secret
 export MULTIVIEW_S3_ENDPOINT="http://127.0.0.1:$PORT"
-docker rm -f "$NAME" > /dev/null 2>&1 || true
+docker rm -f -v "$NAME" > /dev/null 2>&1 || true
 if ! docker pull -q "$IMAGE" > "$OUT/pull.log" 2>&1 ; then
     echo "t10: SKIP: cannot pull $IMAGE ($(tail -n 1 "$OUT/pull.log"))"
     exit 0
