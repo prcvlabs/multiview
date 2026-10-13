@@ -1,0 +1,23 @@
+{
+  "name": "mvcloud-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Control plane of cloud-distributed multiview: API, D1 state, one Workflow per job, blob proxy, status page",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env local --port 8787",
+    "check": "tsc --noEmit -p . && tsc --noEmit -p test",
+    "test": "vitest run",
+    "deploy:dry": "wrangler deploy --dry-run --outdir dist"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261013.1",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.150.0"
+  }
+}

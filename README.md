@@ -244,6 +244,26 @@ with the same layout (e.g. `calibration/scenes/<scene-key>.json`), set
 Cached data, such as undistortion maps, is written to `MULTIVIEW_CACHE_DIR`
 (default `~/.cache/multiview-data/cache`), never to the asset directory.
 
+### Sharded and cloud runs
+
+A long scene can be cut into time windows that separate processes or
+machines compute, followed by one tracker run over the whole scene:
+`pipeline --start S --n-frames N --save-loc-data --no-tracks` writes a window's
+localization data, and `pipeline --load-loc-data <file>...` (repeatable) with
+`--require-aligned` tracks the concatenation; with `--no-stereo` the windows'
+localization data is byte-identical to one run over all frames, and the tracks
+and score equal that run's except `fp_info.lab_p`, which depends on the still.
+`--no-still` skips the still image in no-stereo windows, and
+`--still-warmup W` warms it up in stereo ones.
+`multiview-cli ldata` inspects, concatenates and compares localization-data
+files, `score` scores a `pipeline-output.json` against ground truth or another
+run, and `scene_info` prints a scene's frame count, sensors and tracker window.
+`s3://` paths, including `-m s3://.../manifest.json`, can point at Cloudflare R2
+or any S3-compatible store with `MULTIVIEW_S3_ENDPOINT` (and
+`MULTIVIEW_S3_REGION`, `MULTIVIEW_S3_PATH_STYLE`, `MULTIVIEW_S3_PROFILE`). The
+agent that schedules windows across GPU machines, the worker image and the
+runbook are in [`tools/cloud/README.md`](tools/cloud/README.md).
+
 ## 5. Developing
 
 ```

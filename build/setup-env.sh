@@ -86,9 +86,10 @@ install_tensorrt()
     echo "$TRT_WHEEL_SHA256  $WHEEL" | sha256sum -c -
 
     # Keep the runtime, ONNX parser, plugins and the builder resources for
-    # this machine's GPU(s) (plus PTX for anything else)
-    local SMS="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null \
-        | tr -d '.' | sort -u)"
+    # this machine's GPU(s), or for MULTIVIEW_TRT_SMS (e.g. "86 89" in a
+    # container build without a GPU), plus PTX for anything else
+    local SMS="${MULTIVIEW_TRT_SMS:-$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null \
+        | tr -d '.' | sort -u)}"
     local FILES="libnvinfer.so.10 libnvonnxparser.so.10 libnvinfer_plugin.so.10
         libnvinfer_builder_resource_ptx.so.*"
     for SM in $SMS ; do FILES="$FILES libnvinfer_builder_resource_sm$SM.so.*" ; done

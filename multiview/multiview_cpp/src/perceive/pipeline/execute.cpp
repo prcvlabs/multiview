@@ -3,6 +3,7 @@
 
 #include "movie-results.hpp"
 #include "pipeline-output.hpp"
+#include "shard-range.hpp"
 #include "test-output.hpp"
 
 #include "perceive/calibration/training-data/make-training-data-video.hpp"
@@ -50,6 +51,21 @@ bool run_pipeline(const CliArgs& config) noexcept
 
    const auto scene_desc = in_params.scene_desc;
 
+   { // (*) ---- Accumulate the still over the frames before the start frame
+      const int start_frame = config.start_frame_no;
+      const int first_frame
+          = std::max(0, start_frame - config.still_warmup_frames);
+      if(config.ldata_env_ptr == nullptr && first_frame < start_frame) {
+         const auto now = tick();
+         for(auto t = first_frame; t < start_frame; ++t)
+            scene_desc->get_images_for_frame(t);
+         INFO(format("still warm-up over frames [{}, {}): {}s",
+                     first_frame,
+                     start_frame,
+                     tock(now)));
+      }
+   }
+
    { // (*) ---- Export video if we're creating a testcase
       if(config.setup_testcase) {
          TRACE(format("setup testcase: export movie and manifest"));
@@ -81,7 +97,10 @@ bool run_pipeline(const CliArgs& config) noexcept
       o["task_params"] = movie->task_params();
       const auto fname = format("{}/params.json", config.outdir);
       TRACE(format("saving parameters to: {}", fname));
-      file_put_contents(fname, str(o));
+      if(const auto ec = file_put_contents_atomic(fname, str(o))) {
+         LOG_ERR(format("failed to write '{}': {}", fname, ec.message()));
+         return false;
+      }
    }
 
    // (*) ---- Output 'dot-graph'
@@ -102,6 +121,22 @@ bool run_pipeline(const CliArgs& config) noexcept
       return false;
    }
 
+   if(p.config.require_aligned && p.config.generate_tracks) {
+      // (*) ---- Check that the tracker's windows line up with the shards
+      const int k = int(movie->tracklet_task.params()
+                            .tracklet_params.max_frames_per_tracklet);
+      const auto err
+          = shard_alignment_error(int(movie_ret->start_frame()),
+                                  int(movie_ret->n_frames()),
+                                  int(movie_ret->full_movie_n_frames()),
+                                  k,
+                                  p.config.ldata_env_ptr.get());
+      if(err.has_value()) {
+         LOG_ERR(format("--require-aligned: {}", *err));
+         return false;
+      }
+   }
+
    { // (*) ---- Output colour floor histogram, if required
       if(p.config.colour_floor_hist) {
          TRACE(format("writing floor histogram"));
@@ -120,13 +155,20 @@ bool run_pipeline(const CliArgs& config) noexcept
       const auto& outdir = p.config.outdir;
       auto fname         = format("{}/localization.data", outdir);
 
-      save_localization_data(
-          fname,
-          movie_ret->start_frame(),
-          movie_ret->n_frames(),
-          scene_desc->frame_duration(),
-          [&](unsigned t) { return movie_ret->localization_result(t).get(); },
-          p.config.verbosity >= 1);
+      try {
+         save_localization_data(
+             fname,
+             movie_ret->start_frame(),
+             movie_ret->n_frames(),
+             scene_desc->frame_duration(),
+             [&](unsigned t) {
+                return movie_ret->localization_result(t).get();
+             },
+             p.config.verbosity >= 1);
+      } catch(std::exception& e) {
+         LOG_ERR(format("failed to save localization data: {}", e.what()));
+         return false;
+      }
 
       INFO(format("saved localization data to '{}'", fname));
    }
@@ -148,7 +190,15 @@ bool run_pipeline(const CliArgs& config) noexcept
       outdata.config        = p.config;
       outdata.params        = movie->params().params.to_json();
       outdata.track_results = track_results_ptr->to_json();
-      save(outdata, p.config.pipeline_output_filename);
+      {
+         const auto& fname = p.config.pipeline_output_filename;
+         string s;
+         write(outdata, s);
+         if(const auto ec = file_put_contents_atomic(fname, s)) {
+            LOG_ERR(format("failed to write '{}': {}", fname, ec.message()));
+            return false;
+         }
+      }
 
       if(p.config.run_pipeline_testcase) {
          TRACE(format("running pipeline testcase"));

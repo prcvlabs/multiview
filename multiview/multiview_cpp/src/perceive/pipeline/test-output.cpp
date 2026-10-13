@@ -349,6 +349,22 @@ size_t This::total_pt() const noexcept
    return ground_truth.size() - total_mt - total_ml;
 }
 
+// ------------------------------------------------------------------- precision
+//
+real This::precision() const noexcept
+{
+   const auto N = (total_true_positives + total_false_positives);
+   return (N == 0) ? 0.0 : (total_true_positives / real(N));
+}
+
+// ---------------------------------------------------------------------- recall
+//
+real This::recall() const noexcept
+{
+   const auto N = (total_true_positives + total_false_negatives);
+   return (N == 0) ? 0.0 : (total_true_positives / real(N));
+}
+
 // -------------------------------------------------------------------------- f1
 //
 real This::f1() const noexcept
@@ -357,6 +373,45 @@ real This::f1() const noexcept
        = (total_true_positives + total_false_negatives + total_false_positives);
 
    return (N == 0) ? 0.0 : (total_true_positives / real(N));
+}
+
+// --------------------------------------------------------------------- to-json
+//
+Json::Value This::to_json() const noexcept
+{
+   const real tp_distance_mean
+       = (total_true_positives == 0)
+             ? dNAN
+             : (total_tp_distances / real(total_true_positives));
+   const bool has_theta    = (theta_stats.N > 0);
+   const real theta_bias   = has_theta ? to_degrees(theta_stats.average) : dNAN;
+   const real theta_stddev = has_theta ? to_degrees(theta_stats.stddev) : dNAN;
+
+   Json::Value o{Json::objectValue};
+   o["start_frame"]          = int(start_frame);
+   o["calc_n_frames"]        = int(calc_n_frames);
+   o["n_gt_tracks"]          = int(ground_truth.size());
+   o["n_calc_tracks"]        = int(calculated.size());
+   o["tp"]                   = int(total_true_positives);
+   o["fp"]                   = int(total_false_positives);
+   o["fn"]                   = int(total_false_negatives);
+   o["precision"]            = json_save(precision());
+   o["recall"]               = json_save(recall());
+   o["f1_jaccard"]           = json_save(f1());
+   o["id_switches"]          = int(total_identity_switches);
+   o["frags"]                = int(total_track_frags);
+   o["tp_distance_sum"]      = json_save(total_tp_distances);
+   o["tp_distance_mean"]     = json_save(tp_distance_mean);
+   o["tp_iou_sum"]           = json_save(total_tp_iou);
+   o["mt"]                   = int(total_mt);
+   o["pt"]                   = int(total_pt());
+   o["ml"]                   = int(total_ml);
+   o["proportion_with_gaze"] = json_save(proportion_with_gaze);
+   o["theta_n"]              = int(theta_stats.N);
+   o["theta_bias"]           = json_save(theta_bias);
+   o["theta_stddev"]         = json_save(theta_stddev);
+   o["theta_errors"]         = int(total_theta_errors);
+   return o;
 }
 
 // ------------------------------------------------------------------- to-string

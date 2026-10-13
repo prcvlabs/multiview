@@ -108,6 +108,10 @@ const std::string& multiview_camera_pos_annotation_dir() noexcept;
 const std::string& multiview_hyperpose_path() noexcept;
 const std::string& multiview_openpose_path() noexcept;
 const std::string& svm_train_gpu_exec() noexcept;
+const std::string& multiview_s3_endpoint() noexcept; // "" => AWS default
+const std::string& multiview_s3_region() noexcept;
+const std::string& multiview_s3_profile() noexcept; // "" => AWS_PROFILE kept
+bool multiview_s3_path_style() noexcept;
 
 bool multiview_openpose_serial() noexcept;
 bool multiview_trace_mode() noexcept;

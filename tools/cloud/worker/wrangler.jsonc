@@ -1,0 +1,43 @@
+// mvcloud: the Worker of cloud-distributed multiview (tools/cloud/README.md).
+//
+// Production: wrangler d1 create mvcloud (put its id below), wrangler r2
+// bucket create multiview, wrangler queues create mvcloud-shards, wrangler d1
+// migrations apply mvcloud --remote, wrangler secret put MVCLOUD_ADMIN_TOKEN
+// and MVCLOUD_WORKER_TOKEN, wrangler deploy. Dispatch is /v1/pull (D1); the
+// Queue's HTTP pull consumer and presigned R2 URLs are milestone M8 (not
+// built), so blobs go through the Worker's proxy.
+//
+// Local (tools/cloud/tests/e2e_wrangler.sh): wrangler d1 migrations apply
+// mvcloud --local --env local, then wrangler dev --env local with the tokens
+// as --var. Named environments inherit no bindings and no vars, hence the
+// repetition.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mvcloud",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    { "binding": "DB", "database_name": "mvcloud", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "multiview" }],
+  "queues": { "producers": [{ "binding": "SHARDS", "queue": "mvcloud-shards" }] },
+  "workflows": [{ "binding": "JOB_WORKFLOW", "name": "mvcloud-job", "class_name": "JobWorkflow" }],
+  "vars": { "BLOB_MODE": "proxy", "MULTIPART_PART_BYTES": "67108864" },
+  "triggers": { "crons": ["*/10 * * * *"] },
+  "observability": { "enabled": true },
+  "env": {
+    "local": {
+      "d1_databases": [
+        { "binding": "DB", "database_name": "mvcloud", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "multiview" }],
+      "queues": {
+        "producers": [{ "binding": "SHARDS", "queue": "mvcloud-shards" }],
+        "consumers": [{ "queue": "mvcloud-shards", "max_batch_size": 10, "max_retries": 3 }]
+      },
+      "workflows": [{ "binding": "JOB_WORKFLOW", "name": "mvcloud-job", "class_name": "JobWorkflow" }],
+      "vars": { "BLOB_MODE": "proxy", "MULTIPART_PART_BYTES": "67108864" },
+      "triggers": { "crons": ["*/10 * * * *"] }
+    }
+  }
+}

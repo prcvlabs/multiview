@@ -79,15 +79,23 @@ static void run_slic_impl(const ARGBImage& image,
                   "(Falling back to cpu-slic.)"));
    }
 
-   if(use_cuda)
-      run_cuda_slic_impl(lab_image,
-                         segment_area,
-                         compactness,
-                         klabels,
-                         num_k,
-                         cuda_slic_context);
-   else
-      run_cpu_slic_impl(lab_image, segment_area, compactness, klabels, num_k);
+   if(use_cuda) {
+      // Runs inside the noexcept run_f2d node: a CUDA error (no usable GPU)
+      // must fall back to cpu-slic, not escape and terminate the process
+      try {
+         run_cuda_slic_impl(lab_image,
+                            segment_area,
+                            compactness,
+                            klabels,
+                            num_k,
+                            cuda_slic_context);
+         return;
+      } catch(std::exception& e) {
+         LOG_ERR(format("cuda-slic failed, falling back to cpu-slic: {}",
+                        e.what()));
+      }
+   }
+   run_cpu_slic_impl(lab_image, segment_area, compactness, klabels, num_k);
 }
 
 // ------------------------------------------------------------------------ SLIC

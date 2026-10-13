@@ -38,8 +38,9 @@ static void aws_destroy() { Aws::ShutdownAPI(options); }
 
 static void aws_init()
 {
-   if(setenv("AWS_PROFILE", "multiview", 1) != 0)
-      FATAL(format("Failed to setenv('AWS_PROFILE', 'multiview')"));
+   const auto& profile = multiview_s3_profile();
+   if(!profile.empty() && setenv("AWS_PROFILE", profile.c_str(), 1) != 0)
+      FATAL(format("Failed to setenv('AWS_PROFILE', '{}')", profile));
 
    s3_path_re = std::regex("s3://([^/]*)/(.*)");
 
@@ -63,6 +64,38 @@ to_bucket_key(const string_view s3_path)
    return std::pair<Aws::String, Aws::String>(bucket_name, key_name);
 }
 
+// -------------------------------------------------------------- make s3 client
+//
+static Aws::S3::S3Client make_s3_client()
+{
+   const auto settings = s3_settings_for(multiview_s3_endpoint(),
+                                         multiview_s3_region(),
+                                         multiview_s3_path_style());
+   if(settings.endpoint.empty() && settings.region.empty()
+      && !settings.path_style)
+      return Aws::S3::S3Client{}; // the AWS defaults
+
+   Aws::Client::ClientConfigurationInitValues init;
+   init.shouldDisableIMDS = settings.disable_imds;
+   Aws::S3::S3ClientConfiguration conf(init);
+   if(!settings.endpoint.empty()) {
+      conf.endpointOverride = settings.endpoint.c_str();
+      conf.scheme           = settings.use_https ? Aws::Http::Scheme::HTTPS
+                                                 : Aws::Http::Scheme::HTTP;
+   }
+   if(!settings.region.empty()) conf.region = settings.region.c_str();
+   conf.useVirtualAddressing = !settings.path_style;
+   if(settings.checksums_when_required) {
+      using Aws::Client::RequestChecksumCalculation;
+      using Aws::Client::ResponseChecksumValidation;
+      conf.checksumConfig.requestChecksumCalculation
+          = RequestChecksumCalculation::WHEN_REQUIRED;
+      conf.checksumConfig.responseChecksumValidation
+          = ResponseChecksumValidation::WHEN_REQUIRED;
+   }
+   return Aws::S3::S3Client(conf);
+}
+
 // ----------------------------------------------------------------- Ensure Init
 
 void ensure_aws_is_init() { std::call_once(ensure_aws_flag, aws_init); }
@@ -75,7 +108,7 @@ void s3_load(const string_view s3_path, std::vector<char>& out) noexcept(false)
    // parse s3_path
    auto [bucket_name, key_name] = to_bucket_key(s3_path);
 
-   Aws::S3::S3Client s3_client;
+   auto s3_client = make_s3_client();
    Aws::S3::Model::GetObjectRequest request;
    request.WithBucket(bucket_name).WithKey(key_name);
 
@@ -119,43 +152,13 @@ void s3_store(const string_view s3_path, const std::vector<char>& in)
    // parse s3_path
    auto [bucket_name, key_name] = to_bucket_key(s3_path);
 
-   Aws::S3::S3Client s3_client;
+   auto s3_client = make_s3_client();
    Aws::S3::Model::PutObjectRequest request;
    request.WithBucket(bucket_name).WithKey(key_name);
 
-   // Cannot figure out how to read input into an object-request.
-   // Don't have time to figure it out. So this can be improved
-   // to be in-memory
-   char buffer[256];
-   snprintf(buffer, 256, "/tmp/multiview-s3-out.XXXXXX");
-   // {
-   //    int desc = mkstemp(buffer);
-   //    close(desc);
-   // }
-
-   // Use RAII to ensure temporary file is deleted
-   struct FileUnlinker
-   {
-      const char* fname_{nullptr};
-      FileUnlinker(const char* fname)
-          : fname_(fname)
-      {}
-      ~FileUnlinker()
-      {
-         if(fname_) delete_file(fname_);
-      }
-   };
-   FileUnlinker funlinker(buffer);
-
-   // Copy input data to the temporary file
-   std::ofstream ofs(buffer, std::ios::out | std::ios::binary);
-   std::copy(cbegin(in), cend(in), std::ostreambuf_iterator<char>(ofs));
-   ofs.close();
-
-   // Finish PutObjectRequest
-   auto fdat = Aws::MakeShared<Aws::FStream>(
-       "PutObjStream", buffer, std::ios_base::in | std::ios_base::binary);
-   request.SetBody(fdat);
+   auto body = Aws::MakeShared<Aws::StringStream>("PutObjStream");
+   body->write(in.data(), std::streamsize(in.size()));
+   request.SetBody(body);
 
    auto outcome = s3_client.PutObject(request);
 
@@ -186,7 +189,7 @@ bool s3_exists(const string_view s3_path) noexcept(false)
    // parse s3_path
    auto [bucket_name, key_name] = to_bucket_key(s3_path);
 
-   Aws::S3::S3Client s3_client;
+   auto s3_client = make_s3_client();
 
    {
       Aws::S3::Model::HeadObjectRequest request;
@@ -211,7 +214,7 @@ void s3_remove(const string_view s3_path) noexcept(false)
    // parse s3_path
    auto [bucket_name, key_name] = to_bucket_key(s3_path);
 
-   Aws::S3::S3Client s3_client;
+   auto s3_client = make_s3_client();
    Aws::S3::Model::DeleteObjectRequest request;
    request.WithBucket(bucket_name).WithKey(key_name);
 
@@ -260,6 +263,25 @@ bool s3_exists(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
 void s3_remove(const string_view s3_path) noexcept(false) { no_aws(s3_path); }
 
 #endif // MULTIVIEW_NO_AWS
+
+// ------------------------------------------------------------- s3 settings for
+//
+S3Settings s3_settings_for(const string_view endpoint,
+                           const string_view region,
+                           const bool path_style) noexcept
+{
+   S3Settings o;
+   o.region     = string(region);
+   o.path_style = path_style;
+   if(endpoint.empty()) return o;
+
+   o.endpoint                = string(endpoint);
+   o.use_https               = !begins_with(o.endpoint, string("http://"));
+   o.checksums_when_required = true;
+   o.disable_imds            = true;
+   if(o.region.empty()) o.region = "auto"s;
+   return o;
+}
 
 // ------------------------------------------------------------------- is s3 uri
 

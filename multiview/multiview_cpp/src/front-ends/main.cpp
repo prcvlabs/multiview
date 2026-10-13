@@ -17,6 +17,7 @@
 #include "classifier/classifier-inc.hpp"
 #include "distortion-calib/distortion-calib-inc.hpp"
 #include "dump-default-params/dump-default-params-inc.hpp"
+#include "ldata/ldata-inc.hpp"
 #include "phase-camera-extrinsic/phase-camera-extrinsic-inc.hpp"
 #include "phase-stereo-calib/phase-stereo-calib-inc.hpp"
 #include "pipeline/pipeline-inc.hpp"
@@ -24,6 +25,8 @@
 #include "position-scene-cameras/position-scene-cameras-inc.hpp"
 #include "render-floor-map/render-floor-map-inc.hpp"
 #include "run-scraps/run-scraps-inc.hpp"
+#include "scene-info/scene-info-inc.hpp"
+#include "score/score-inc.hpp"
 #include "sprite-main/sprite-main-inc.hpp"
 #include "training-data/training-data-inc.hpp"
 #include "undistort/undistort-inc.hpp"
@@ -70,6 +73,9 @@ static auto make_runs()
    REGISTER(blur_faces);
    REGISTER(training_data);
    REGISTER(classifier);
+   REGISTER(ldata);
+   REGISTER(scene_info);
+   REGISTER(score);
 #endif
 
 #undef REGISTER

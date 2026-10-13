@@ -1,6 +1,7 @@
 
 #include "cli-args.hpp"
 
+#include "perceive/cost-functions/localization/envelope-ops.hpp"
 #include "perceive/cost-functions/localization/localization-data.hpp"
 #include "perceive/io/json-io.hpp"
 #include "perceive/io/lazy-s3.hpp"
@@ -37,10 +38,14 @@ const vector<MemberMetaData>& This::meta_data() const noexcept
       m.push_back(MAKE_META(This, BOOL, generate_timings, false));
       m.push_back(MAKE_META(This, BOOL, save_localization_data, false));
       m.push_back(MAKE_META(This, STRING, localization_data_fname, false));
+      m.push_back(MAKE_META(This, JSON_VALUE, localization_data_fnames, false));
       m.push_back(MAKE_META(This, BOOL, developer_features, false));
       m.push_back(MAKE_META(This, BOOL, on_the_fly_still, false));
       m.push_back(MAKE_META(This, BOOL, colour_floor_hist, false));
       m.push_back(MAKE_META(This, BOOL, no_stereo, false));
+      m.push_back(MAKE_META(This, BOOL, require_aligned, false));
+      m.push_back(MAKE_META(This, INT, still_warmup_frames, false));
+      m.push_back(MAKE_META(This, BOOL, no_still, false));
       m.push_back(MAKE_META(This, BOOL, export_training_data, false));
       m.push_back(MAKE_META(This, STRING, export_training_data_prefix, false));
       m.push_back(MAKE_META(This, STRING, pose_classifier, false));
@@ -86,7 +91,9 @@ void show_help(string argv0) noexcept
                             Default is '{}' in output directory.
     
       -p <filename>         Params filename.
-      -m <filename>         Manifest filename. MUST be specified.
+      -m <filename>         Manifest filename. MUST be specified. May be an
+                            s3:// URI; its videos are then fetched relative
+                            to it through the lazy-s3 cache.
       --p-json <json-str>   Params inline JSON.
       --m-json <json-str>   Manifest inline JSON.    
 
@@ -97,10 +104,19 @@ void show_help(string argv0) noexcept
                             indicates that all frames are processed.
       --target-fps <real>   Target frames-per-second to process at. Default is
                             0.0, which will use the movie's frames-per-second.
+      --require-aligned     Fail unless --start and the end frame are multiples
+                            of 'max_frames_per_tracklet' (or the end is the
+                            movie's end), and any loaded localization data
+                            covers them. For tracks jobs over shards.
 
       --on-the-fly-still    Instead of loading or generating stills, the 
                             stills are generated on the fly from a few 
                             frames, and are NOT saved to disk.
+      --still-warmup <int>  Decode the <int> frames before --start, adding
+                            them to the still only. Default is 0.
+      --no-still            Do not accumulate the still. With --no-stereo
+                            the localization data does not change; the tracks
+                            do, because the pose classifier reads the still.
 
       --verbosity <integer> 0, 1, or 2, with '2' being most verbose.
                             Default is {}.
@@ -108,6 +124,9 @@ void show_help(string argv0) noexcept
       --save-loc-data       Save localization data to disk in order to quickly
                             run the tracker in some later run.
       --load-loc-data <fname> 
+                            Load localization data instead of calculating it.
+                            Repeat to concatenate the frames of several files
+                            (e.g., shards), which must tile in order.
 
       --timings             Generate a timing image. Results are saved to
                             the output directory.
@@ -200,7 +219,9 @@ CliArgs parse_command_line(
          } else if(arg == "-m"s or arg == "--manifest"s) {
             manifest_fname = cli::safe_arg_str(argc, argv, i);
             config.manifest_opt_search_path
-                = dirname(absolute_path(manifest_fname));
+                = is_s3_uri(manifest_fname)
+                      ? s3_dirname(manifest_fname)
+                      : dirname(absolute_path(manifest_fname));
          } else if(arg == "--m-json"s) {
             manifest_json_str = cli::safe_arg_str(argc, argv, i);
          } else if(arg == "-s"s or arg == "--stats"s) { // deprecated
@@ -242,11 +263,17 @@ CliArgs parse_command_line(
          } else if(arg == "--save-loc-data"s) {
             config.save_localization_data = true;
          } else if(arg == "--load-loc-data"s) {
-            config.localization_data_fname = cli::safe_arg_str(argc, argv, i);
+            config.push_loc_data_fname(cli::safe_arg_str(argc, argv, i));
          } else if(arg == "--developer"s) {
             config.developer_features = true;
          } else if(arg == "--no-stereo"s) {
             config.no_stereo = true;
+         } else if(arg == "--require-aligned"s) {
+            config.require_aligned = true;
+         } else if(arg == "--still-warmup"s) {
+            config.still_warmup_frames = cli::safe_arg_int(argc, argv, i);
+         } else if(arg == "--no-still"s) {
+            config.no_still = true;
          } else if(arg == "--debug-video"s) {
             config.debug_video_output = true;
          } else if(arg == "--present-video"s) {
@@ -333,48 +360,106 @@ CliArgs parse_command_line(
       config.generate_tracks        = true;
    }
 
-   if(!config.localization_data_fname.empty()) {
-      if(!is_regular_file(config.localization_data_fname)) {
-         LOG_ERR(format("failed to find localization-data file: '{}'",
-                        config.localization_data_fname));
+   // A run-file from before 'localization_data_fnames' has only the one name
+   if(config.n_loc_data_fnames() == 0
+      and !config.localization_data_fname.empty())
+      config.push_loc_data_fname(config.localization_data_fname);
+   if(config.n_loc_data_fnames() > 0)
+      config.localization_data_fname = config.loc_data_fname(0);
+
+   if(config.n_loc_data_fnames() > 0) {
+      try {
+         vector<LocalizationDataEnvelope> envelopes;
+         envelopes.reserve(config.n_loc_data_fnames());
+         for(auto i = 0u; i < config.n_loc_data_fnames(); ++i) {
+            const auto fname = config.loc_data_fname(i);
+            if(!is_regular_file(fname))
+               throw std::runtime_error(format(
+                   "failed to find localization-data file: '{}'", fname));
+            envelopes.push_back(load_localization_data(fname));
+         }
+
+         if(envelopes.size() == 1) {
+            config.ldata_env_ptr = make_shared<LocalizationDataEnvelope>(
+                std::move(envelopes.front()));
+         } else {
+            auto cat_ret = ldata::cat_envelopes(envelopes, {});
+            if(!cat_ret.error.empty())
+               throw std::runtime_error(
+                   format("failed to concatenate localization data: {}",
+                          cat_ret.error));
+            for(const auto& report : cat_ret.overlap_reports)
+               WARN(format("localization data files overlap, and the later "
+                           "file's frames are used: {}",
+                           trim_copy(str(report))));
+            config.ldata_env_ptr = make_shared<LocalizationDataEnvelope>(
+                std::move(cat_ret.envelope));
+         }
+      } catch(std::exception& e) {
+         LOG_ERR(e.what());
          has_error = true;
-      } else {
-         config.ldata_env_ptr = make_shared<LocalizationDataEnvelope>(
-             load_localization_data(config.localization_data_fname));
-
-         Expects(config.ldata_env_ptr != nullptr);
-         Expects(std::isfinite(config.ldata_env_ptr->frame_duration));
-         const auto& ldat = *config.ldata_env_ptr;
-
-         // Make sure the start/n-frames is valid
-         if(config.start_frame_no > int(ldat.start_frame)) {
-            WARN(format("loaded localization data starts at frame {}, but "
-                        "start-frame was set to {}. Setting start-frame to {}",
-                        ldat.start_frame,
-                        config.start_frame_no,
-                        ldat.start_frame));
-            config.start_frame_no = int(ldat.start_frame);
-         }
-
-         if(config.n_frames_to_process < 0) {
-            config.n_frames_to_process = int(ldat.loc_data.size());
-         } else if(config.n_frames_to_process > int(ldat.loc_data.size())) {
-            config.n_frames_to_process = int(ldat.loc_data.size());
-         }
-
-         // The target fps
-         const auto target_fps = 1.0 / ldat.frame_duration;
-         if(config.target_fps == 0.0) {
-            config.target_fps = target_fps;
-         } else if(!is_close(target_fps, config.target_fps)) {
-            WARN(format("target-fps set to '{}', but loaded localization-data "
-                        "has a target-fps of {}. Using {}.",
-                        config.target_fps,
-                        target_fps,
-                        config.target_fps));
-            config.target_fps = target_fps;
-         }
       }
+   }
+
+   if(config.ldata_env_ptr != nullptr) {
+      Expects(std::isfinite(config.ldata_env_ptr->frame_duration));
+      const auto& ldat = *config.ldata_env_ptr;
+
+      // Make sure the start/n-frames is valid
+      if(config.start_frame_no > int(ldat.start_frame)) {
+         WARN(format("loaded localization data starts at frame {}, but "
+                     "start-frame was set to {}. Setting start-frame to {}",
+                     ldat.start_frame,
+                     config.start_frame_no,
+                     ldat.start_frame));
+         config.start_frame_no = int(ldat.start_frame);
+      }
+
+      if(config.n_frames_to_process < 0) {
+         config.n_frames_to_process = int(ldat.loc_data.size());
+      } else if(config.n_frames_to_process > int(ldat.loc_data.size())) {
+         config.n_frames_to_process = int(ldat.loc_data.size());
+      }
+
+      // The target fps
+      const auto target_fps = 1.0 / ldat.frame_duration;
+      if(config.target_fps == 0.0) {
+         config.target_fps = target_fps;
+      } else if(!is_close(target_fps, config.target_fps)) {
+         WARN(format("target-fps set to '{}', but loaded localization-data "
+                     "has a target-fps of {}. Using {}.",
+                     config.target_fps,
+                     target_fps,
+                     config.target_fps));
+         config.target_fps = target_fps;
+      }
+   }
+
+   if(config.still_warmup_frames < 0) {
+      LOG_ERR(format("--still-warmup must be >= 0, but it is {}",
+                     config.still_warmup_frames));
+      has_error = true;
+   } else if(config.still_warmup_frames > 0 and config.no_still) {
+      LOG_ERR(format("cannot use --still-warmup with --no-still"));
+      has_error = true;
+   } else if(config.still_warmup_frames > 0 and config.ldata_env_ptr) {
+      WARN(format("--still-warmup is ignored with --load-loc-data"));
+   }
+
+   if(config.no_still and config.generate_tracks
+      and !config.pose_classifier.empty()) {
+      WARN(format("--no-still changes the pose classifier's input, and so the "
+                  "pose labels of the tracks"));
+   }
+
+   if(config.no_still and !config.no_stereo) {
+      WARN(format("--no-still without --no-stereo changes the localization "
+                  "data: the floor histogram weighs points by the still"));
+   }
+
+   if(config.require_aligned and !config.generate_tracks) {
+      WARN(format("--require-aligned only applies when the tracker runs, "
+                  "and is ignored with --no-tracks"));
    }
 
    for(const auto& fname : config.in_stats_filenames) {
@@ -516,8 +601,9 @@ CliArgs parse_command_line(
          }
       } else if(!manifest_fname.empty()) {
          try {
-            config.manifest_params
-                = parse_json(file_get_contents(manifest_fname));
+            string manifest_s = ""s;
+            lazy_load(manifest_fname, manifest_s); // s3:// through lazy-s3
+            config.manifest_params = parse_json(manifest_s);
          } catch(std::exception& e) {
             LOG_ERR(format(
                 "failed to load json file '{}': {}", manifest_fname, e.what()));
@@ -543,13 +629,23 @@ CliArgs parse_command_line(
       has_error = true;
    }
 
+   if(config.export_training_data and config.no_still) {
+      LOG_ERR(format("cannot use --no-still with --export-training-data: the "
+                     "training-data export reads the still"));
+      has_error = true;
+   }
+
    // (*) ---- Finalize and return result
    config.has_error = has_error;
 
    if(!config.has_error) {
       load_environment_variables();
       const string fname = format("{}/run-object.json", config.outdir);
-      file_put_contents(fname, config.multiview_run_object_str());
+      if(const auto ec
+         = file_put_contents_atomic(fname, config.multiview_run_object_str())) {
+         LOG_ERR(format("failed to write '{}': {}", fname, ec.message()));
+         config.has_error = true;
+      }
    }
 
    return config;
@@ -576,6 +672,30 @@ string This::in_stats_fname(const unsigned ind) const noexcept
    if((in_stats_filenames.type() == Json::arrayValue)
       and (ind < in_stats_filenames.size()))
       return in_stats_filenames[ind].asString();
+   return ""s;
+}
+
+// ------------------------------------------------------------- loc-data-fnames
+//
+unsigned This::n_loc_data_fnames() const noexcept
+{
+   return (localization_data_fnames.type() != Json::arrayValue)
+              ? 0
+              : localization_data_fnames.size();
+}
+
+void This::push_loc_data_fname(const string_view fname) noexcept
+{
+   if(localization_data_fnames.type() != Json::arrayValue)
+      localization_data_fnames = Json::Value(Json::arrayValue);
+   localization_data_fnames.append(Json::Value(string(fname)));
+}
+
+string This::loc_data_fname(const unsigned ind) const noexcept
+{
+   if((localization_data_fnames.type() == Json::arrayValue)
+      and (ind < localization_data_fnames.size()))
+      return localization_data_fnames[ind].asString();
    return ""s;
 }
 

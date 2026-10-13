@@ -1,0 +1,17 @@
+[
+{"case": [499, 0, 499, 250, 0, 10], "result": [{"idx": 0, "start": 0, "n": 250, "keep_start": 0, "keep_n": 250}, {"idx": 1, "start": 250, "n": 249, "keep_start": 250, "keep_n": 249}]},
+{"case": [499, 0, 499, 100, 0, 10], "result": [{"idx": 0, "start": 0, "n": 100, "keep_start": 0, "keep_n": 100}, {"idx": 1, "start": 100, "n": 100, "keep_start": 100, "keep_n": 100}, {"idx": 2, "start": 200, "n": 100, "keep_start": 200, "keep_n": 100}, {"idx": 3, "start": 300, "n": 100, "keep_start": 300, "keep_n": 100}, {"idx": 4, "start": 400, "n": 99, "keep_start": 400, "keep_n": 99}]},
+{"case": [101, 0, 101, 100, 0, 10], "result": [{"idx": 0, "start": 0, "n": 101, "keep_start": 0, "keep_n": 101}]},
+{"case": [499, 0, 499, 250, 30, 10], "result": [{"idx": 0, "start": 0, "n": 250, "keep_start": 0, "keep_n": 250}, {"idx": 1, "start": 220, "n": 279, "keep_start": 250, "keep_n": 249}]},
+{"case": [149, 0, 149, 80, 0, 10], "result": [{"idx": 0, "start": 0, "n": 80, "keep_start": 0, "keep_n": 80}, {"idx": 1, "start": 80, "n": 69, "keep_start": 80, "keep_n": 69}]},
+{"case": [120, 0, 120, 60, 0, 10], "result": [{"idx": 0, "start": 0, "n": 60, "keep_start": 0, "keep_n": 60}, {"idx": 1, "start": 60, "n": 60, "keep_start": 60, "keep_n": 60}]},
+{"case": [120, 0, 120, 120, 0, 10], "result": [{"idx": 0, "start": 0, "n": 120, "keep_start": 0, "keep_n": 120}]},
+{"case": [499, 300, 199, 300, 0, 10], "result": [{"idx": 0, "start": 300, "n": 199, "keep_start": 300, "keep_n": 199}]},
+{"case": [149, 0, 150, 80, 0, 10], "result": {"error": "frames [0, 150) are outside the scene's 149 frames"}},
+{"case": [499, 5, 100, 50, 0, 10], "result": {"error": "start frame 5 is not a multiple of K = 10"}},
+{"case": [499, 0, 95, 50, 0, 10], "result": {"error": "end frame 95 is neither a multiple of K = 10 nor the scene's last frame 499"}},
+{"case": [499, 0, 1, 50, 0, 10], "result": {"error": "at least 2 frames required, got n_frames 1"}},
+{"case": [499, 0, 100, 1, 0, 10], "result": {"error": "shard_frames must be at least 2, got 1"}},
+{"case": [499, 0, 100, 50, -1, 10], "result": {"error": "overlap must not be negative, got -1"}},
+{"case": [499, 0, 100, 50, 0, 0], "result": {"error": "K must be positive, got 0"}}
+]

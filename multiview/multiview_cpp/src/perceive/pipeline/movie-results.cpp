@@ -135,6 +135,7 @@ bool This::Params::load_manifest() noexcept
       opts.optional_search_path = config.manifest_opt_search_path;
       opts.on_the_fly_still     = config.on_the_fly_still;
       opts.no_stereo            = config.no_stereo;
+      opts.accumulate_still     = !config.no_still;
       opts.verbose              = true; // config.verbosity >= 1;
       scene_desc->init_from_json(config.manifest_params, opts);
       scene_desc->seek_frame_(config.start_frame_no - 1);

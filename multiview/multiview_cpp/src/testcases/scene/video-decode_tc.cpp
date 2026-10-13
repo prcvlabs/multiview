@@ -6,6 +6,7 @@
 
 #include "perceive/utils/file-system.hpp"
 #include "perceive/utils/md5.hpp"
+#include "testcases/testcase-data.hpp"
 
 #include <opencv2/videoio.hpp>
 
@@ -17,12 +18,8 @@ namespace perceive
 
 static string testcase_video_filename() noexcept
 {
-   const char* data_dir = getenv("MULTIVIEW_TESTCASE_DATA");
-   const string root
-       = (data_dir != nullptr) ? string(data_dir)
-                               : format("{}/multiview-data", getenv("HOME"));
    return format("{}/testcases/007_site03_sparse_tracks/C0001020_v1.mp4",
-                 root);
+                 test::testcase_data_dir());
 }
 
 static string frame_digest(const cv::Mat& im) noexcept

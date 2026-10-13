@@ -8,6 +8,7 @@
 #include "perceive/geometry/skeleton/2d-helpers.hpp"
 #include "perceive/graphics/bresenham.hpp"
 #include "perceive/io/fp-io.hpp"
+#include "perceive/utils/file-system.hpp"
 
 #define This LocalizationData
 
@@ -775,6 +776,12 @@ void save_localization_data(
    }
 }
 
+// ------------------------------------------------------ save-localization-data
+//
+// Writes `filename.tmp`, checks that every frame reads back equal to the copy
+// that was written, and then renames the temporary to `filename`. The check
+// compares against copies, because `get_loc` may recompute frames that have
+// left the frame cache.
 void save_localization_data(
     const string_view filename,
     const unsigned start_frame,
@@ -783,46 +790,91 @@ void save_localization_data(
     std::function<const LocalizationData*(unsigned)> get_loc,
     const bool verbose) noexcept(false)
 {
-   FILE* fp = fopen(filename.data(), "w");
+   const string fname     = string(filename);
+   const string tmp_fname = format("{}.tmp", fname);
+
+   vector<LocalizationData> written;
+   written.reserve(n_frames);
+   auto get_and_copy = [&](unsigned t) -> const LocalizationData* {
+      const auto loc_ptr = get_loc(t);
+      if(loc_ptr == nullptr) return nullptr;
+      written.push_back(*loc_ptr);
+      return &written.back();
+   };
+
+   auto check_file = [&]() -> string { // empty if the file is good
+      FILE* fp = fopen(tmp_fname.c_str(), "rb");
+      if(fp == nullptr)
+         return format("failed to open '{}' for reading", tmp_fname);
+
+      string err = ""s;
+      try {
+         unsigned file_start_frame = 0;
+         unsigned file_n_frames    = 0;
+         real file_frame_duration  = 0.0;
+         load_uint(fp, file_start_frame);
+         load_uint(fp, file_n_frames);
+         load_real(fp, file_frame_duration);
+         if(file_start_frame != start_frame or file_n_frames != n_frames
+            or !is_close(file_frame_duration, frame_duration)) {
+            err = format("header mismatch: read start-frame = {}, n-frames = "
+                         "{}, frame-duration = {}",
+                         file_start_frame,
+                         file_n_frames,
+                         file_frame_duration);
+         }
+
+         LocalizationData ldat;
+         for(auto i = 0u; err.empty() and i < n_frames; ++i) {
+            ldat.read(fp);
+            const auto& odat = written.at(i);
+            if(ldat != odat or ldat.frame_no != odat.frame_no) {
+               cout << "original-data: " << endl;
+               cout << indent(odat.to_string(), 3) << endl;
+               cout << "loaded-data: " << endl;
+               cout << indent(ldat.to_string(), 3) << endl;
+               err = format("discrepancy when loading frame {}",
+                            start_frame + i);
+            }
+         }
+      } catch(std::exception& e) {
+         err = format("exception reading back '{}': {}", tmp_fname, e.what());
+      }
+      fclose(fp);
+      return err;
+   };
+
+   auto fail = [&](const string& msg) {
+      delete_file(tmp_fname);
+      throw std::runtime_error(msg);
+   };
+
+   FILE* fp = fopen(tmp_fname.c_str(), "wb");
    if(fp == nullptr)
       throw std::runtime_error(
-          format("failed to open '{}' for writing", filename));
+          format("failed to open '{}' for writing", tmp_fname));
 
    save_localization_data(
-       fp, start_frame, n_frames, frame_duration, get_loc, verbose);
-   fclose(fp);
+       fp, start_frame, n_frames, frame_duration, get_and_copy, verbose);
+   const bool write_error = ferror(fp) != 0;
+   if(fclose(fp) != 0 or write_error)
+      fail(format("failed to write '{}'", tmp_fname));
 
-   if(true) {
-      INFO(format("performing deep-check on ldat save operation"));
-      cout << format("   start-frame    = {}", start_frame) << endl;
-      cout << format("   n_frames       = {}", n_frames) << endl;
-      cout << format("   frame_duration = {}", frame_duration) << endl;
-      cout << format("   fps            = {}", 1.0 / frame_duration) << endl;
+   INFO(format("performing deep-check on ldat save operation"));
+   cout << format("   start-frame    = {}", start_frame) << endl;
+   cout << format("   n_frames       = {}", n_frames) << endl;
+   cout << format("   frame_duration = {}", frame_duration) << endl;
+   cout << format("   fps            = {}", 1.0 / frame_duration) << endl;
 
-      // Let's check that this actually worked
-      LocalizationDataEnvelope ldat = load_localization_data(filename);
+   if(const auto err = check_file(); !err.empty()) fail(err);
 
-      Expects(start_frame == ldat.start_frame);
-      Expects(n_frames == ldat.loc_data.size());
-      Expects(is_close(frame_duration, ldat.frame_duration));
-      unsigned t = start_frame;
-      for(const auto& ldat : ldat.loc_data) {
-         const auto odat_ptr = get_loc(t);
-         Expects(odat_ptr != nullptr);
-         if(ldat == *odat_ptr) {
-            // all good
-         } else {
-            LOG_ERR(format("discrepancy when loading from {}", t));
-            cout << "original-data: " << endl;
-            cout << indent(odat_ptr->to_string(), 3) << endl;
-            cout << "loaded-data: " << endl;
-            cout << indent(ldat.to_string(), 3) << endl;
-            FATAL("aborting");
-         }
-         ++t;
-      }
-      cout << format("   DONE") << endl;
-   }
+   if(std::rename(tmp_fname.c_str(), fname.c_str()) != 0)
+      fail(format("failed to rename '{}' to '{}': {}",
+                  tmp_fname,
+                  fname,
+                  strerror(errno)));
+
+   cout << format("   DONE") << endl;
 }
 
 // ------------------------------------------------------------------- Calculate

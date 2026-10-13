@@ -3,6 +3,8 @@
 
 #include "perceive/graphics/image-container.hpp"
 
+#include <mutex>
+
 namespace perceive::cuda::slic
 {
 #ifdef WITH_CUDA
@@ -17,6 +19,8 @@ struct SLIC
 
  private:
    struct Pimpl;
+   // Made on first use, so that a process without a GPU can construct one
+   mutable std::once_flag pimpl_init_;
    mutable std::unique_ptr<Pimpl> pimpl_;
 
  public:

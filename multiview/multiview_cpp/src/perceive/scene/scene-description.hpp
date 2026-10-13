@@ -59,6 +59,7 @@ struct SceneDescription
       string optional_search_path = ""s;
       bool on_the_fly_still       = false;
       bool no_stereo              = false;
+      bool accumulate_still       = true; // else 'accum_blurred_LAB' is empty
       bool verbose                = false;
    };
 
@@ -82,6 +83,12 @@ struct SceneDescription
    bool has_current_frame() const noexcept;
    int current_frame_no() const noexcept;
    int n_frames() const noexcept;
+
+   // The input videos, one per camera; frame counts are 0 for still images
+   real movie_fps() const noexcept;
+   int n_movie_frames() const noexcept; // after the offsets
+   int movie_frame_count(int cam_no) const noexcept;
+   int movie_frame_offset(int cam_no) const noexcept;
 
    string to_string() const noexcept;
 

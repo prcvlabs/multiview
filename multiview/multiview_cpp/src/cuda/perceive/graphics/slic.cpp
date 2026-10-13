@@ -132,13 +132,15 @@ void SLIC::Pimpl::enforce_connectivity()
    }
 }
 
-SLIC::SLIC() { pimpl_ = std::make_unique<Pimpl>(); }
+SLIC::SLIC()  = default;
 SLIC::~SLIC() = default;
 
 SLIC::Result SLIC::calc_labels(const Vec3fImage& image,
                                unsigned spixel_area,
                                float compactness) const
 {
+   std::call_once(pimpl_init_,
+                  [this]() { pimpl_ = std::make_unique<Pimpl>(); });
    lock_guard<std::mutex> padlock{pimpl_->lock};
 
    auto step = unsigned(sqrt(spixel_area) + 0.5);

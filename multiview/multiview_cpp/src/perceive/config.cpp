@@ -43,6 +43,11 @@ struct EnvironmentVariables
    std::string testcase_cache_dir     = ""s;
    std::string cam_pos_annotation_dir = ""s;
    std::string svm_train_gpu_exec     = ""s;
+   std::string s3_endpoint            = ""s;
+   std::string s3_region              = ""s;
+   std::string s3_path_style_s        = ""s;
+   std::string s3_profile             = ""s;
+   bool s3_path_style                 = false;
    bool openpose_serial               = false;
    bool openpose_disabled             = false;
    bool trace_mode                    = false;
@@ -112,6 +117,10 @@ string EnvironmentVariables::make_config_info_str()
     - MULTIVIEW_ASSET_DIR        = '{}'
    MULTIVIEW_CACHE_DIR           = '{}'   
    MULTIVIEW_LAZY_S3_DIR         = '{}'
+   MULTIVIEW_S3_ENDPOINT         = '{}'
+    - MULTIVIEW_S3_REGION        = '{}'
+    - MULTIVIEW_S3_PATH_STYLE    =  {}
+   MULTIVIEW_S3_PROFILE          = '{}'
    MULTIVIEW_CUDA_NUM_GPUS       =  {}
    MULTIVIEW_CUDA_GPU0           =  {}
    MULTIVIEW_OPENPOSE_SERIAL     =  {}
@@ -131,6 +140,10 @@ string EnvironmentVariables::make_config_info_str()
                  asset_dir,
                  cache_dir,
                  lazy_s3_dir,
+                 s3_endpoint,
+                 s3_region,
+                 str(s3_path_style),
+                 s3_profile,
                  cuda_num_gpus,
                  cuda_gpu0,
                  str(openpose_serial),
@@ -200,6 +213,10 @@ static Json::Value read_env()
    get_w_default("MULTIVIEW_CACHE_DIR", ""s);
    get_w_default("MULTIVIEW_LAZY_S3_DIR", ""s);
    get_w_default("MULTIVIEW_HYPERPOSE_DIR", ""s);
+   get_w_default("MULTIVIEW_S3_ENDPOINT", ""s);
+   get_w_default("MULTIVIEW_S3_REGION", ""s);
+   get_w_default("MULTIVIEW_S3_PATH_STYLE", ""s); // "" means unset
+   get_w_default("MULTIVIEW_S3_PROFILE", "multiview"s);
    get_bool_w_default("MULTIVIEW_TRACE_MODE");
    get_bool_w_default("MULTIVIEW_DEBUG_LOCKS");
    get_bool_w_default("MULTIVIEW_OPENPOSE_SERIAL");
@@ -298,7 +315,16 @@ void EnvironmentVariables::init_config(const Json::Value& o)
    openpose_disabled   = o["MULTIVIEW_OPENPOSE_DISABLED"].asBool();
    cuda_num_gpus       = o["MULTIVIEW_CUDA_NUM_GPUS"].asInt();
    cuda_gpu0           = o["MULTIVIEW_CUDA_GPU0"].asInt();
+   s3_endpoint         = o["MULTIVIEW_S3_ENDPOINT"].asString();
+   s3_region           = o["MULTIVIEW_S3_REGION"].asString();
+   s3_path_style_s     = o["MULTIVIEW_S3_PATH_STYLE"].asString();
+   s3_profile          = o["MULTIVIEW_S3_PROFILE"].asString();
    env_obj             = o;
+
+   // Path-style addressing defaults to on exactly when an endpoint is set
+   s3_path_style = s3_path_style_s.empty()
+                       ? !s3_endpoint.empty()
+                       : (s3_path_style_s == "1" || s3_path_style_s == "true");
 
    svm_train_gpu_exec
        = format("{}/opt/cc/bin/svm-train-gpu", installation_root);
@@ -378,6 +404,23 @@ const std::string& svm_train_gpu_exec() noexcept
 {
    return instance().svm_train_gpu_exec;
 }
+
+const std::string& multiview_s3_endpoint() noexcept
+{
+   return instance().s3_endpoint;
+}
+
+const std::string& multiview_s3_region() noexcept
+{
+   return instance().s3_region;
+}
+
+const std::string& multiview_s3_profile() noexcept
+{
+   return instance().s3_profile;
+}
+
+bool multiview_s3_path_style() noexcept { return instance().s3_path_style; }
 
 bool multiview_openpose_serial() noexcept { return instance().openpose_serial; }
 

@@ -18,7 +18,12 @@ static void write_to_lazy_cache(const string_view fname,
              "could not make lazy-cache directory '{}' for file '{}'",
              dname,
              fname));
-   file_put_contents(fname, data);
+   // A killed process must not leave a truncated file in the cache
+   const auto ec
+       = file_put_contents_atomic(fname, string_view(data.data(), data.size()));
+   if(ec)
+      throw std::runtime_error(format(
+          "could not write lazy-cache file '{}': {}", fname, ec.message()));
 }
 
 // ------------------------------------------------------------------- lazy-load
