@@ -22,6 +22,7 @@
 #include "pipeline/pipeline-inc.hpp"
 #include "plane-set-calib/plane-set-calib-inc.hpp"
 #include "position-scene-cameras/position-scene-cameras-inc.hpp"
+#include "realtime/realtime-inc.hpp"
 #include "render-floor-map/render-floor-map-inc.hpp"
 #include "run-scraps/run-scraps-inc.hpp"
 #include "sprite-main/sprite-main-inc.hpp"
@@ -70,6 +71,7 @@ static auto make_runs()
    REGISTER(blur_faces);
    REGISTER(training_data);
    REGISTER(classifier);
+   REGISTER(realtime);
 #endif
 
 #undef REGISTER

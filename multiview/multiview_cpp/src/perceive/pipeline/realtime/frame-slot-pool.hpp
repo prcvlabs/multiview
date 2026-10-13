@@ -36,6 +36,9 @@ class FrameSlotPool
    // Called on a pool thread; must not block, and must not throw
    using on_done_type = std::function<void(FrameRecord&& record)>;
 
+   // `dispatch` without a timeout
+   static constexpr std::chrono::milliseconds k_wait_forever{-1};
+
  private:
    struct Pimpl;
    unique_ptr<Pimpl> pimpl_;
@@ -65,8 +68,8 @@ class FrameSlotPool
    // and survive every change of frame. False if any of them failed.
    bool warm_up() noexcept;
 
-   // Waits up to `timeout` for an idle slot (0: no wait;
-   // `SlotPool<>::k_wait_forever`). False if no slot became idle.
+   // Waits up to `timeout` for an idle slot (0: no wait). False if no slot
+   // became idle.
    bool dispatch(shared_ptr<const SourceFrame> frame,
                  const FrameTimeline& timeline,
                  std::chrono::milliseconds timeout) noexcept;

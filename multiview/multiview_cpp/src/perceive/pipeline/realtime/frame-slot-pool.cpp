@@ -36,6 +36,9 @@ struct FrameSlot
    }
 };
 
+static_assert(FrameSlotPool::k_wait_forever
+              == SlotPool<FrameSlot>::k_wait_forever);
+
 // ----------------------------------------------------------------------- Pimpl
 //
 struct FrameSlotPool::Pimpl

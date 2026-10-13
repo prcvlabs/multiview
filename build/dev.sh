@@ -25,6 +25,8 @@
 #       better replay set (F1 0.61), see tools/privacy/README.md.
 #   pipeline [--hyperpose] <multiview-cli pipeline args...>
 #       Run `multiview-cli pipeline ...` under the GPU lock at low priority.
+#   realtime [--hyperpose] <multiview-cli realtime args...>
+#       Run `multiview-cli realtime ...` under the GPU lock at low priority.
 #   cli [--hyperpose] <multiview-cli args...>
 #       Run multiview-cli with any subcommand (no lock).
 #   check
@@ -50,7 +52,7 @@ BUILD_LOCK=/tmp/multiview-dev-build.lock
 GPU_LOCK=/tmp/multiview-dev-gpu.lock
 SMOKE_TC=007_site03_sparse_tracks
 
-usage() { sed -n '2,36p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 # ------------------------------------------------------------------ helpers
 
@@ -87,7 +89,7 @@ with_lock() # with_lock <lockfile> <what> command...
     local lock="$1" what="$2" ; shift 2
     exec 9>"$lock"
     if ! flock -n 9 ; then
-        echo "dev.sh: waiting for the $what lock ($lock)"
+        echo "dev.sh: waiting for the $what lock ($lock)" >&2
         flock 9
     fi
     # Run the command as a child and forward a termination signal to it, so an
@@ -292,6 +294,7 @@ case "$CMD" in
     smoke)    do_smoke "$@" ;;
     replay)   do_replay "$@" ;;
     pipeline) ensure_built ; with_lock "$GPU_LOCK" gpu nice -n "$NICE" "$(cli_bin)" pipeline "$@" ;;
+    realtime) ensure_built ; with_lock "$GPU_LOCK" gpu nice -n "$NICE" "$(cli_bin)" realtime "$@" ;;
     cli)      ensure_built ; nice -n "$NICE" "$(cli_bin)" "$@" ;;
     check)    do_build && do_test && do_smoke ;;
     -h|--help|help) usage ;;
