@@ -1,3 +1,4 @@
+
 #define CATCH_CONFIG_PREFIX_ALL
 #include "perceive/contrib/catch.hpp"
 
@@ -27,7 +28,7 @@ static tcp::endpoint endpoint(uint16_t port)
    return tcp::endpoint(net::ip::make_address("127.0.0.1"), port);
 }
 
-// -------------------------------------------------------------------- http-get
+// ---------------------------------------------------------------- http-request
 //
 static http::response<http::string_body>
 http_request(uint16_t port, http::verb verb, const string& target)
@@ -174,12 +175,69 @@ CATCH_TEST_CASE("WsServer", "[realtime_ws]")
 
    CATCH_SECTION("slow-client-drops-oldest")
    {
+      params.client_queue = 4;
+      WsServer server(params, health, metrics);
+      CATCH_REQUIRE(server.start());
+
+      // A client that does not read: its socket buffers fill, then its queue
+      net::io_context ioc;
+      websocket::stream<tcp::socket> ws(ioc);
+      ws.next_layer().connect(endpoint(server.port()));
+      ws.handshake("127.0.0.1", "/v1/stream");
+
+      constexpr int n = 64;
+      const string padding(1 << 20, 'x');
+      for(int i = 0; i < n; ++i)
+         server.broadcast(format("{:08d}{}", i, padding));
+      CATCH_REQUIRE(wait_for([&]() {
+         return server.n_sent() + server.n_dropped() + params.client_queue + 1
+                    >= n
+                and server.n_dropped() > 0;
+      }));
+
+      // Other requests are still answered
+      CATCH_REQUIRE(
+          http_request(server.port(), http::verb::get, "/v1/health").result()
+          == http::status::ok);
+
+      // The client now reads everything it is sent, until `stop` closes it
+      vector<int> indices;
+      std::thread reader([&]() {
+         beast::flat_buffer buffer;
+         beast::error_code ec;
+         while(true) {
+            ws.read(buffer, ec);
+            if(ec) break;
+            const auto msg = beast::buffers_to_string(buffer.data());
+            indices.push_back(std::stoi(msg.substr(0, 8)));
+            buffer.consume(buffer.size());
+         }
+      });
+      CATCH_REQUIRE(wait_for([&]() {
+         return server.n_sent() + server.n_dropped() == uint64_t(n);
+      }));
+      server.stop();
+      reader.join();
+
+      const auto n_received = indices.size();
+      CATCH_REQUIRE(n_received >= params.client_queue);
+      CATCH_REQUIRE(server.n_sent() == n_received);
+      CATCH_REQUIRE(server.n_dropped() == n - n_received);
+      for(size_t i = 1; i < n_received; ++i)
+         CATCH_REQUIRE(indices[i - 1] < indices[i]);
+      for(size_t i = 0; i < params.client_queue; ++i) // the newest are kept
+         CATCH_REQUIRE(indices[n_received - params.client_queue + i]
+                       == int(n - params.client_queue + i));
+   }
+
+   CATCH_SECTION("stop-gives-up-on-a-stuck-client")
+   {
       params.client_queue    = 4;
       params.close_timeout_s = 0.5;
       WsServer server(params, health, metrics);
       CATCH_REQUIRE(server.start());
 
-      // A client that never reads: its socket buffers fill, then its queue
+      // A client that never reads
       net::io_context ioc;
       websocket::stream<tcp::socket> ws(ioc);
       ws.next_layer().connect(endpoint(server.port()));
@@ -188,16 +246,7 @@ CATCH_TEST_CASE("WsServer", "[realtime_ws]")
       constexpr int n = 64;
       const string line(1 << 20, 'x');
       for(int i = 0; i < n; ++i) server.broadcast(line);
-      CATCH_REQUIRE(wait_for([&]() {
-         return server.n_sent() + server.n_dropped() + 4 + 1 >= n
-                and server.n_dropped() > 0;
-      }));
-      CATCH_REQUIRE(server.n_sent() + server.n_dropped() <= n);
-
-      // Other requests are still answered
-      CATCH_REQUIRE(
-          http_request(server.port(), http::verb::get, "/v1/health").result()
-          == http::status::ok);
+      CATCH_REQUIRE(wait_for([&]() { return server.n_dropped() > 0; }));
 
       const auto t0 = std::chrono::steady_clock::now();
       server.stop(); // gives up on the client after `close_timeout_s`
