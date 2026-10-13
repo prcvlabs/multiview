@@ -458,6 +458,8 @@ bool This::seek_frame_(int scene_frame_no)
    const bool has_prev = int(prev.size()) == n_cameras();
    const bool ret      = int(raw.size()) == n_cameras();
 
+   // `prev` and `raw` are empty when the frame could not be read, e.g. the
+   // frame before frame 0
    const size_t sz_n_cams = size_t(n_cameras());
    for(size_t i = 0; i < sz_n_cams; ++i) {
       if(is_video[i]) {
@@ -467,7 +469,11 @@ bool This::seek_frame_(int scene_frame_no)
          } else {
             raw_prev_frame[i] = empty_mat;
          }
-         raw_images[i] = std::move(raw[i]);
+         if(ret) {
+            raw_images[i] = std::move(raw[i]);
+         } else {
+            raw_images[i] = empty_mat;
+         }
       }
    }
 
@@ -477,57 +483,97 @@ bool This::seek_frame_(int scene_frame_no)
    return ret;
 }
 
-This::FrameImages This::get_images_for_frame(int scene_frame_no) const noexcept
+// -------------------------------------------------------- get-images-for-frame
+//
+This::FrameImages
+This::get_images_for_frame(int scene_frame_no,
+                           int still_period,
+                           int still_max_frames) const noexcept
 {
-   auto& P = *pimpl_;
-   FrameImages ret;
-   ParallelJobSet pjobs;
+   auto ret
+       = split_raw_images(grab_video_frame_(scene_frame_no), scene_frame_no);
+   accumulate_still(ret, still_period, still_max_frames);
 
-   const size_t sz_n_sensors = size_t(n_sensors());
-
-   ret.frame_no   = scene_frame_no;
-   ret.raw_images = grab_video_frame_(scene_frame_no);
-   ret.sensor_images.resize(sz_n_sensors);
-   ret.labs.resize(sz_n_sensors);
-   ret.frame_loaded = int(ret.raw_images.size()) == n_cameras();
-
-   if(ret.frame_loaded) {
-      auto process_cam_i = [&](const int i) {
-         const auto n_sensors = bcam_infos[size_t(i)].n_sensors();
-         Expects(n_sensors == 2);
-         const auto ind0 = sensor_lookup(i, 0);
-         const auto ind1 = sensor_lookup(i, 1);
-         Expects(ind0 >= 0 and ind0 < this->n_sensors());
-         Expects(ind1 >= 0 and ind1 < this->n_sensors());
-
-         hsplit(ret.raw_images[size_t(i)],
-                ret.sensor_images[size_t(ind0)],
-                ret.sensor_images[size_t(ind1)]);
-
-         if(P.init_opts.no_stereo) { // Delete the right sensor
-            ret.sensor_images[size_t(ind1)] = empty_mat;
-         }
-
-         P.accumulate_sensor(
-             ret.sensor_images[size_t(ind0)], scene_frame_no, ind0);
-         if(!P.init_opts.no_stereo)
-            P.accumulate_sensor(
-                ret.sensor_images[size_t(ind1)], scene_frame_no, ind1);
-      };
-
-      for(auto i = 0; i < n_cameras(); ++i)
-         pjobs.schedule([&process_cam_i, i]() { process_cam_i(i); });
-      pjobs.execute();
-
-      if(false) {
-         for(auto i = 0; i < n_sensors(); ++i) {
-            cv::imwrite(format("/tmp/{}.png", sensor_ids[size_t(i)]),
-                        ret.sensor_images[size_t(i)]);
-         }
+   if(false) {
+      for(auto i = 0; i < n_sensors(); ++i) {
+         cv::imwrite(format("/tmp/{}.png", sensor_ids[size_t(i)]),
+                     ret.sensor_images[size_t(i)]);
       }
    }
 
    return ret;
+}
+
+// ------------------------------------------------------------ split-raw-images
+//
+This::FrameImages This::split_raw_images(vector<cv::Mat>&& raw,
+                                         int scene_frame_no) const noexcept
+{
+   auto& P = *pimpl_;
+   FrameImages ret;
+
+   const size_t sz_n_sensors = size_t(n_sensors());
+
+   ret.frame_no   = scene_frame_no;
+   ret.raw_images = std::move(raw);
+   ret.sensor_images.resize(sz_n_sensors);
+   ret.labs.resize(sz_n_sensors);
+   ret.frame_loaded = int(ret.raw_images.size()) == n_cameras();
+
+   if(!ret.frame_loaded) return ret;
+
+   for(auto i = 0; i < n_cameras(); ++i) {
+      const auto n_sensors = bcam_infos[size_t(i)].n_sensors();
+      Expects(n_sensors == 2);
+      const auto ind0 = sensor_lookup(i, 0);
+      const auto ind1 = sensor_lookup(i, 1);
+      Expects(ind0 >= 0 and ind0 < this->n_sensors());
+      Expects(ind1 >= 0 and ind1 < this->n_sensors());
+
+      hsplit(ret.raw_images[size_t(i)],
+             ret.sensor_images[size_t(ind0)],
+             ret.sensor_images[size_t(ind1)]);
+
+      if(P.init_opts.no_stereo) { // Delete the right sensor
+         ret.sensor_images[size_t(ind1)] = empty_mat;
+      }
+   }
+
+   return ret;
+}
+
+// ------------------------------------------------------------ accumulate-still
+//
+void This::accumulate_still(const FrameImages& images,
+                            int still_period,
+                            int still_max_frames) const noexcept
+{
+   auto& P = *pimpl_;
+   if(!images.frame_loaded) return;
+   if(still_period > 1 and images.frame_no % still_period != 0) return;
+
+   auto is_full = [&](const int sensor_no) {
+      if(still_max_frames <= 0) return false;
+      std::lock_guard<SpinLock> lock(
+          *P.accumulater_padlocks[size_t(sensor_no)]);
+      return P.accumulator_counters.at(size_t(sensor_no)) >= still_max_frames;
+   };
+
+   auto accumulate = [&](const int sensor_no) {
+      if(is_full(sensor_no)) return;
+      P.accumulate_sensor(
+          images.sensor_images[size_t(sensor_no)], images.frame_no, sensor_no);
+   };
+
+   auto process_cam_i = [&](const int i) {
+      accumulate(sensor_lookup(i, 0));
+      if(!P.init_opts.no_stereo) accumulate(sensor_lookup(i, 1));
+   };
+
+   ParallelJobSet pjobs;
+   for(auto i = 0; i < n_cameras(); ++i)
+      pjobs.schedule([&process_cam_i, i]() { process_cam_i(i); });
+   pjobs.execute();
 }
 
 bool This::is_no_stereo() const noexcept { return pimpl_->init_opts.no_stereo; }

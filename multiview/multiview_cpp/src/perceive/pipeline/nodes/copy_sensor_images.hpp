@@ -23,6 +23,12 @@ struct Params final : public MetaCompatible
 
    unsigned frame_num{0};
    bool export_frames{false};
+
+   // The frame enters the scene's still when `frame_num` is a multiple of
+   // `still_sample_period`, and the still has fewer than `still_max_frames`
+   // frames (0 means no limit). The defaults add every frame.
+   unsigned still_sample_period{1};
+   unsigned still_max_frames{0};
 };
 
 struct Result
