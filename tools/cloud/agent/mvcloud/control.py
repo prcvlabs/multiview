@@ -2,8 +2,8 @@
 
 A backend hands out leases on shards, extends them on heartbeats, and
 records how each attempt ended. The filesystem backend (fsbackend.FsControl)
-implements it for one machine and the tests; the Worker API implements the
-same calls over HTTP.
+implements it for one machine and the tests; httpcontrol.HttpControl is the
+same calls on the Worker API (tools/cloud/worker).
 
 Times are seconds since the epoch.
 """
@@ -71,10 +71,15 @@ class Control(Protocol):
 
 
 # ----------------------------------------------------------------- open_control
-def open_control(url):
-    """The backend that `url` names: fs:///path/to/root."""
+def open_control(url, token=None):
+    """The backend that `url` names: fs:///path/to/root, or the Worker API
+    at http(s)://host[:port] with `token` (bearer)."""
     if url.startswith("fs://"):
         from .fsbackend import FsControl
 
         return FsControl(url[len("fs://"):])
-    raise ValueError(f"unsupported control url '{url}' (this version has the fs:// backend only)")
+    if url.startswith(("http://", "https://")):
+        from .httpcontrol import HttpControl
+
+        return HttpControl(url, token)
+    raise ValueError(f"unsupported control url '{url}' (fs:// or http(s)://)")

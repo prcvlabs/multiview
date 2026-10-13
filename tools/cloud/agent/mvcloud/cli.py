@@ -7,6 +7,14 @@
   python3 -m mvcloud sweep  --control fs:///root [--verify]
   python3 -m mvcloud cancel --control fs:///root job_id
 
+With the Worker API (tools/cloud/worker) as the control plane, --control is
+its URL and --token a bearer token: the worker token for `agent`
+(MVCLOUD_WORKER_TOKEN), the admin token for `submit`, `status` and `cancel`
+(MVCLOUD_ADMIN_TOKEN). `submit` then uploads the job's files first:
+
+  python3 -m mvcloud agent  --control http://127.0.0.1:8787 --dispatch api --cli multiview-cli
+  python3 -m mvcloud submit --control http://127.0.0.1:8787 --cli multiview-cli job.json
+
 A job (job.json) names a scene and a frame range:
 
   {"scene_id": "007_site03_sparse_tracks", "manifest": ".../manifest.json",
@@ -25,8 +33,9 @@ import logging
 import os
 import sys
 
-from . import agent, plan, procs, scene
+from . import agent, plan, procs, scene, storage
 from .control import open_control
+from .httpcontrol import HttpError
 
 log = logging.getLogger("mvcloud")
 
@@ -57,8 +66,15 @@ def parse(argv):
     ap.add_argument("-v", "--verbose", action="store_true")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
+    def control_args(p, token_env):
+        p.add_argument("--control", required=True, help="fs:///path/to/root or the Worker's URL")
+        p.add_argument("--token", default=os.environ.get(token_env) or os.environ.get("MVCLOUD_ADMIN_TOKEN"),
+                       help=f"the Worker API's bearer token (default ${token_env})")
+
     p = sub.add_parser("agent", help="run shards")
-    p.add_argument("--control", required=True, help="fs:///path/to/root")
+    control_args(p, "MVCLOUD_WORKER_TOKEN")
+    p.add_argument("--dispatch", choices=("api", "queue"), default="api",
+                   help="api: the Worker's /v1/pull (D1); queue: Cloudflare Queues pull (not built: M8)")
     p.add_argument("--cli", required=True, help="the multiview-cli binary")
     p.add_argument("--cache", default=os.path.expanduser("~/mvcloud-cache"),
                    help="inputs, cached by md5")
@@ -76,12 +92,12 @@ def parse(argv):
     g.add_argument("--drain", action="store_true", help="stop when there is no work")
 
     p = sub.add_parser("submit", help="plan a job and queue its shards")
-    p.add_argument("--control", required=True)
+    control_args(p, "MVCLOUD_ADMIN_TOKEN")
     p.add_argument("--cli", help="multiview-cli, for scene_info")
     p.add_argument("job")
 
     p = sub.add_parser("status", help="jobs and shards as json")
-    p.add_argument("--control", required=True)
+    control_args(p, "MVCLOUD_ADMIN_TOKEN")
     p.add_argument("job_id", nargs="?")
 
     p = sub.add_parser("plan", help="print a job's shards")
@@ -89,11 +105,11 @@ def parse(argv):
     p.add_argument("job")
 
     p = sub.add_parser("sweep", help="expire leases, retry, promote the tracks job")
-    p.add_argument("--control", required=True)
+    control_args(p, "MVCLOUD_ADMIN_TOKEN")
     p.add_argument("--verify", action="store_true", help="also check the md5 of done outputs")
 
     p = sub.add_parser("cancel", help="cancel a job")
-    p.add_argument("--control", required=True)
+    control_args(p, "MVCLOUD_ADMIN_TOKEN")
     p.add_argument("job_id")
     return ap.parse_args(argv)
 
@@ -105,7 +121,10 @@ def main(argv=None):
                         format="%(asctime)s mvcloud %(levelname)s %(message)s", stream=sys.stderr)
     try:
         if args.cmd == "agent":
-            a = agent.Agent(open_control(args.control), cli_bin=args.cli, cache_dir=args.cache,
+            if args.dispatch == "queue":
+                raise ValueError("--dispatch queue (Cloudflare Queues HTTP pull) is milestone M8 and is "
+                                 "not built; use --dispatch api")
+            a = agent.Agent(open_control(args.control, args.token), cli_bin=args.cli, cache_dir=args.cache,
                             work_dir=args.work, gpu_lock=args.gpu_lock, mem=args.mem,
                             kill_grace_s=args.kill_grace, worker_id=args.worker_id,
                             poll_s=args.poll, multiview_cache=args.multiview_cache,
@@ -113,10 +132,10 @@ def main(argv=None):
             n = a.run(once=args.once, drain=args.drain, install_signals=True)
             log.info(f"processed {n} shard(s)" + (f"; {a.stop_reason}" if a.stop_reason else ""))
         elif args.cmd == "submit":
-            job_id = open_control(args.control).submit(load_job_(args.job, args.cli))
+            job_id = open_control(args.control, args.token).submit(load_job_(args.job, args.cli))
             print(job_id)
         elif args.cmd == "status":
-            print(json.dumps(open_control(args.control).status(args.job_id), indent=1))
+            print(json.dumps(open_control(args.control, args.token).status(args.job_id), indent=1))
         elif args.cmd == "plan":
             spec = load_job_(args.job, args.cli)
             start = spec.get("start_frame", 0)
@@ -132,12 +151,12 @@ def main(argv=None):
             print(f"{'tracks':>8} {f'[{start}, {start + n})':>14} {f'[{start}, {start + n})':>14} "
                   f"{plan.wall_budget_s('tracks', n, mode):>11}")
         elif args.cmd == "sweep":
-            for event in open_control(args.control).sweep(verify=args.verify):
+            for event in open_control(args.control, args.token).sweep(verify=args.verify):
                 print(event)
         elif args.cmd == "cancel":
-            open_control(args.control).cancel(args.job_id)
+            open_control(args.control, args.token).cancel(args.job_id)
     except (plan.PlanError, scene.SceneInfoError, procs.WorkBusy, KeyError, ValueError,
-            OSError) as e:
+            OSError, HttpError, storage.TransferError) as e:
         log.error(f"{args.cmd}: {e}")
         return 1
     return 0

@@ -268,8 +268,9 @@ class Agent:
 
     def upload_(self, output, path):
         try:
-            if output.get("multipart"):
-                storage.put_multipart(output["multipart"], path, headers=output.get("headers"))
+            multipart = output.get("multipart")
+            if multipart and os.path.getsize(path) > int(multipart["part_bytes"]):
+                storage.put_multipart(multipart, path, headers=output.get("headers"))
             else:
                 self.uploader(output["url"], path, headers=output.get("headers"))
         except storage.TransferError as e:
