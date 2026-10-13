@@ -106,7 +106,7 @@ vector<Point2> calc_frame_pairs(const real in_fps,
 
 // ------------------------------------------ scene-frame_to_movie-frame_mapping
 //
-static vector<unsigned>
+vector<unsigned>
 scene_frame_to_movie_frame_mapping(const real video_fps,
                                    const real target_fps,
                                    const int n_video_frames) noexcept
@@ -135,6 +135,31 @@ scene_frame_to_movie_frame_mapping(const real video_fps,
       FATAL("kBAM!");
    }
 
+   return ret;
+}
+
+// ------------------------------------------------- calc-manifest-camera-lookup
+//
+vector<int>
+calc_manifest_camera_lookup(const SceneManifest& manifest,
+                            const vector<string>& bcam_keys) noexcept(false)
+{
+   if(manifest.size() != bcam_keys.size())
+      throw std::runtime_error(format("manifest has {} cameras, but the scene "
+                                      "has {}",
+                                      manifest.size(),
+                                      bcam_keys.size()));
+
+   vector<int> ret(manifest.size());
+   for(size_t i = 0; i < manifest.size(); ++i) {
+      const auto ii = find_bcam_key(
+          cbegin(bcam_keys), cend(bcam_keys), manifest.camera_ids.at(i));
+      if(ii == cend(bcam_keys))
+         throw std::runtime_error(format("failed to find camera '{}' in the "
+                                         "scene",
+                                         manifest.camera_ids.at(i)));
+      ret[i] = int(std::distance(cbegin(bcam_keys), ii));
+   }
    return ret;
 }
 

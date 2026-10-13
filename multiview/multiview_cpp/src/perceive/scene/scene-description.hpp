@@ -219,4 +219,16 @@ int calc_movie_frame_offset(const real movie_fps,
                             const Timestamp& timestamp0,
                             const Timestamp& movie_timestamp) noexcept;
 
+// Scene frame `i` is movie frame `ret[i]`
+vector<unsigned>
+scene_frame_to_movie_frame_mapping(const real video_fps,
+                                   const real target_fps,
+                                   const int n_video_frames) noexcept;
+
+// The scene camera (index into `bcam_keys`) of each video in the manifest, as
+// `SceneDescription::init` matches them. Throws if a camera is missing.
+vector<int>
+calc_manifest_camera_lookup(const SceneManifest& manifest,
+                            const vector<string>& bcam_keys) noexcept(false);
+
 } // namespace perceive
