@@ -10,6 +10,7 @@ import logging
 import os
 import signal
 import subprocess
+import threading
 import time
 
 log = logging.getLogger("mvcloud")
@@ -28,18 +29,32 @@ class GpuLock:
 
     def acquire(self, should_stop=None, poll_s=0.5):
         """Waits for the lock. Returns False, without the lock, as soon as
-        should_stop() returns something true."""
+        should_stop() returns something true. The wait is a blocking flock
+        in a helper thread, so the agent queues for the GPU like dev.sh's
+        `flock` does, instead of polling behind it."""
         fd = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o666)
-        while True:
-            try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                self.fd_ = fd
-                return True
-            except BlockingIOError:
-                if should_stop is not None and should_stop():
+        got = threading.Event()
+        abandoned = threading.Event()
+        padlock = threading.Lock()
+
+        def wait_():
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            with padlock:
+                if abandoned.is_set():
+                    fcntl.flock(fd, fcntl.LOCK_UN)
                     os.close(fd)
-                    return False
-                time.sleep(poll_s)
+                    return
+                got.set()
+
+        threading.Thread(target=wait_, name="gpu-lock", daemon=True).start()
+        while not got.wait(poll_s):
+            if should_stop is not None and should_stop():
+                with padlock:
+                    if not got.is_set():
+                        abandoned.set()
+                        return False
+        self.fd_ = fd
+        return True
 
     def release(self):
         if self.fd_ is not None:

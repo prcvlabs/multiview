@@ -42,6 +42,7 @@ class RunResult:
     wall_s: float = 0.0
     log_tail: str = ""
     sid: int | None = None
+    lock_wait_s: float = 0.0  # waiting for the GPU lock, not in wall_s
     outputs: dict = field(default_factory=dict)  # name -> local path
 
 
@@ -227,10 +228,11 @@ def product_paths(lease, workdir):
 
 # -------------------------------------------------------------------- run_shard
 def run_shard(lease, workdir, cli_bin, *, env, prefix, gpu_lock, kill_grace_s, should_stop,
-              on_progress=None, fault_kill_after_s=None):
+              on_progress=None, on_lock=None, fault_kill_after_s=None):
     """Runs the shard whose inputs are already in `workdir` (in/, params.json)
     and returns a RunResult. The GPU lock is held from before the pipeline
-    starts until it has exited; max_wall_s counts from the lock."""
+    starts until it has exited; max_wall_s counts from the lock, and
+    on_lock() is called when it is taken."""
     log_path = os.path.join(workdir, "stdout.log")
     pid_path = os.path.join(workdir, "child.pid")
     os.makedirs(os.path.join(workdir, "out"), exist_ok=True)
@@ -259,14 +261,19 @@ def run_shard(lease, workdir, cli_bin, *, env, prefix, gpu_lock, kill_grace_s, s
             r.outcome = "fatal" if r.outcome == "retry" else r.outcome  # inputs are md5-checked
             return r
 
+    t_lock = time.monotonic()
     if not gpu_lock.acquire(should_stop):
         return RunResult(exit_code=None, outcome="stopped", error=should_stop() or "stopped")
+    lock_wait_s = time.monotonic() - t_lock
+    if on_lock is not None:
+        on_lock()
     try:
         main_product = "localization.data" if lease["kind"] == "loc" else "pipeline-output.json"
         r = result(*child(pipeline_argv(lease, workdir, cli_bin), lease["max_wall_s"],
                           lease["progress_timeout_s"], fault_kill_after_s), product=main_product)
     finally:
         gpu_lock.release()
+    r.lock_wait_s = lock_wait_s
     if r.outcome != "ok":
         return r
 
@@ -296,5 +303,11 @@ def outcome_of_(code, error, tail, present):
 
 # ------------------------------------------------------------------- last_line_
 def last_line_(tail):
-    lines = [x for x in tail.splitlines() if x.strip()]
-    return lines[-1].strip()[:300] if lines else ""
+    """The line of the log tail that says why: the last one with a fatal,
+    then a retry pattern, else the last line."""
+    lines = [x.strip() for x in tail.splitlines() if x.strip()]
+    for patterns in (k_fatal_patterns, k_retry_patterns):
+        hits = [x for x in lines if any(p in x for p in patterns)]
+        if hits:
+            return hits[-1][:300]
+    return lines[-1][:300] if lines else ""

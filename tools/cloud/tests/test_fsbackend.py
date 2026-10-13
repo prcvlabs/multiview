@@ -101,10 +101,13 @@ class TestFsBackend(unittest.TestCase):
     def test_heartbeat_refused_after_the_wall_budget(self):
         self.submit(max_wall_s={"loc": 100, "tracks": None})
         lease = self.control.pull(k_worker)
-        self.clock.t += 149
+        self.clock.t += 1000  # waiting for the GPU lock does not count
         self.assertEqual(self.control.heartbeat(lease, {}), HeartbeatResult.OK)
-        self.clock.t += 2  # 1.5 x max_wall_s after the lease started
-        self.assertEqual(self.control.heartbeat(lease, {}), HeartbeatResult.LOST)
+        progress = {"run_started_at": self.clock.t}
+        self.clock.t += 149
+        self.assertEqual(self.control.heartbeat(lease, progress), HeartbeatResult.OK)
+        self.clock.t += 2  # 1.5 x max_wall_s after the run started
+        self.assertEqual(self.control.heartbeat(lease, progress), HeartbeatResult.LOST)
 
     def test_retries_then_dead(self):
         job_id = self.submit(n_frames=20, shard_frames=20, total_frames=60)

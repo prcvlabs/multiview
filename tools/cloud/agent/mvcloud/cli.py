@@ -62,7 +62,8 @@ def parse(argv):
     p.add_argument("--cli", required=True, help="the multiview-cli binary")
     p.add_argument("--cache", default=os.path.expanduser("~/mvcloud-cache"),
                    help="inputs, cached by md5")
-    p.add_argument("--work", default="/tmp/mvcloud-work", help="attempt directories")
+    p.add_argument("--work", default="/tmp/mvcloud-work",
+                   help="attempt directories, one per agent (orphans found there are killed)")
     p.add_argument("--gpu-lock", default=agent.k_default_gpu_lock)
     p.add_argument("--mem", default="24G", help="memory cap of a shard; '' for none")
     p.add_argument("--kill-grace", type=float, default=20.0, help="seconds from SIGTERM to SIGKILL")

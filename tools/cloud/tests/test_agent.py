@@ -177,6 +177,18 @@ class TestAgent(unittest.TestCase):
                                  (outcome, state, outcome))
                 self.assertTrue(r["error"])
 
+    def test_waiting_for_the_gpu_does_not_count(self):
+        lock = os.path.join(self.tmp.name, "gpu.lock")
+        holder = subprocess.Popen(["flock", lock, "sleep", "4"])  # another job on the GPU
+        time.sleep(0.3)
+        try:
+            got, r = self.one_shard("ok", max_wall_s={"loc": 2, "tracks": None})
+        finally:
+            holder.wait()
+        self.assertEqual((got, r["state"]), ("ok", "done"))
+        with open(self.control.blob_path(f"{r['output_prefix']}/done.json")) as f:
+            self.assertGreater(json.load(f)["lock_wait_s"], 3.0)
+
     def test_a_grandchild_left_behind_is_killed(self):
         got, r = self.one_shard("leave-child")
         self.assertEqual((got, r["state"]), ("ok", "done"))

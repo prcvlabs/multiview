@@ -352,10 +352,16 @@ class FsControl:
         return r, r["state"] == "leased" and r["lease_token"] == lease["lease_token"]
 
     def heartbeat(self, lease, progress):
+        """LOST unless the lease is current and, once the run has started
+        (progress["run_started_at"], when the agent took the GPU lock), it
+        is within 1.5 x max_wall_s of that start. Waiting for the GPU does
+        not count: another job may hold it for long."""
         with self.locked_():
             r, current = self.current_(lease)
             now = self.clock()
-            if not current or now > r["lease_started_at"] + 1.5 * r["max_wall_s"]:
+            run_started_at = (progress or {}).get("run_started_at")
+            if not current or (run_started_at is not None
+                               and now > run_started_at + 1.5 * r["max_wall_s"]):
                 return HeartbeatResult.LOST
             job = read_json_(os.path.join(self.job_dir_(r["job_id"]), "job.json"))
             r.update(lease_expires_at=now + job["spec"]["lease_seconds"], last_heartbeat_at=now,

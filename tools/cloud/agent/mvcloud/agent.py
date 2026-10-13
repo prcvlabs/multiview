@@ -154,12 +154,15 @@ class Agent:
             return "lease lost" if hb.lost.is_set() else None
 
         def on_progress(line):
-            hb.progress = {"line": line, "at": self.clock()}
+            hb.progress = {**hb.progress, "line": line, "at": self.clock()}
+
+        def on_lock():
+            hb.progress = {"run_started_at": self.clock()}
 
         started_at = self.clock()
         hb.start()
         try:
-            done = self.attempt_(lease, workdir, should_stop, on_progress, started_at)
+            done = self.attempt_(lease, workdir, should_stop, on_progress, on_lock, started_at)
             outcome = "ok"
             error = ""
         except ShardError as e:
@@ -190,7 +193,7 @@ class Agent:
         return outcome
 
     # ----------------------------------------------------------------- attempt_
-    def attempt_(self, lease, workdir, should_stop, on_progress, started_at):
+    def attempt_(self, lease, workdir, should_stop, on_progress, on_lock, started_at):
         """Fetch, run, check and upload; returns done.json's object or
         raises ShardError."""
         replay_dir = self.prepare_inputs_(lease, workdir)
@@ -205,17 +208,18 @@ class Agent:
             fault = float(spec.split(":", 1)[1])
         r = runner.run_shard(lease, workdir, self.cli_bin, env=self.env, prefix=self.prefix,
                              gpu_lock=self.gpu_lock, kill_grace_s=self.kill_grace_s,
-                             should_stop=should_stop, on_progress=on_progress,
+                             should_stop=should_stop, on_progress=on_progress, on_lock=on_lock,
                              fault_kill_after_s=fault)
         if r.sid is not None:
             log.info(f"{lease['job_id']}/{lease['shard_id']}: session {r.sid} ended: "
-                     f"exit {r.exit_code}, {r.outcome}, {r.wall_s:.1f} s")
+                     f"exit {r.exit_code}, {r.outcome}, {r.wall_s:.1f} s "
+                     f"(after {r.lock_wait_s:.1f} s for the GPU lock)")
         if r.outcome != "ok":
             raise ShardError(r.outcome, r.error)
 
         done = {"shard_id": lease["shard_id"], "job_id": lease["job_id"],
                 "attempt": lease["attempt"], "kind": lease["kind"], "exit_code": r.exit_code,
-                "started_at": started_at, "wall_s": r.wall_s,
+                "started_at": started_at, "wall_s": r.wall_s, "lock_wait_s": r.lock_wait_s,
                 "frames": {"start": lease["cli"]["start_frame"], "n": lease["cli"]["n_frames"]},
                 "host": {**self.worker, "host": socket.gethostname(), "cli": self.cli_bin,
                          "memory_capped": self.capped}}

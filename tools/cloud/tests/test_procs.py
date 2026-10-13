@@ -31,10 +31,21 @@ class TestProcs(unittest.TestCase):
         self.assertFalse(b.acquire(should_stop=lambda: "stop", poll_s=0.01))
         r = subprocess.run(["flock", "-n", path, "true"])
         self.assertNotEqual(r.returncode, 0)  # build/dev.sh's flock waits too
-        a.release()
-        self.assertEqual(subprocess.run(["flock", "-n", path, "true"]).returncode, 0)
+        a.release()  # b's abandoned waiter takes the lock and lets it go at once
+        self.assertEqual(subprocess.run(["flock", "-w", "5", path, "true"]).returncode, 0)
         with procs.GpuLock(path):
             self.assertFalse(procs.GpuLock(path).acquire(should_stop=lambda: True, poll_s=0.01))
+
+    def test_gpu_lock_queues_behind_a_holder(self):
+        path = os.path.join(self.d, "gpu.lock")
+        holder = subprocess.Popen(["flock", path, "sleep", "1"])
+        time.sleep(0.3)
+        lock = procs.GpuLock(path)
+        t0 = time.monotonic()
+        self.assertTrue(lock.acquire(poll_s=5.0))  # woken by the release, not by the poll
+        self.assertLess(time.monotonic() - t0, 2.0)
+        lock.release()
+        holder.wait()
 
     def test_kill_session_reaches_grandchildren(self):
         log_path = os.path.join(self.d, "log")
