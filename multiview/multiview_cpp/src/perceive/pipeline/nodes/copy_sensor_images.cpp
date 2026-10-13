@@ -21,6 +21,8 @@ const vector<MemberMetaData>& Params::meta_data() const noexcept
       m.push_back(MAKE_META(ThisParams, STRING, out_dir, false));
       m.push_back(MAKE_META(ThisParams, UNSIGNED, frame_num, true));
       m.push_back(MAKE_META(ThisParams, BOOL, export_frames, false));
+      m.push_back(MAKE_META(ThisParams, UNSIGNED, still_sample_period, true));
+      m.push_back(MAKE_META(ThisParams, UNSIGNED, still_max_frames, true));
       return m;
    };
    static vector<MemberMetaData> meta_ = make_meta();
@@ -43,7 +45,22 @@ Task::execute(const RunData& data,
    }
 
    const auto& scene_desc{ret->scene_desc()};
-   ret->images = scene_desc.get_images_for_frame(int(params.frame_num));
+   if(images_provider_) {
+      const auto images_ptr = images_provider_(int(params.frame_num));
+      if(images_ptr == nullptr or !images_ptr->frame_loaded) {
+         LOG_ERR(format("no images for frame {}", params.frame_num));
+         return nullptr;
+      }
+      ret->images = *images_ptr;
+      scene_desc.accumulate_still(ret->images,
+                                  int(params.still_sample_period),
+                                  int(params.still_max_frames));
+   } else {
+      ret->images
+          = scene_desc.get_images_for_frame(int(params.frame_num),
+                                            int(params.still_sample_period),
+                                            int(params.still_max_frames));
+   }
 
    //
    if(params.export_frames) {

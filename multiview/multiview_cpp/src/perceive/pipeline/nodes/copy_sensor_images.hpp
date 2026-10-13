@@ -23,6 +23,12 @@ struct Params final : public MetaCompatible
 
    unsigned frame_num{0};
    bool export_frames{false};
+
+   // The frame enters the scene's still when `frame_num` is a multiple of
+   // `still_sample_period`, and the still has fewer than `still_max_frames`
+   // frames (0 means no limit). The defaults add every frame.
+   unsigned still_sample_period{1};
+   unsigned still_max_frames{0};
 };
 
 struct Result
@@ -41,7 +47,22 @@ struct Result
 class Task : public PipelineTask<Params, Result>
 {
  public:
+   using images_provider_type
+       = std::function<shared_ptr<const SceneDescription::FrameImages>(
+           int frame_num)>;
+
+ private:
+   images_provider_type images_provider_ = nullptr;
+
+ public:
    CUSTOM_NEW_DELETE(Task)
+
+   // The images of frame `frame_num` come from `f` instead of the scene's
+   // videos (nullptr from `f` fails the frame). Set before the first result.
+   void set_images_provider(images_provider_type f) noexcept
+   {
+      images_provider_ = std::move(f);
+   }
 
  protected:
    shared_ptr<const Result>

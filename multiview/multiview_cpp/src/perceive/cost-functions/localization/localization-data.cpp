@@ -967,6 +967,31 @@ size_t This::memory_usage() const noexcept
           - sizeof(Grey16Image) + vector_memory_usage(p2ds, sizeof_p2d_vec);
 }
 
+// ------------------------------------------------------------------ make-empty
+//
+LocalizationData
+This::make_empty(const LocalizationData& like, const Params& p, int frame_no)
+{
+   LocalizationData dat;
+   dat.frame_no = frame_no;
+   dat.hist_sz  = like.hist_sz;
+   dat.bounds   = like.bounds;
+   dat.loc_min  = like.loc_min;
+   dat.loc_max  = like.loc_max;
+
+   // As `calculate` does for a cell with no evidence
+   const float range = dat.loc_max - dat.loc_min;
+   FloatImage fhist;
+   fhist.resize(like.loc_hist.width, like.loc_hist.height);
+   fhist.fill(0.5f * (1.0f - float(p.zero_value)) * range + dat.loc_min);
+   dat.loc_hist = float_im_to_grey16(fhist, dat.loc_min, dat.loc_max);
+
+   dat.p2ds.resize(like.p2ds.size());
+
+   Ensures(dat.invariant_check());
+   return dat;
+}
+
 // --------------------------------------------------------- approx-memory-usage
 //
 bool This::invariant_check() const noexcept

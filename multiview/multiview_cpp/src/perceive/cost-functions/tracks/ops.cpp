@@ -330,7 +330,7 @@ static void set_still_score(This& op, This::XYT& xyt)
       const int sensor_no = p2d->sensor_no();
       Expects(size_t(sensor_no) < op.blur_labs.size());
       const auto& still = op.blur_labs.at(size_t(sensor_no));
-      Expects(still.width > 0 && still.height > 0);
+      if(still.width == 0 || still.height == 0) continue; // no still yet
 
       const int patch_w  = int(info_ptr->patches[0].width);
       const int patch_h  = int(info_ptr->patches[0].height);

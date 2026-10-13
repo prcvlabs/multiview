@@ -41,12 +41,9 @@ FowlkesResult run_tracklets_algorithm_1(const pipeline::MovieResults::Params& p,
 
    const auto now = tick();
 
-   // Remove ghost tracks here, and filter short tracks
-   const auto result1 = post_process(result0, p.post_process_params);
-
-   // Smooth tracks
-   const auto fowlkes_result
-       = smooth_tracks(p.params.fowlkes_params, result1.to_fowlkes_result());
+   // Remove ghost tracks, filter short tracks, and smooth
+   const auto fowlkes_result = finalise_tracks(
+       result0, p.post_process_params, p.params.fowlkes_params);
 
    if(p.config.verbosity > 0)
       INFO(format("finalizing track data: {}s", tock(now)));

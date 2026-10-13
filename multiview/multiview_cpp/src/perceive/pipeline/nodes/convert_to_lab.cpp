@@ -47,10 +47,15 @@ shared_ptr<const Result> Task::execute(const RunData& data,
    auto start = tick();
 
    try {
-      // Runs cuda if available
-      ret->lab_image = make_shared<const LABImage>(
-          LAB_vec3f_im_to_LAB(argb_to_LAB_vec3f_im(*ret->argb_image)));
-   } catch(const std::runtime_error& e) {
+      // Runs cuda if available, on this node's own converter, so that the
+      // sensors (and the frames in flight) do not queue on one lock
+      const auto& argb = *ret->argb_image;
+      const bool use_node_conversion
+          = cuda::cuda_is_available() and argb.size() > 0;
+      ret->lab_image = make_shared<const LABImage>(LAB_vec3f_im_to_LAB(
+          use_node_conversion ? lab_conversion.convert(argb)
+                              : argb_to_LAB_vec3f_im(argb)));
+   } catch(std::exception& e) {
       LOG_ERR(format("Exception in convert_to_lab: {}", e.what()));
       return nullptr;
    }

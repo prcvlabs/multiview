@@ -66,20 +66,15 @@ Task::execute(const RunData& data,
 
    if(is_cancelled()) return nullptr;
 
-   // Wastefully seek and copy a bunch of images. Is there a better thing we can
-   // do? We only do this once per video so...
-   auto ims = scene_desc.get_images_for_frame(0);
-
+   // `SceneDescription::init` sets the working format of each sensor from the
+   // first frame it reads. Reading a frame here would decode it on every
+   // camera, and add it to the still.
    auto get_wh = [&]() -> Point2 {
-      const int n_sensors_for_cam = scene_desc.n_sensors_for(int(cam_num));
-      for(auto i = 0; i < n_sensors_for_cam; ++i) {
-         const int sensor_ind = scene_desc.sensor_lookup(int(cam_num), i);
-         const cv::Mat im     = scene_desc.sensor_image.at(size_t(sensor_ind));
-         if(im.empty()) continue;
-         return Point2{im.cols, im.rows};
-      }
-      Expects(false);
-      return Point2{0, 0};
+      const auto& bcam_info = scene_desc.bcam_infos.at(size_t(cam_num));
+      Expects(bcam_info.n_sensors() > 0);
+      const auto wh = bcam_info.M[0].working_format();
+      Expects(wh.x > 0.0 and wh.y > 0.0);
+      return Point2{int(wh.x), int(wh.y)};
    };
 
    auto s = time_thunk([&]() {

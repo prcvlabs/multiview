@@ -166,58 +166,12 @@ struct TrackCalculator
          }
       }
 
-      { // Sanity
-         if(tracks.size() == 0) {
-            LOG_ERR(format("attempt to get tracks result, because apparently "
-                           "there's no frames!"));
-            return {};
-         }
-      }
-
-      // Create the result
-      TrackerResult ret;
-      ret.start_frame    = movie_start_frame;
-      ret.n_frames       = movie_n_frames;
-      ret.hist_w         = tracks[0]->w;
-      ret.hist_h         = tracks[0]->h;
-      ret.top_left       = top_left;
-      ret.hist_sz        = hist_sz;
-      ret.frame_duration = frame_duration;
-
-      // How many tracks could we be looking at?
-      auto calc_max_id = [&]() {
-         int max_id = -1;
-         for(auto& ptr : tracks)
-            for(const auto& tt : ptr->seqs)
-               if(tt.id() > max_id) max_id = tt.id();
-         return max_id;
-      };
-
-      { // Combine all the node-sequences, merging as necessary
-         ret.seqs.resize(size_t(calc_max_id() + 1));
-         vector<bool> marks(ret.seqs.size(), false);
-         for(const auto& track : tracks) {
-            for(const auto& seq : track->seqs) {
-               Expects(size_t(seq.id()) < ret.seqs.size());
-               if(!marks[size_t(seq.id())]) {
-                  ret.seqs[size_t(seq.id())] = seq;  // copy
-                  marks[size_t(seq.id())]    = true; // so we append next time
-               } else {
-                  ret.seqs[size_t(seq.id())].append(seq); // append
-               }
-            }
-         }
-      }
-
-      { // Remove all empty tracks
-         auto ii = std::stable_partition(
-             begin(ret.seqs), end(ret.seqs), [&](const auto& seq) {
-                return seq.size() > 0;
-             });
-         ret.seqs.erase(ii, end(ret.seqs));
-      }
-
-      return ret;
+      return make_tracker_result(tracks,
+                                 movie_start_frame,
+                                 movie_n_frames,
+                                 top_left,
+                                 hist_sz,
+                                 frame_duration);
    }
 
    // --------------------------------- get track
@@ -259,7 +213,7 @@ struct TrackCalculator
    {
       Result::CompDataEnvelope comp_dat;
 
-      if(idx < start_idx && idx > end_idx) return comp_dat;
+      if(idx < start_idx || idx > end_idx) return comp_dat;
 
       // There's a problem with multiple threads reading mp4 files
       // (from scene-desc)

@@ -19,7 +19,8 @@ struct KzFilter
    vector<real> coefficients_ = {};
 
  public:
-   // Window size is (m + k(m-1))
+   // Window size is m + (k-1)(m-1): the box filter of width m, convolved
+   // with itself k - 1 times
    KzFilter(const int m = 5,           // must be odd
             const int k = 3) noexcept; // must be > 0
    KzFilter(const KzFilter&) = delete;

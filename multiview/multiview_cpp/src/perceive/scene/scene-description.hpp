@@ -97,7 +97,25 @@ struct SceneDescription
       vector<cv::Mat> sensor_images; // distorted, one per sensor
       vector<Vec3fImage> labs;
    };
-   FrameImages get_images_for_frame(int frame_no) const noexcept; // thread-safe
+   // thread-safe. Frame `frame_no` enters the still when `frame_no` is a
+   // multiple of `still_period`, and the still has fewer than
+   // `still_max_frames` frames (0 means no limit).
+   FrameImages get_images_for_frame(int frame_no,
+                                    int still_period     = 1,
+                                    int still_max_frames = 0) const noexcept;
+
+   // Splits each camera's side-by-side image into its sensors' images (the
+   // right sensor's is empty with `no_stereo`). `frame_loaded` is FALSE unless
+   // there is one image per camera. thread-safe.
+   FrameImages split_raw_images(vector<cv::Mat>&& raw,
+                                int frame_no) const noexcept;
+
+   // Adds the frame's sensor images to the running still, as
+   // `get_images_for_frame` does. thread-safe. `still_max_frames` is a soft
+   // cap: N concurrent callers can overshoot it by up to N - 1 frames.
+   void accumulate_still(const FrameImages& images,
+                         int still_period,
+                         int still_max_frames) const noexcept;
 
    // Every frame that's read is accumulated into buffer... one sensor
    // per camera. (i.e., sensor zero). Returns the average image.
@@ -201,5 +219,17 @@ vector<Point2> calc_frame_pairs(const real in_fps,
 int calc_movie_frame_offset(const real movie_fps,
                             const Timestamp& timestamp0,
                             const Timestamp& movie_timestamp) noexcept;
+
+// Scene frame `i` is movie frame `ret[i]`
+vector<unsigned>
+scene_frame_to_movie_frame_mapping(const real video_fps,
+                                   const real target_fps,
+                                   const int n_video_frames) noexcept;
+
+// The scene camera (index into `bcam_keys`) of each video in the manifest, as
+// `SceneDescription::init` matches them. Throws if a camera is missing.
+vector<int>
+calc_manifest_camera_lookup(const SceneManifest& manifest,
+                            const vector<string>& bcam_keys) noexcept(false);
 
 } // namespace perceive
