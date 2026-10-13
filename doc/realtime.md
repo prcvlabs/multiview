@@ -86,11 +86,12 @@ authentication) serves, from scene load to the end of the run:
 |---|---|
 | `ws://HOST:8765/v1/stream` | Every NDJSON line, one WebSocket text message each, without the newline. A client that connects late gets the `header` line first, then the stream from where it joined. |
 | `GET /v1/health` | The `stats` object (below) plus `"status"`: `"ok"`, or `"overloaded"` when more than 20 % of the frames of the last 5 s were dropped, and `"drop_share"`. `{"status": "starting"}` until the slots are warmed up. |
-| `GET /v1/metrics` | The same counters in Prometheus text format (`multiview_realtime_*`: frames, fps, queue depths, drops by reason, latency summaries, `overloaded`). |
+| `GET /v1/metrics` | The same counters in Prometheus text format (`multiview_realtime_*`: frames, fps, queue depths, drops by reason, latency summaries, `overloaded`, `ws_clients`, `ws_dropped_lines_total`). |
 
 Each client has its own queue of 256 lines; when a client reads too slowly,
-its oldest unsent line is dropped (counted as `ws_dropped` in
-`realtime-stats.json`), so a client never slows the run. The file or stdout
+its oldest unsent line is dropped (counted as `ws_dropped` in the `stats`
+line, `/v1/health` and `realtime-stats.json`), so a client never slows the
+run. The file or stdout
 sink never drops. At the end the server sends each client its last lines
 and closes it (waiting 2 s at most).
 
@@ -160,8 +161,9 @@ the line being written.
   final (`final_upto_t` is the last revised frame minus `delta_t`, the
   smoothing filter's half width).
 - `track_end`: a track that did not continue into the newest window.
-- `window_error`: a window that failed validation and was skipped (none in
-  any run so far).
+- `window_error`: a window that failed validation or threw (none in any
+  run so far). The tracker stops at the first one; the run then stops,
+  writes no `pipeline-output.json` and exits with an error.
 
 `bin/compare-tracks.py` checks a stream against the run's output
 (`--stream`), the revised positions against the unsmoothed output
@@ -369,6 +371,9 @@ the drop-free output in 1-35 points).
   pool jobs while it waits.
 - **Confirmed tracks** are decided on the sequence so far; only the end of
   the stream applies `post_process`.
+- **Scoring** (`--pipeline-testcase`) covers the frames `[start, start + n)`
+  (batch passes 0); with `--start > 0` at a frame rate other than the
+  ground truth's it is skipped with an error, where batch would stop.
 - **Replayed poses** must carry the scene frame in `frame-no`; a mismatch
   fails a precondition on a pool thread (as in `pipeline`).
 - **Not measured**: the soak (RSS over a long run, which needs `--loop`), the
