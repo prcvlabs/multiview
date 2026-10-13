@@ -240,14 +240,17 @@ bool FrameSlotPool::warm_up() noexcept
       node.calc_result(on_result);
    };
 
+   // One slot at a time
    for(unsigned i = 0; i < n_slots(); ++i) {
-      auto& results = *P.pool->slot(i).results;
+      const auto now = tick();
+      auto& results  = *P.pool->slot(i).results;
       for(auto& node : results.bcam_init) warm_node(*node);
       for(auto& node : results.get_xy_mapping) warm_node(*node);
-   }
 
-   std::unique_lock<std::mutex> lock(padlock);
-   all_done.wait(lock, [&]() { return n_waiting == 0; });
+      std::unique_lock<std::mutex> lock(padlock);
+      all_done.wait(lock, [&]() { return n_waiting == 0; });
+      INFO(format("slot {} warmed up in {}s", i, tock(now)));
+   }
    return success;
 }
 
