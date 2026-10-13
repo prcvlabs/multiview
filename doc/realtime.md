@@ -45,6 +45,7 @@ out).
 | `--max-seconds <s>` | 0 | Stop after this long (0: at the end of the frames). |
 | `--missing-timeout <s>` | 5 | Give up waiting for a frame's result (drop newest only). |
 | `--no-provisional` | | Do not write `frame` lines. |
+| `--ws-port <port>` | 0 | Serve the stream over WebSocket, and the health and metrics endpoints, on this port (0: no server). See below. |
 | `--print-frame-mapping` | | Print `k movie-frame` for every scene frame `k`, and exit. |
 
 A run on testcase 007 with the 2D poses replayed from disk (no pose network;
@@ -68,12 +69,41 @@ first run for a model, precision and camera count builds a TensorRT engine
 later runs load it in about 2 s.
 
 SIGINT stops the run cleanly (the frames in flight are finished, the tracks
-written); a second SIGINT exits at once. At the end the output directory holds
+written, `end` published); a second SIGINT exits at once. `--max-seconds`
+stops it the same way. At the end the output directory holds
 `pipeline-output.json` (as `pipeline` writes it), `pipeline-output-presmooth.json`
 (the same before smoothing), `params.json` (with the realtime flags under
 `"realtime"`; `pipeline -p` accepts it), `realtime-stats.json` (throughput,
 latency percentiles, drops, per-node mean times) and, with `--timings`, one
 Gantt chart per slot.
+
+### Serving the stream (`--ws-port`)
+
+With `--ws-port 8765` one listener on all interfaces (no TLS, no
+authentication) serves, from scene load to the end of the run:
+
+| Endpoint | Answer |
+|---|---|
+| `ws://HOST:8765/v1/stream` | Every NDJSON line, one WebSocket text message each, without the newline. A client that connects late gets the `header` line first, then the stream from where it joined. |
+| `GET /v1/health` | The `stats` object (below) plus `"status"`: `"ok"`, or `"overloaded"` when more than 20 % of the frames of the last 5 s were dropped, and `"drop_share"`. `{"status": "starting"}` until the slots are warmed up. |
+| `GET /v1/metrics` | The same counters in Prometheus text format (`multiview_realtime_*`: frames, fps, queue depths, drops by reason, latency summaries, `overloaded`). |
+
+Each client has its own queue of 256 lines; when a client reads too slowly,
+its oldest unsent line is dropped (counted as `ws_dropped` in
+`realtime-stats.json`), so a client never slows the run. The file or stdout
+sink never drops. At the end the server sends each client its last lines
+and closes it (waiting 2 s at most).
+
+`bin/realtime-client.py` reads a stream from a file, stdin or the WebSocket
+URL (standard library only), and summarises it: lines per type, frames
+processed and dropped, provisional latency over the run and per half, the
+last `stats` line's latencies, and the `end` line:
+
+```
+bin/realtime-client.py ws://localhost:8765/v1/stream --save /tmp/ws.ndjson
+bin/realtime-client.py /tmp/rt/stream.ndjson
+curl -s localhost:8765/v1/health
+```
 
 ### Replaying poses at a lower `--target-fps`
 
@@ -144,6 +174,11 @@ paced source --> dispatcher --> N slots (FrameResults) --> reorder --> tracker
  (a decoder       (drop newest    per-frame pipeline        (frame       (one window
  thread per       or wait)        on the thread pool)       order)       of K frames
  camera)                                                                 at a time)
+                                                               |            |
+                                                               v            v
+                                                  publisher (one thread) --> file / stdout
+                                                                         --> WebSocket server
+                                                                             (one thread)
 ```
 
 - The source decodes each camera on its own thread, sequentially, and puts
@@ -161,6 +196,14 @@ paced source --> dispatcher --> N slots (FrameResults) --> reorder --> tracker
 - The running still is sampled every `--still-every` frames inside the
   slots' `copy_sensor_images`, with the batch code. In `--no-stereo` nothing
   but `lab_p` (the tracks' appearance score) depends on the still.
+- The reorder stage and the tracker hand their messages to the publisher,
+  which serialises each once, writes it to the file (blocking: nothing is
+  lost) and hands it to the WebSocket server, and adds a `stats` line every
+  `--stats-period`. The server runs Boost.Beast on its own thread; every
+  client keeps a read pending, so pings and the close are answered.
+- At the end the stages stop in data-flow order (source, dispatcher, slots,
+  reorder, tracker, publisher, server), so every frame a slot took is
+  published before `end`.
 - New threads use `std::mutex` and `std::condition_variable` only: no new
   helping waits (issue #13). The tracker thread still enters the existing
   ones inside `Tracklet::execute` and the tracks stage.
@@ -308,9 +351,9 @@ the drop-free output in 1-35 points).
 
 - **Cameras**: input is replayed from the scene's files (`PacedFrameSource`);
   there is no RTSP or camera source, and `--loop` is not implemented.
-- **WebSocket and health server** (`--ws-port`, `/v1/health`,
-  `/v1/metrics`) and `bin/realtime-client.py`: not implemented (milestone M7);
-  NDJSON goes to a file or stdout.
+- **Service hardening**: the WebSocket server has no TLS, no
+  authentication and no client limit, and listens on all interfaces; it was
+  checked with one or two local clients only.
 - **Stereo**: without `--no-stereo` the still, which stereo depends on, is
   sampled differently from batch; stereo realtime is untested.
 - **Engine warm-up**: the TensorRT engine is loaded (or built) on the first
@@ -329,5 +372,6 @@ the drop-free output in 1-35 points).
 - **Replayed poses** must carry the scene frame in `frame-no`; a mismatch
   fails a precondition on a pool thread (as in `pipeline`).
 - **Not measured**: the soak (RSS over a long run, which needs `--loop`), the
-  pose-level comparison of the 6- and 9-image engine profiles, and the
-  latency of a WebSocket client.
+  pose-level comparison of the 6- and 9-image engine profiles, and a remote
+  WebSocket client (the local ones received every line, byte for byte as the
+  file).

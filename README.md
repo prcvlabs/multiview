@@ -258,6 +258,11 @@ $CLI realtime -m $TC/manifest.json -p params.json -d /tmp/rt -y --no-stereo \
     --pose-classifier pose-svm-lite_v0 --out /tmp/rt/stream.ndjson
 ```
 
+With `--ws-port 8765` the same lines are served over WebSocket at
+`ws://HOST:8765/v1/stream`, with `GET /v1/health` (`ok` or `overloaded`) and
+`GET /v1/metrics` (Prometheus) on the same port; `bin/realtime-client.py`
+reads and summarises a stream from a file or that URL.
+
 Unpaced and without drops (`--replay-rate 0 --drop none`) its
 `pipeline-output.json` equals the batch output exactly, except `lab_p` (the
 tracks' appearance score), which depends on the still that `--still-every`
