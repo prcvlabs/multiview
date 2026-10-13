@@ -156,10 +156,20 @@ error_code file_put_contents(const std::string_view fname,
 error_code file_put_contents_atomic(const std::string_view fname,
                                     const std::string_view dat) noexcept
 {
-   const std::string filename  = std::string(fname);
-   const std::string tmp_fname = filename + ".tmp";
+   const std::string filename = std::string(fname);
+   std::string tmp_fname      = filename + ".XXXXXX";
 
-   error_code ec = file_put_contents(tmp_fname, dat);
+   // A name of our own, so that concurrent writers of `fname` (several
+   // processes sharing a cache directory) never write into each other's file.
+   const int fd = mkstemp(tmp_fname.data());
+   if(fd == -1) return std::make_error_code(std::errc(errno));
+   // mkstemp creates the file 0600; readers in other containers need 0644
+   error_code ec = {};
+   if(fchmod(fd, 0644) != 0) ec = std::make_error_code(std::errc(errno));
+   if(close(fd) != 0)
+      if(!ec) ec = std::make_error_code(std::errc(errno));
+
+   if(!ec) ec = file_put_contents(tmp_fname, dat);
    if(!ec and std::rename(tmp_fname.c_str(), filename.c_str()) != 0)
       ec = std::make_error_code(std::errc(errno));
    if(ec) delete_file(tmp_fname);
