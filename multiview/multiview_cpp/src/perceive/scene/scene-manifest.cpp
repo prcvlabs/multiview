@@ -64,6 +64,8 @@ vector<string> This::resolve_video_filenames(const string& directory) const
 
       if(begins_with(fname, string("s3://"))) {
          return fname;
+      } else if(begins_with(directory, string("s3://"))) {
+         return format("{}/{}", directory, fname); // fetched at load
       } else if(directory == "") {
          if(is_regular_file(fname)) return fname;
       } else {

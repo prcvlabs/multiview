@@ -91,7 +91,9 @@ void show_help(string argv0) noexcept
                             Default is '{}' in output directory.
     
       -p <filename>         Params filename.
-      -m <filename>         Manifest filename. MUST be specified.
+      -m <filename>         Manifest filename. MUST be specified. May be an
+                            s3:// URI; its videos are then fetched relative
+                            to it through the lazy-s3 cache.
       --p-json <json-str>   Params inline JSON.
       --m-json <json-str>   Manifest inline JSON.    
 
@@ -217,7 +219,9 @@ CliArgs parse_command_line(
          } else if(arg == "-m"s or arg == "--manifest"s) {
             manifest_fname = cli::safe_arg_str(argc, argv, i);
             config.manifest_opt_search_path
-                = dirname(absolute_path(manifest_fname));
+                = is_s3_uri(manifest_fname)
+                      ? s3_dirname(manifest_fname)
+                      : dirname(absolute_path(manifest_fname));
          } else if(arg == "--m-json"s) {
             manifest_json_str = cli::safe_arg_str(argc, argv, i);
          } else if(arg == "-s"s or arg == "--stats"s) { // deprecated
@@ -597,8 +601,9 @@ CliArgs parse_command_line(
          }
       } else if(!manifest_fname.empty()) {
          try {
-            config.manifest_params
-                = parse_json(file_get_contents(manifest_fname));
+            string manifest_s = ""s;
+            lazy_load(manifest_fname, manifest_s); // s3:// through lazy-s3
+            config.manifest_params = parse_json(manifest_s);
          } catch(std::exception& e) {
             LOG_ERR(format(
                 "failed to load json file '{}': {}", manifest_fname, e.what()));
