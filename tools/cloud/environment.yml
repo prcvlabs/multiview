@@ -1,0 +1,14 @@
+# The mvcloud tool environment: the agent's tests and the Worker's
+# toolchain (wrangler 4.87 and later need Node 22; the system Node is 18).
+#
+#   micromamba create -y -f tools/cloud/environment.yml
+#   micromamba run -n mvcloud npm --prefix tools/cloud/worker ci
+#
+# The agent itself needs only the Python 3.12 standard library.
+name: mvcloud
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pytest
+  - nodejs=22
