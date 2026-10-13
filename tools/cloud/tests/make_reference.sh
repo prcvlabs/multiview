@@ -22,9 +22,10 @@
 #
 # --no-still passes --no-still to R2 and R3, whose products then go to
 # R2-no-still, R3-no-still, ref-<N>-no-still.data and t0a-no-still.json
-# (R1 is shared). ref-<N>-no-still.data must equal ref-<N>.data byte for
-# byte; t0a-no-still.json shows what the still changes in a tracks job (the
-# pose classifier's input, hence the pose labels, and lab_p).
+# (R1 is shared, so --runs defaults to R2,R3). ref-<N>-no-still.data must
+# equal ref-<N>.data byte for byte; t0a-no-still.json shows what the still
+# changes in a tracks job (the pose classifier's input, hence the pose
+# labels, and lab_p).
 
 set -euo pipefail
 
@@ -40,7 +41,7 @@ MEM="${MULTIVIEW_CLOUD_MEM:-24G}"
 CLI="$ROOT/multiview/multiview_cpp/build/cmake-release/multiview-cli"
 OUT="$DATA_D/cloud-golden/007"
 FRAMES=()
-RUNS="R1,R2,R3"
+RUNS=""
 NO_STILL=()
 SUF=""
 
@@ -51,12 +52,15 @@ while [ "$#" -gt 0 ] ; do
         --no-still) NO_STILL=(--no-still) ; SUF="-no-still" ;;
         --cli)    shift ; CLI="$1" ;;
         --out)    shift ; OUT="$1" ;;
-        -h|--help) sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
+        -h|--help) sed -n '2,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
         *) echo "make_reference: unknown argument '$1'" ; exit 1 ;;
     esac
     shift
 done
 [ "${#FRAMES[@]}" -gt 0 ] || FRAMES=(120 499)
+if [ -z "$RUNS" ] ; then
+    if [ -n "$SUF" ] ; then RUNS="R2,R3" ; else RUNS="R1,R2,R3" ; fi
+fi
 
 MANIFEST="$DATA_D/testcases/$TC/manifest.json"
 GT="$DATA_D/testcases/$TC/ground-truth.json"

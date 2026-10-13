@@ -48,7 +48,7 @@ while [ "$#" -gt 0 ] ; do
         --no-still)     NO_STILL=(--no-still) ;;
         --cli)          shift ; CLI="$1" ;;
         --out)          shift ; OUT="$1" ;;
-        -h|--help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
+        -h|--help) sed -n '2,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
         *) echo "check_shard_parity: unknown argument '$1'" ; exit 1 ;;
     esac
     shift
