@@ -43,15 +43,24 @@ export async function enqueue(env: Env, messages: ShardMessage[]): Promise<numbe
   return messages.length;
 }
 
+const k_wake_timeout_ms = 5000;
+
 // --------------------------------------------------------------- wakeWorkflow
 // Wakes the job's Workflow from its wait; it would sweep at the timeout
-// anyway, so a failure here only costs time.
+// anyway, so a failure here only costs time, and the wait for an answer is
+// bounded so that a request's waitUntil always settles.
 export async function wakeWorkflow(env: Env, jobId: string, kind: string): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`no answer in ${k_wake_timeout_ms} ms`)), k_wake_timeout_ms);
+  });
   try {
     const instance = await env.JOB_WORKFLOW.get(jobId);
-    await instance.sendEvent({ type: "shard-event", payload: { kind } });
+    await Promise.race([instance.sendEvent({ type: "shard-event", payload: { kind } }), timeout]);
   } catch (e) {
     console.warn(`wake ${jobId}: ${String(e)}`);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }
 

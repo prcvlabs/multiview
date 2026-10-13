@@ -219,6 +219,8 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     const jobId = decodeURIComponent(m[1]);
     if (m[2] && method === "POST") {
       if (role !== "admin") return json(403, { error: "cancelling a job needs the admin token" });
+      // Running agents learn of it from D1 (their next heartbeat is
+      // refused); the Workflow is woken to end the instance.
       if (!(await cancelJob(env.DB, jobId, now_()))) return json(404, { error: `no job '${jobId}'` });
       ctx.waitUntil(wakeWorkflow(env, jobId, "cancel"));
       return json(200, { job_id: jobId, state: "cancelled" });
