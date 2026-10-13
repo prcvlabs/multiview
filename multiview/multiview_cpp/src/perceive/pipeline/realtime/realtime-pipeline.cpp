@@ -487,6 +487,7 @@ StatsMessage RealtimeRun::make_stats(time_point now) noexcept
    stats->set_queue_depth(RealtimeStats::Queue::TRACKER, tracker->queue_size());
    stats->set_queue_depth(RealtimeStats::Queue::OUT, publisher->queue_size());
    stats->set_slots_busy(slots->n_busy());
+   if(server) stats->set_ws_clients(server->n_clients(), server->n_dropped());
    StatsMessage msg;
    msg.stats = stats->to_json(now);
    return msg;

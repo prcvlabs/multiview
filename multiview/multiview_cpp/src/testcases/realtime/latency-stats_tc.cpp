@@ -79,6 +79,7 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
    stats.set_queue_depth(RealtimeStats::Queue::LOC, 3);
    stats.set_slots_busy(2);
    stats.set_still_samples(7);
+   stats.set_ws_clients(2, 5);
    for(int i = 1; i <= 100; ++i)
       stats.add_latency(RealtimeStats::Latency::PROVISIONAL, double(i));
    stats.add_window_ms(250.0);
@@ -94,6 +95,8 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
       CATCH_REQUIRE(stats.queue_depth(RealtimeStats::Queue::LOC) == 3);
       CATCH_REQUIRE(stats.slots_busy() == 2);
       CATCH_REQUIRE(stats.still_samples() == 7);
+      CATCH_REQUIRE(stats.ws_clients() == 2);
+      CATCH_REQUIRE(stats.ws_dropped() == 5);
    }
 
    CATCH_SECTION("to-json")
@@ -106,6 +109,8 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
                             "slots_busy",
                             "drops",
                             "still_samples",
+                            "ws_clients",
+                            "ws_dropped",
                             "rss_mb",
                             "latency_ms",
                             "window_ms"})
@@ -116,6 +121,7 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
       CATCH_REQUIRE(o["frames"]["dag"].asUInt64() == 10);
       CATCH_REQUIRE(o["queue_depth"]["loc"].asUInt64() == 3);
       CATCH_REQUIRE(o["queue_depth"]["ring"].asUInt64() == 0);
+      CATCH_REQUIRE(o["ws_dropped"].asUInt64() == 5);
       CATCH_REQUIRE(o["drops"]["no_free_slot"].asUInt64() == 2);
       CATCH_REQUIRE(o["drops"]["dag_error"].asUInt64() == 1);
       CATCH_REQUIRE(o["drops"]["tracker_behind"].asUInt64() == 0);
@@ -143,6 +149,8 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
            "multiview_realtime_dropped_frames_total{reason=\"no_free_slot\"} "
            "2\n",
            "multiview_realtime_still_samples_total 7\n",
+           "multiview_realtime_ws_clients 2\n",
+           "multiview_realtime_ws_dropped_lines_total 5\n",
            "# TYPE multiview_realtime_latency_ms summary\n",
            "multiview_realtime_latency_ms{status=\"provisional\",quantile="
            "\"0.95\"} 95.0\n",

@@ -259,6 +259,14 @@ uint64_t RealtimeStats::still_samples() const noexcept
    return still_samples_;
 }
 
+// ------------------------------------------------------------------ ws-clients
+//
+uint64_t RealtimeStats::ws_clients() const noexcept { return ws_clients_; }
+
+// ------------------------------------------------------------------ ws-dropped
+//
+uint64_t RealtimeStats::ws_dropped() const noexcept { return ws_dropped_; }
+
 // --------------------------------------------------------------------- latency
 //
 const LatencyStats& RealtimeStats::latency(Latency which) const noexcept
@@ -322,6 +330,15 @@ void RealtimeStats::set_still_samples(uint64_t n) noexcept
    still_samples_ = n;
 }
 
+// -------------------------------------------------------------- set-ws-clients
+//
+void RealtimeStats::set_ws_clients(unsigned n_clients,
+                                   uint64_t n_dropped) noexcept
+{
+   ws_clients_ = n_clients;
+   ws_dropped_ = n_dropped;
+}
+
 // ----------------------------------------------------------------- add-latency
 //
 void RealtimeStats::add_latency(Latency which, double ms) noexcept
@@ -363,6 +380,8 @@ Json::Value RealtimeStats::to_json(time_point now) const noexcept
    o["drops"] = drops_o;
 
    o["still_samples"] = Json::Int64(still_samples());
+   o["ws_clients"]    = Json::Int64(ws_clients());
+   o["ws_dropped"]    = Json::Int64(ws_dropped());
    o["rss_mb"]        = double(resident_set_size()) / (1024.0 * 1024.0);
 
    Json::Value latency_o{Json::objectValue};
@@ -457,6 +476,12 @@ string RealtimeStats::to_prometheus(time_point now) const noexcept
 
    type_line("still_samples_total", "counter");
    ss << format("{}still_samples_total {}\n", prefix, still_samples());
+
+   type_line("ws_clients", "gauge");
+   ss << format("{}ws_clients {}\n", prefix, ws_clients());
+
+   type_line("ws_dropped_lines_total", "counter");
+   ss << format("{}ws_dropped_lines_total {}\n", prefix, ws_dropped());
 
    type_line("resident_memory_bytes", "gauge");
    ss << format("{}resident_memory_bytes {}\n", prefix, resident_set_size());

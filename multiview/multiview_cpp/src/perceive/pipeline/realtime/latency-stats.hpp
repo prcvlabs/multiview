@@ -101,6 +101,8 @@ class RealtimeStats
    array<std::atomic<uint64_t>, k_n_queues> queue_depths_;
    std::atomic<uint64_t> slots_busy_    = 0;
    std::atomic<uint64_t> still_samples_ = 0;
+   std::atomic<uint64_t> ws_clients_    = 0;
+   std::atomic<uint64_t> ws_dropped_    = 0;
    array<LatencyStats, k_n_latencies> latencies_;
    LatencyStats window_ms_;
    RateCounter recent_frames_; // provisional or dropped, `k_overload_window`
@@ -119,6 +121,8 @@ class RealtimeStats
    uint64_t queue_depth(Queue queue) const noexcept;
    uint64_t slots_busy() const noexcept;
    uint64_t still_samples() const noexcept;
+   uint64_t ws_clients() const noexcept;
+   uint64_t ws_dropped() const noexcept; // lines, all WebSocket clients
    const LatencyStats& latency(Latency which) const noexcept;
    const LatencyStats& window_ms() const noexcept { return window_ms_; }
 
@@ -133,6 +137,7 @@ class RealtimeStats
    void set_queue_depth(Queue queue, size_t depth) noexcept;
    void set_slots_busy(unsigned n) noexcept;
    void set_still_samples(uint64_t n) noexcept;
+   void set_ws_clients(unsigned n_clients, uint64_t n_dropped) noexcept;
    void add_latency(Latency which, double ms) noexcept;
    void add_window_ms(double ms) noexcept;
 
