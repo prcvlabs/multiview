@@ -48,6 +48,15 @@ int run_main(int argc, char** argv)
       return EXIT_FAILURE;
    }
 
+   if(rp.print_frame_mapping) {
+      std::stringstream ss{""};
+      const bool success = rt::print_frame_mapping(config, ss);
+      run_exit_functions();
+      restore_cout();
+      cout << ss.str();
+      return success ? EXIT_SUCCESS : EXIT_FAILURE;
+   }
+
    INFO(perceive::format("Multiview Configuration:"));
    std::cout << perceive::environment_info() << std::endl;
 

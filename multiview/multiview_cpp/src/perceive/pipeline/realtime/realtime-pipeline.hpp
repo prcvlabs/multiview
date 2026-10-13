@@ -28,4 +28,11 @@ namespace perceive::pipeline::realtime
 // be written.
 bool run_realtime(const CliArgs& config, const RealtimeParams& rp) noexcept;
 
+// Writes `k movie-frame` for every scene frame `k` of the scene in `config`:
+// the frame that the paced source decodes for `k`, before each camera's
+// offset. With `--target-fps` below the videos' rate, scene frames skip
+// movie frames, and pose replay files (named by scene frame) recorded at the
+// videos' rate must be renamed (`bin/pose-replay-remap.py`). False on error.
+bool print_frame_mapping(const CliArgs& config, std::ostream& out) noexcept;
+
 } // namespace perceive::pipeline::realtime

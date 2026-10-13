@@ -111,6 +111,8 @@ bool parse_realtime_arg(RealtimeParams& p,
       p.missing_timeout_s = cli::safe_arg_real(argc, argv, i);
    } else if(arg == "--no-provisional"s) {
       p.publish_provisional = false;
+   } else if(arg == "--print-frame-mapping"s) {
+      p.print_frame_mapping = true;
    } else {
       return false;
    }
@@ -142,6 +144,8 @@ string realtime_args_help() noexcept
       --missing-timeout <s>  Give up on a frame after this long (drop newest
                              only). Default: {}.
       --no-provisional       Do not write 'frame' lines.
+      --print-frame-mapping  Print 'k movie-frame' for every scene frame k
+                             (see --target-fps), and exit.
 )V0G0N",
                  RealtimeParams::k_max_slots,
                  o.n_slots,

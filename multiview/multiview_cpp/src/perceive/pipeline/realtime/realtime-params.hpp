@@ -31,6 +31,9 @@ struct RealtimeParams final : public MetaCompatible
    real missing_timeout_s       = 5.0;     // give up on a frame (drop newest)
    bool publish_provisional     = true;    // write `frame` lines
 
+   // Not a parameter of the run: print the frame mapping and exit
+   bool print_frame_mapping = false;
+
    static constexpr unsigned k_max_slots = 6;
 
    // The pacing rate for a scene at `scene_fps`: 0 means unpaced

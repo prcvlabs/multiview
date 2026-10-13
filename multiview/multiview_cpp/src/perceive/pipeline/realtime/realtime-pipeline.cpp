@@ -761,6 +761,34 @@ bool RealtimeRun::finish() noexcept
    return has_tracks and !tracker->has_error();
 }
 
+// --------------------------------------------------------- print-frame-mapping
+//
+bool print_frame_mapping(const CliArgs& config, std::ostream& out) noexcept
+{
+   try {
+      MovieResults::Params in_params;
+      if(!in_params.init(config, false)) return false;
+      if(!in_params.load_manifest()) return false;
+      Expects(in_params.scene_desc != nullptr);
+      const auto& scene = *in_params.scene_desc;
+
+      SceneManifest manifest;
+      read(manifest, config.manifest_params);
+      const auto map = make_video_frame_map(scene, manifest);
+
+      out << format("# scene frame => movie frame; scene fps {}, movie fps {}",
+                    map.scene_fps,
+                    map.movie_fps)
+          << endl;
+      for(size_t k = 0; k < map.frame_mapping.size(); ++k)
+         out << format("{} {}", k, map.frame_mapping[k]) << endl;
+      return true;
+   } catch(std::exception& e) {
+      LOG_ERR(format("failed to make the frame mapping: {}", e.what()));
+   }
+   return false;
+}
+
 // ---------------------------------------------------------------- run-realtime
 //
 bool run_realtime(const CliArgs& config, const RealtimeParams& rp) noexcept
