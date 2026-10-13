@@ -105,14 +105,22 @@ python3 -m mvcloud cancel --control http://127.0.0.1:8787 <job_id>
 one tar) and the ground truth through the Worker, content-addressed (section
 3), skipping objects already there, and the Worker checks that every input
 exists before it accepts the job. Agents poll `/v1/pull` (`--poll`, 15 s
-with jitter); a job's tracks job appears when its Workflow sees the last loc
-shard done (at once: `complete` wakes it), and expired leases and retries are
-swept every `wait_seconds` (300 by default). The status page is
-`http://127.0.0.1:8787/?token=<admin>`.
+with jitter); a job's tracks job appears as soon as its last loc shard is
+done (that shard's `complete` promotes it), and the Workflow sweeps expired
+leases and retries every `wait_seconds` (300 by default), a wait that doubles
+up to an hour while none of the job's shards is leased or failed and nothing
+changes. That keeps an instance under its 1,024 steps for about 42 hours of
+running shards plus any time queued (`job-workflow.ts` has the arithmetic); a
+live job whose instance has errored anyway fails when `GET /v1/jobs/<id>`, the
+status page or the cron trigger (every 10 minutes) sees it. The status page is
+`http://127.0.0.1:8787/?token=<admin>`, which moves the token into an HttpOnly
+cookie; the API takes tokens only as `Authorization: Bearer`.
 
-API: `POST /v1/jobs` (admin), `GET /v1/jobs[/<id>]`, `POST /v1/jobs/<id>/cancel`
-(admin), `POST /v1/pull | /v1/claim | /v1/heartbeat | /v1/complete | /v1/fail`,
-`GET /v1/workers`, `/v1/blobs/<key>` (a worker writes only under its lease's
+API: `POST /v1/jobs` (admin; `submit` names the job, so a retried request
+returns the job the first one created), `GET /v1/jobs[/<id>]`,
+`POST /v1/jobs/<id>/cancel` (admin; 409 for a job that has ended),
+`POST /v1/pull | /v1/claim | /v1/heartbeat | /v1/complete | /v1/fail` (a
+retried pull gets back the lease whose reply was lost), `GET /v1/workers`, `/v1/blobs/<key>` (a worker writes only under its lease's
 `a<attempt>/` prefix, named by `x-mvcloud-lease`), `GET /v1/health`. Every
 state change of a shard is one conditional D1 `UPDATE` on its state and lease
 token; a late or duplicate call changes nothing. Deploying is in the header
@@ -257,7 +265,9 @@ jobs/<job_id>/summary.json
 ```
 
 Scene inputs are content-addressed (`<md5>` of the file; `mvcloud submit`
-uploads them with their md5, which R2 verifies), so two jobs with different
+sends it with each upload: R2 verifies it for a single PUT, up to 64 MiB,
+while a multipart object keeps it as metadata that the agent checks when it
+downloads the object), so two jobs with different
 params for one scene never overwrite each other's inputs and an unchanged
 file is uploaded once. The filesystem backend uses the same `jobs/...` layout
 under `<root>/blobs/` and reads scene inputs where they are. Every attempt

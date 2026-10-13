@@ -12,12 +12,14 @@ other URL (a presigned one) is used as it is.
 import json
 import logging
 import os
+import re
 import shutil
 import tarfile
 import tempfile
 import time
 import urllib.error
 import urllib.request
+import uuid
 
 from . import storage
 from .control import Conflict, HeartbeatResult
@@ -55,6 +57,15 @@ def tar_poses(src, dest):
     return len(names)
 
 
+# ------------------------------------------------------------------- new_job_id
+def new_job_id(scene_id):
+    """A job id as the Worker would make it (<scene>-<UTC time>-<random>),
+    chosen here so that a retried POST /v1/jobs names the same job; it is
+    also a Workflow instance id, hence the character set."""
+    t = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+    return f"{re.sub(r'[^A-Za-z0-9_-]', '_', scene_id)[:70]}-{t}-{uuid.uuid4().hex[:6]}"
+
+
 # ------------------------------------------------------------------ HttpControl
 class HttpControl:
     """Control backend on the Worker at `base` (http://127.0.0.1:8787 under
@@ -89,10 +100,14 @@ class HttpControl:
         except ValueError:
             return status, {"error": raw[:500].decode(errors="replace")}
 
+    # ---------------------------------------------------------------- retrying_
     def retrying_(self, method, path, body=None):
-        """call_ with retries of 5xx answers and unreachable Workers; the
-        calls retried are idempotent for the Worker (a repeated complete or
-        fail of the same lease is a no-op)."""
+        """call_ with retries of 5xx answers and unreachable Workers. Only
+        for calls that the Worker makes idempotent: a repeated complete or
+        fail of the same lease is a no-op, a repeated pull returns the lease
+        it handed out if its reply was lost (one that has not heartbeated
+        yet), and a repeated POST /v1/jobs names the same job_id, so it
+        returns the job the first one created."""
         for i in range(k_attempts):
             try:
                 status, obj = self.call_(method, path, body)
@@ -106,7 +121,7 @@ class HttpControl:
             log.warning(f"{problem}; retrying")
             time.sleep(min(30.0, k_backoff_s * 2**i))
 
-    # ---------------------------------------------------------------- authorize_
+    # --------------------------------------------------------------- authorize_
     def authorize_(self, lease):
         """Adds the tokens to the lease's URLs on this Worker."""
         own = lambda url: url.startswith(self.base + "/")
@@ -172,7 +187,7 @@ class HttpControl:
         except HttpError as e:  # the lease expires on its own
             log.warning(f"fail: {e}")
 
-    # ------------------------------------------------------------------- upload_
+    # ------------------------------------------------------------------ upload_
     def upload_(self, path, scene_id, name):
         """Puts the local file `path` at scenes/<scene_id>/<md5>/<name>
         unless an object of its size is there; returns the key."""
@@ -200,6 +215,7 @@ class HttpControl:
         its id; raises ValueError when the Worker refuses it."""
         s = {k: v for k, v in spec.items() if k not in ("manifest", "params", "poses", "gt")}
         scene = spec["scene_id"]
+        s.setdefault("job_id", new_job_id(scene))
         manifest = os.path.abspath(spec["manifest"])
         s["manifest_key"] = self.upload_(manifest, scene, "manifest.json")
         with open(manifest) as f:

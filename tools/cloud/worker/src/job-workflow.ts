@@ -4,12 +4,25 @@
 //   the tracks job -> wait for it -> finalize (summary.json, delete the
 //   losing attempts' objects, job done)
 //
-// Each wait is a loop of waitForEvent('shard-event') with a timeout of the
-// job's wait_seconds, followed by a sweep step (expire leases, retry failed
-// shards when their delay has passed, tally). `complete` and `fail` send the
-// event only when a kind is finished or a shard died, so the number of steps
-// grows with the job's wall time / wait_seconds, not with its shard count.
-// The Workflow is the only re-enqueuer; D1 is the authority.
+// Each wait is a loop of waitForEvent('shard-event') with a timeout, followed
+// by a sweep step (expire leases, retry failed shards when their delay has
+// passed, tally). `complete` and `fail` send the event only when a kind is
+// finished or a shard died, so the steps do not grow with the shard count.
+// The Workflow is the only re-enqueuer; D1 is the authority, and the last
+// loc shard's `complete` promotes the tracks job itself.
+//
+// Steps: an instance may take 1,024. The plan and finalize take 4, each kind
+// 2 per wait. The timeout is the job's wait_seconds (300 s by default) while
+// a shard is leased or failed or the tally moves, and doubles up to
+// k_idle_wait_max_s (1 h) while nothing happens: a job queued behind others
+// costs 2 steps an hour once its wait has grown (about 10 to get there), a
+// running one 2 per wait_seconds, 24 an hour at 300 s. So the instance
+// lasts about 42 hours of running shards, plus the time spent queued (an
+// agent that leases a shard during a long wait does not wake the instance,
+// so a lease lost then is swept at the end of that wait at the latest). An
+// instance that errors anyway (out of steps, or a sweep out of retries) does
+// not strand the job: GET /v1/jobs/{id}, the status page and the cron
+// trigger fail a live job whose instance has errored (failStrandedJob).
 
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from "cloudflare:workers";
 import { NonRetryableError } from "cloudflare:workflows";
@@ -44,8 +57,9 @@ export async function enqueue(env: Env, messages: ShardMessage[]): Promise<numbe
 }
 
 const k_wake_timeout_ms = 5000;
+const k_idle_wait_max_s = 3600;
 
-// --------------------------------------------------------------- wakeWorkflow
+// ---------------------------------------------------------------- wakeWorkflow
 // Wakes the job's Workflow from its wait; it would sweep at the timeout
 // anyway, so a failure here only costs time, and the wait for an answer is
 // bounded so that a request's waitUntil always settles.
@@ -65,10 +79,10 @@ export async function wakeWorkflow(env: Env, jobId: string, kind: string): Promi
 }
 
 type SweepResult =
-  | { outcome: "running"; done: number; total: number; requeued: number }
+  | { outcome: "running"; done: number; total: number; busy: number; requeued: number }
   | { outcome: "failed" | "cancelled"; error: string | null };
 
-// ------------------------------------------------------------- sweepAndTally
+// --------------------------------------------------------------- sweepAndTally
 async function sweepAndTally(env: Env, jobId: string, kind: ShardKind): Promise<SweepResult> {
   const requeued = await enqueue(env, await sweepJob(env.DB, jobId, now_()));
   const job = await loadJob(env.DB, jobId);
@@ -76,12 +90,17 @@ async function sweepAndTally(env: Env, jobId: string, kind: ShardKind): Promise<
   if (job.row.state === "failed") return { outcome: "failed", error: job.row.error };
   const t = await tally(env.DB, jobId, kind);
   const correlated = await correlatedFailure(env.DB, jobId);
-  const error = t.dead > 0 ? t.dead_error : correlated ? `correlated failures: ${correlated}` : null;
+  let error: string | null = null;
+  if (t.dead > 0) error = t.dead_error;
+  else if (t.params_md5s > 1) error = `the ${kind} shards were computed with ${t.params_md5s} different params_md5`;
+  else if (correlated) error = `correlated failures: ${correlated}`;
   if (error !== null) {
-    await failJob(env.DB, jobId, error, now_());
-    return { outcome: "failed", error };
+    if (await failJob(env.DB, jobId, error, now_())) return { outcome: "failed", error };
+    const ended = await loadJob(env.DB, jobId); // cancelled meanwhile
+    if (ended?.row.state === "cancelled") return { outcome: "cancelled", error: null };
+    return { outcome: "failed", error: ended?.row.error ?? error };
   }
-  return { outcome: "running", done: t.done, total: t.total, requeued };
+  return { outcome: "running", done: t.done, total: t.total, busy: t.leased + t.failed, requeued };
 }
 
 // -------------------------------------------------------------------- finalize
@@ -125,26 +144,34 @@ export class JobWorkflow extends WorkflowEntrypoint<Env, JobParams> {
   }
 
   // Waits until every shard of `kind` is done: null. A cancelled job ends the
-  // instance ({state: "cancelled"}); a failed one errors it.
+  // instance ({state: "cancelled"}); a failed one errors it. The timeout
+  // doubles while no shard is leased or failed and the tally stands still
+  // (the header's step arithmetic); the results it depends on are the
+  // steps', so a replay computes the same timeouts.
   private async awaitKind_(
     step: WorkflowStep,
     jobId: string,
     kind: ShardKind,
     waitSeconds: number,
   ): Promise<{ state: string } | null> {
+    let wait = waitSeconds;
+    let lastDone = -1;
     for (let i = 0; ; ++i) {
       try {
         await step.waitForEvent(`shard-event-${kind}-${i}`, {
           type: "shard-event",
-          timeout: `${waitSeconds} seconds`,
+          timeout: `${wait} seconds`,
         });
       } catch {
         // The timeout: sweep anyway
       }
       const t = await step.do(`sweep-${kind}-${i}`, async () => sweepAndTally(this.env, jobId, kind));
       if (t.outcome === "cancelled") return { state: "cancelled" };
-      if (t.outcome === "failed") throw new NonRetryableError(`job ${jobId} failed: ${t.error}`);
-      if (t.outcome === "running" && t.done === t.total) return null;
+      if (t.outcome !== "running") throw new NonRetryableError(`job ${jobId} failed: ${t.error}`);
+      if (t.done === t.total) return null;
+      const idle = t.busy === 0 && t.requeued === 0 && t.done === lastDone;
+      wait = idle ? Math.max(waitSeconds, Math.min(k_idle_wait_max_s, 2 * wait)) : waitSeconds;
+      lastDone = t.done;
     }
   }
 }

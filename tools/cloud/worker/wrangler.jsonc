@@ -23,6 +23,7 @@
   "queues": { "producers": [{ "binding": "SHARDS", "queue": "mvcloud-shards" }] },
   "workflows": [{ "binding": "JOB_WORKFLOW", "name": "mvcloud-job", "class_name": "JobWorkflow" }],
   "vars": { "BLOB_MODE": "proxy", "MULTIPART_PART_BYTES": "67108864" },
+  "triggers": { "crons": ["*/10 * * * *"] },
   "observability": { "enabled": true },
   "env": {
     "local": {
@@ -35,7 +36,8 @@
         "consumers": [{ "queue": "mvcloud-shards", "max_batch_size": 10, "max_retries": 3 }]
       },
       "workflows": [{ "binding": "JOB_WORKFLOW", "name": "mvcloud-job", "class_name": "JobWorkflow" }],
-      "vars": { "BLOB_MODE": "proxy", "MULTIPART_PART_BYTES": "67108864" }
+      "vars": { "BLOB_MODE": "proxy", "MULTIPART_PART_BYTES": "67108864" },
+      "triggers": { "crons": ["*/10 * * * *"] }
     }
   }
 }

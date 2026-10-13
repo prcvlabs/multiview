@@ -1,7 +1,8 @@
-// The lease protocol of db.ts on the real schema (node:sqlite): claims,
-// heartbeats and their wall-clock budget, complete with output checks,
-// failures and retries, expiry, cancel, the tracks job's promotion and
-// lease, and correlated failures. The same cases as test_fsbackend.py.
+// The lease protocol of db.ts on the real schema (node:sqlite): claims and
+// retried pulls, heartbeats and their wall-clock budget, complete with output
+// checks, failures and retries, expiry, cancel and failure of a job, the
+// tracks job's promotion and lease, correlated failures and the blob write
+// guard. The same cases as test_fsbackend.py, and those of the Worker.
 
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -12,12 +13,16 @@ import {
   claimShard,
   completeShard,
   correlatedFailure,
+  failJob,
   failShard,
+  failStrandedJob,
   getShard,
   heartbeatShard,
   insertJob,
   jobStatus,
   leasePrefix,
+  loadJob,
+  mayWrite,
   pendingMessages,
   planJob,
   promoteTracks,
@@ -31,6 +36,7 @@ import { SqliteD1 } from "./d1-sqlite";
 
 const k_migration = fileURLToPath(new URL("../migrations/0001_init.sql", import.meta.url));
 const k_worker = { worker_id: "host-gpu0", gpu: "RTX 3090", version: "test" };
+const k_other = { ...k_worker, worker_id: "host-gpu1" };
 const k_origin = "http://127.0.0.1:8787";
 
 function spec(overrides: Record<string, unknown> = {}): JobSpec {
@@ -119,14 +125,27 @@ describe("the lease protocol", () => {
 
   it("leases each loc shard once, never the blocked tracks job", async () => {
     const a = await pullShard(db, k_worker, null, now);
-    const b = await pullShard(db, { ...k_worker, worker_id: "other" }, null, now);
+    const b = await pullShard(db, k_other, null, now);
     expect([a?.id, b?.id]).toEqual(["loc-0000", "loc-0001"]);
     expect(a?.attempt).toBe(1);
     expect(a?.lease_expires_at).toBe(now + 30);
-    expect(await pullShard(db, k_worker, null, now)).toBeNull();
+    expect(await pullShard(db, { ...k_worker, worker_id: "third" }, null, now)).toBeNull();
     // A stale queue message (attempt 0) cannot claim the leased shard
     expect(await claimShard(db, jobId, "loc-0000", 0, k_worker, now)).toBeNull();
     expect(await leasePrefix(db, a!.lease_token!)).toBe(`jobs/${jobId}/shards/loc-0000/a1`);
+  });
+
+  it("gives a retried pull the lease it handed out until that lease heartbeats", async () => {
+    const a = (await pullShard(db, k_worker, null, now))!;
+    const again = (await pullShard(db, k_worker, null, now))!; // the reply to the first was lost
+    expect([again.id, again.attempt, again.lease_token]).toEqual([a.id, a.attempt, a.lease_token]);
+    expect((await jobStatus(db, jobId))!.shards).toMatchObject([{ state: "leased" }, { state: "pending" }, {}]);
+    now += 1;
+    expect((await heartbeatShard(db, jobId, a.id, a.lease_token!, {}, now)).ok).toBe(true);
+    const b = (await pullShard(db, k_worker, null, now))!; // a run that heartbeated is not handed out again
+    expect(b.id).toBe("loc-0001");
+    now += 31; // nor is an expired lease
+    expect(await pullShard(db, k_worker, null, now)).toBeNull();
   });
 
   it("builds loc and tracks leases as the agent expects them", async () => {
@@ -147,7 +166,7 @@ describe("the lease protocol", () => {
     });
     expect(lease.outputs.find((o) => o.name === "params.json")!.multipart).toBeNull();
 
-    const b = (await pullShard(db, k_worker, null, now))!;
+    const b = (await pullShard(db, k_other, null, now))!;
     expect((await complete(a)).status).toBe(200);
     expect(await promoteTracks(db, jobId, now)).toEqual([]); // loc-0001 is not done yet
     expect((await complete(b)).status).toBe(200);
@@ -190,7 +209,7 @@ describe("the lease protocol", () => {
 
   it("completes only with the outputs in place, idempotently, and wakes the Workflow when a kind is done", async () => {
     const a = (await pullShard(db, k_worker, null, now))!;
-    const b = (await pullShard(db, k_worker, null, now))!;
+    const b = (await pullShard(db, k_other, null, now))!;
     const { done, headSize } = finished(a);
     const missing = async (key: string) => (key.endsWith("/done.json") ? null : headSize(key));
     expect((await completeShard(db, jobId, a.id, a.lease_token!, done, missing, now)).status).toBe(422);
@@ -205,6 +224,9 @@ describe("the lease protocol", () => {
     expect(await complete(a)).toMatchObject({ status: 200, body: { noop: true } });
     expect(await complete(b)).toMatchObject({ status: 200, wake: true });
     expect((await getShard(db, jobId, a.id))!.output_prefix).toBe(`jobs/${jobId}/shards/loc-0000/a1`);
+    // The last loc shard promoted the tracks job, with or without a Workflow
+    expect((await getShard(db, jobId, "tracks"))!.state).toBe("pending");
+    expect((await loadJob(db, jobId))!.row.state).toBe("merging");
     const status = (await jobStatus(db, jobId))!;
     const attempts = (status.shards as { attempts: { outcome: string; wall_s: number }[] }[])[0].attempts;
     expect(attempts).toMatchObject([{ attempt: 1, outcome: "done", wall_s: 12.5 }]);
@@ -212,17 +234,28 @@ describe("the lease protocol", () => {
 
   it("kills a loc shard whose params_md5 differs from the others'", async () => {
     const a = (await pullShard(db, k_worker, null, now))!;
-    const b = (await pullShard(db, k_worker, null, now))!;
+    const b = (await pullShard(db, k_other, null, now))!;
     await complete(a);
     expect(await complete(b, "q".repeat(32))).toMatchObject({ status: 200, body: { state: "dead" }, wake: true });
     expect((await tally(db, jobId, "loc")).dead_error).toContain("params_md5");
+  });
+
+  it("does not promote the tracks job when two loc shards with different params_md5 complete at once", async () => {
+    const a = (await pullShard(db, k_worker, null, now))!;
+    const b = (await pullShard(db, k_other, null, now))!;
+    const both = await Promise.all([complete(a), complete(b, "q".repeat(32))]);
+    expect(both.map((o) => o.body.state)).toEqual(["done", "done"]); // each checked before the other's update
+    expect((await tally(db, jobId, "loc")).params_md5s).toBe(2);
+    expect(await promoteTracks(db, jobId, now)).toEqual([]);
+    expect((await getShard(db, jobId, "tracks"))!.state).toBe("blocked");
+    expect((await loadJob(db, jobId))!.row.state).toBe("running");
   });
 
   it("retries a retryable failure after its delay, then gives up", async () => {
     for (let attempt = 1; attempt <= 3; ++attempt) {
       const a = (await pullShard(db, k_worker, null, now))!;
       expect([a.id, a.attempt]).toEqual(["loc-0000", attempt]);
-      await pullShard(db, k_worker, null, now).then((b) => b && failShard(db, jobId, b.id, b.lease_token!, "x", true, null, now));
+      await pullShard(db, k_other, null, now).then((b) => b && failShard(db, jobId, b.id, b.lease_token!, "x", true, null, now));
       const r = await failShard(db, jobId, a.id, a.lease_token!, "exit 134", true, "retry", now);
       expect(r.body.state).toBe(attempt < 3 ? "failed" : "dead");
       expect(r.wake).toBe(attempt === 3);
@@ -262,6 +295,56 @@ describe("the lease protocol", () => {
     expect(status.state).toBe("cancelled");
     expect((status.shards as { state: string }[]).map((s) => s.state)).toEqual(["cancelled", "cancelled", "cancelled"]);
     expect(await pullShard(db, k_worker, null, now)).toBeNull();
+  });
+
+  it("fails a job in one batch and leaves a job that has ended as it is", async () => {
+    const a = (await pullShard(db, k_worker, null, now))!;
+    expect(await failJob(db, jobId, "loc-0001: exit 134", now)).toBe(true);
+    const status = (await jobStatus(db, jobId))!;
+    expect([status.state, status.error]).toEqual(["failed", "loc-0001: exit 134"]);
+    expect((status.shards as { state: string }[]).map((s) => s.state)).toEqual(["cancelled", "cancelled", "cancelled"]);
+    expect((await heartbeatShard(db, jobId, a.id, a.lease_token!, {}, now)).ok).toBe(false);
+    expect(await failJob(db, jobId, "again", now)).toBe(false);
+    expect(await cancelJob(db, jobId, now)).toBe(true);
+    expect((await loadJob(db, jobId))!.row).toMatchObject({ state: "failed", error: "loc-0001: exit 134" });
+  });
+
+  it("fails a live job whose Workflow instance errored or was terminated", async () => {
+    expect(await failStrandedJob(db, jobId, { status: "running" }, now)).toBe(false);
+    expect(await failStrandedJob(db, jobId, { status: "unknown" }, now)).toBe(false);
+    expect((await loadJob(db, jobId))!.row.state).toBe("running");
+    const wf = { status: "errored", error: { name: "Error", message: "step limit" } };
+    expect(await failStrandedJob(db, jobId, wf, now)).toBe(true);
+    expect((await loadJob(db, jobId))!.row).toMatchObject({
+      state: "failed",
+      error: "the Workflow instance is errored: step limit",
+    });
+    expect(await failStrandedJob(db, jobId, { status: "terminated" }, now)).toBe(false); // ended already
+  });
+
+  it("lets a lease write under its own attempt's prefix only", async () => {
+    const a = (await pullShard(db, k_worker, null, now))!;
+    const b = (await pullShard(db, k_other, null, now))!;
+    const own = `jobs/${jobId}/shards/loc-0000/a1`;
+    expect(await mayWrite(db, a.lease_token!, `${own}/localization.data`)).toBeNull();
+    expect(await mayWrite(db, "", `${own}/localization.data`)).toMatchObject({ status: 409 });
+    expect(await mayWrite(db, a.lease_token!, `jobs/${jobId}/shards/loc-0001/a1/x`)).toMatchObject({ status: 403 });
+    expect(await mayWrite(db, a.lease_token!, `jobs/${jobId}/shards/loc-0000/a10/x`)).toMatchObject({ status: 403 });
+    expect(await mayWrite(db, a.lease_token!, own)).toMatchObject({ status: 403 });
+    expect(await mayWrite(db, b.lease_token!, `jobs/${jobId}/shards/loc-0001/a1/x`)).toBeNull();
+    now += 31;
+    await sweepJob(db, jobId, now);
+    const again = (await pullShard(db, { ...k_worker, worker_id: "third" }, null, now))!;
+    expect(again.attempt).toBe(2);
+    // The superseded token may not write, not even under its old prefix
+    expect(await mayWrite(db, a.lease_token!, `${own}/localization.data`)).toMatchObject({ status: 409 });
+    expect(await mayWrite(db, again.lease_token!, `jobs/${jobId}/shards/loc-0000/a2/x`)).toBeNull();
+  });
+
+  it("inserts a job once per id", async () => {
+    const row = await insertJob(db, jobId, spec({ n_frames: 60 }), now + 5);
+    expect(row.created_at).toBe(now);
+    expect(row.spec_json).toBe(JSON.stringify(spec()));
   });
 
   it("calls three same-class failures of different shards correlated", async () => {

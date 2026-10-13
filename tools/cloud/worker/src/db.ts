@@ -3,11 +3,12 @@
 // a directory).
 //
 // Agents move a shard pending -> leased -> done | failed | dead; the Workflow
-// (the only re-enqueuer) moves failed and expired shards back to pending and
-// the tracks job from blocked to pending; cancel moves pending and leased
-// shards to cancelled. Every one of those changes is a conditional UPDATE
-// whose WHERE clause names the state and, for an agent's call, the lease
-// token it expects, checked through meta.changes. Nothing here imports a
+// (the only re-enqueuer) moves failed and expired shards back to pending; the
+// last loc shard's complete (or the Workflow) moves the tracks job from
+// blocked to pending; cancel moves pending and leased shards to cancelled.
+// Every one of those changes is a conditional UPDATE whose WHERE clause
+// names the state and, for an agent's call, the lease token it expects,
+// checked through meta.changes. Nothing here imports a
 // Workers runtime module, so test/db.test.ts runs it on node:sqlite.
 
 import { planShards, wallBudgetS, type ShardKind } from "./plan";
@@ -27,25 +28,25 @@ import type {
 const k_multipart_outputs = new Set(["localization.data", "poses.tar"]);
 const k_retry_delay_max_s = 600;
 
-// ----------------------------------------------------------------------- Job
+// ------------------------------------------------------------------------- Job
 export interface Job {
   row: JobRow;
   spec: JobSpec;
 }
 
-// -------------------------------------------------------------- attemptPrefix
+// --------------------------------------------------------------- attemptPrefix
 // Every attempt writes under its own prefix; the shard row records the
 // winner's, and finalize deletes the others.
 export function attemptPrefix(jobId: string, shardId: string, attempt: number): string {
   return `jobs/${jobId}/shards/${shardId}/a${attempt}`;
 }
 
-// ------------------------------------------------------------------ encodeKey
+// ------------------------------------------------------------------- encodeKey
 export function encodeKey(key: string): string {
   return key.split("/").map(encodeURIComponent).join("/");
 }
 
-// -------------------------------------------------------------------- blobUrl
+// --------------------------------------------------------------------- blobUrl
 export function blobUrl(origin: string, key: string): string {
   return `${origin}/v1/blobs/${encodeKey(key)}`;
 }
@@ -58,28 +59,35 @@ function newToken_(): string {
   return crypto.randomUUID().replaceAll("-", "");
 }
 
-// -------------------------------------------------------------------- loadJob
+// --------------------------------------------------------------------- loadJob
 export async function loadJob(db: D1Database, jobId: string): Promise<Job | null> {
   const row = await db.prepare("SELECT * FROM jobs WHERE id = ?").bind(jobId).first<JobRow>();
   return row ? { row, spec: JSON.parse(row.spec_json) as JobSpec } : null;
 }
 
-// ------------------------------------------------------------------- getShard
+// -------------------------------------------------------------------- getShard
 export async function getShard(db: D1Database, jobId: string, shardId: string): Promise<ShardRow | null> {
   return db.prepare("SELECT * FROM shards WHERE job_id = ? AND id = ?").bind(jobId, shardId).first<ShardRow>();
 }
 
-// ------------------------------------------------------------------ insertJob
-export async function insertJob(db: D1Database, jobId: string, spec: JobSpec, now: number): Promise<void> {
+// ------------------------------------------------------------------- insertJob
+// Inserts the job unless a job of that id exists (a retried POST /v1/jobs
+// names the same id). Returns the row that holds the id: ours, or the one
+// that was there.
+export async function insertJob(db: D1Database, jobId: string, spec: JobSpec, now: number): Promise<JobRow> {
   await db
     .prepare(
-      "INSERT INTO jobs (id, scene_id, spec_json, state, created_at, updated_at) VALUES (?, ?, ?, 'planned', ?, ?)",
+      `INSERT INTO jobs (id, scene_id, spec_json, state, created_at, updated_at) VALUES (?, ?, ?, 'planned', ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
     )
     .bind(jobId, spec.scene_id, JSON.stringify(spec), now, now)
     .run();
+  const job = await loadJob(db, jobId);
+  if (!job) throw new Error(`job '${jobId}' vanished after its insert`);
+  return job.row;
 }
 
-// -------------------------------------------------------------------- planJob
+// --------------------------------------------------------------------- planJob
 // Inserts the job's loc shards (pending) and its tracks job (blocked) and
 // moves the job to running. Idempotent: the Workflow step may run twice.
 // Returns the number of loc shards.
@@ -107,7 +115,7 @@ export async function planJob(db: D1Database, jobId: string, now: number): Promi
   return shards.length;
 }
 
-// ------------------------------------------------------------ pendingMessages
+// ------------------------------------------------------------- pendingMessages
 // One queue message per pending shard of `kind`.
 export async function pendingMessages(db: D1Database, jobId: string, kind: ShardKind): Promise<ShardMessage[]> {
   const { results } = await db
@@ -117,7 +125,7 @@ export async function pendingMessages(db: D1Database, jobId: string, kind: Shard
   return results.map((r) => ({ v: 1, job_id: jobId, shard_id: r.id, attempt: r.attempt }));
 }
 
-// --------------------------------------------------------------- seenWorker_
+// ----------------------------------------------------------------- seenWorker_
 function seenWorker_(db: D1Database, worker: WorkerInfo, now: number): D1PreparedStatement {
   return db
     .prepare(
@@ -128,7 +136,7 @@ function seenWorker_(db: D1Database, worker: WorkerInfo, now: number): D1Prepare
     .bind(worker.worker_id, worker.gpu ?? null, worker.version ?? null, now, now);
 }
 
-// ----------------------------------------------------------------- claimShard
+// ------------------------------------------------------------------ claimShard
 // Leases attempt `attempt + 1` of the shard if it is still pending at
 // `attempt` (so a stale queue message cannot claim) and its job is live.
 // Returns the leased row, or null.
@@ -171,16 +179,33 @@ export async function claimShard(
   return getShard(db, jobId, shardId);
 }
 
-// ------------------------------------------------------------------ pullShard
+// ------------------------------------------------------------------- pullShard
 // The /v1/pull dispatcher: leases the oldest live job's next pending shard
 // (loc shards first; jobs of `sceneAffinity` first). Returns null when there
 // is none.
+//
+// An agent pulls only when it holds no lease, so a lease of this worker that
+// has not heartbeated yet is one whose reply was lost: a retried pull gets
+// it back instead of leasing a second shard. (A lease that has heartbeated
+// belongs to a run that is going on or crashed; it expires as usual.)
 export async function pullShard(
   db: D1Database,
   worker: WorkerInfo,
   sceneAffinity: string | null,
   now: number,
 ): Promise<ShardRow | null> {
+  const held = await db
+    .prepare(
+      `SELECT * FROM shards WHERE worker_id = ? AND state = 'leased' AND last_heartbeat_at IS NULL
+         AND lease_expires_at >= ?
+       ORDER BY lease_started_at DESC LIMIT 1`,
+    )
+    .bind(worker.worker_id, now)
+    .first<ShardRow>();
+  if (held) {
+    await seenWorker_(db, worker, now).run();
+    return held;
+  }
   const { results } = await db
     .prepare(
       `SELECT s.job_id, s.id, s.attempt FROM shards s JOIN jobs j ON j.id = s.job_id
@@ -197,7 +222,7 @@ export async function pullShard(
   return null;
 }
 
-// ----------------------------------------------------------------- buildLease
+// ------------------------------------------------------------------ buildLease
 // The lease of a leased shard: its command line, its inputs and where its
 // outputs go, as URLs of the Worker's blob proxy under `origin`.
 export async function buildLease(
@@ -291,7 +316,7 @@ export async function buildLease(
   };
 }
 
-// ---------------------------------------------------------------- leasePrefix
+// ----------------------------------------------------------------- leasePrefix
 // The prefix the holder of `token` may write to, or null if the token is not
 // a current lease.
 export async function leasePrefix(db: D1Database, token: string): Promise<string | null> {
@@ -302,9 +327,24 @@ export async function leasePrefix(db: D1Database, token: string): Promise<string
   return row ? attemptPrefix(row.job_id, row.id, row.attempt) : null;
 }
 
+// -------------------------------------------------------------------- mayWrite
+// Whether the holder of the lease token `token` (the x-mvcloud-lease header;
+// empty without one) may write the blob `key`: null if it may, else the
+// refusal, 409 without a current lease and 403 outside its attempt's prefix.
+export async function mayWrite(
+  db: D1Database,
+  token: string,
+  key: string,
+): Promise<{ status: number; error: string } | null> {
+  const prefix = token.length > 0 ? await leasePrefix(db, token) : null;
+  if (prefix === null) return { status: 409, error: "no current lease (x-mvcloud-lease)" };
+  if (!key.startsWith(`${prefix}/`)) return { status: 403, error: `the lease may write under ${prefix}/ only` };
+  return null;
+}
+
 export type Refusal = { ok: false; state: string; reason: string };
 
-// ------------------------------------------------------------------ refusal_
+// -------------------------------------------------------------------- refusal_
 function refusal_(row: ShardRow | null, token: string): Refusal {
   if (!row) return { ok: false, state: "missing", reason: "no such shard" };
   if (row.state !== "leased") return { ok: false, state: row.state, reason: `the shard is ${row.state}` };
@@ -348,7 +388,7 @@ export interface Outcome {
   wake: boolean; // the shard's kind is finished, or the shard died
 }
 
-// -------------------------------------------------------------- kindFinished_
+// --------------------------------------------------------------- kindFinished_
 async function kindFinished_(db: D1Database, jobId: string, kind: ShardKind): Promise<boolean> {
   const t = await tally(db, jobId, kind);
   return t.done === t.total || t.dead > 0;
@@ -359,7 +399,9 @@ async function kindFinished_(db: D1Database, jobId: string, kind: ShardKind): Pr
 // required one) is in the bucket under the attempt's prefix with its size.
 // 200 also for a cancelled shard and for a repeated call of the same lease;
 // 409 for a lease that is not current; 422 for missing outputs. A loc shard
-// whose params_md5 differs from the other loc shards' is dead (fatal).
+// whose params_md5 differs from the other loc shards' is dead (fatal). The
+// last loc shard promotes the tracks job in the same batch, so the job moves
+// on even if its Workflow instance is gone.
 export async function completeShard(
   db: D1Database,
   jobId: string,
@@ -434,6 +476,7 @@ export async function completeShard(
            shards_done = shards_done + (CASE WHEN ? = 'done' THEN 1 ELSE 0 END) WHERE id = ?`,
       )
       .bind(now, state, row.worker_id),
+    ...(row.kind === "loc" ? promoteStatements_(db, jobId, now) : []),
   ]);
   if (results[0].meta.changes !== 1) {
     const r = refusal_(await getShard(db, jobId, shardId), token);
@@ -483,13 +526,12 @@ export async function failShard(
   return { status: 200, body: { state }, wake: state === "dead" };
 }
 
-// ------------------------------------------------------------------- cancelJob
-// Every unfinished shard becomes cancelled, so the next heartbeat of a
-// running one is refused (409) and its agent kills the run. Returns false if
-// there is no such job.
-export async function cancelJob(db: D1Database, jobId: string, now: number, why = "job cancelled"): Promise<boolean> {
-  if (!(await loadJob(db, jobId))) return false;
-  await db.batch([
+// ------------------------------------------------------------- stopStatements_
+// Ends the running attempts of the job and cancels its unfinished shards, so
+// the next heartbeat of a running one is refused (409) and its agent kills
+// the run. cancelJob and failJob batch them with the job's own UPDATE.
+function stopStatements_(db: D1Database, jobId: string, why: string, now: number): D1PreparedStatement[] {
+  return [
     db
       .prepare(
         `UPDATE attempts SET finished_at = ?, outcome = 'cancelled', error = ?
@@ -503,9 +545,20 @@ export async function cancelJob(db: D1Database, jobId: string, now: number, why 
          WHERE job_id = ? AND state IN ('blocked', 'pending', 'leased', 'failed')`,
       )
       .bind(why, now, jobId),
+  ];
+}
+
+// ------------------------------------------------------------------- cancelJob
+// Every unfinished shard becomes cancelled, and the job unless it has ended.
+// Returns false if there is no such job.
+export async function cancelJob(db: D1Database, jobId: string, now: number): Promise<boolean> {
+  if (!(await loadJob(db, jobId))) return false;
+  await db.batch([
+    ...stopStatements_(db, jobId, "job cancelled", now),
     db
       .prepare(
-        `UPDATE jobs SET state = 'cancelled', updated_at = ? WHERE id = ? AND state IN ('planned', 'running', 'merging')`,
+        `UPDATE jobs SET state = 'cancelled', updated_at = ?
+         WHERE id = ? AND state IN ('planned', 'running', 'merging')`,
       )
       .bind(now, jobId),
   ]);
@@ -513,14 +566,36 @@ export async function cancelJob(db: D1Database, jobId: string, now: number, why 
 }
 
 // --------------------------------------------------------------------- failJob
-// The job failed (a dead shard, or correlated failures): its job row says
-// why, and its unfinished shards are cancelled so running agents stop.
-export async function failJob(db: D1Database, jobId: string, error: string, now: number): Promise<void> {
-  await cancelJob(db, jobId, now, `job failed: ${error}`);
-  await db
-    .prepare("UPDATE jobs SET state = 'failed', error = ?, updated_at = ? WHERE id = ? AND state <> 'done'")
-    .bind(error, now, jobId)
-    .run();
+// The job failed (a dead shard, correlated failures, a lost Workflow): its
+// job row says why and its unfinished shards are cancelled so running agents
+// stop, in one batch, so nobody sees it cancelled first. Returns false if
+// the job had already ended.
+export async function failJob(db: D1Database, jobId: string, error: string, now: number): Promise<boolean> {
+  const results = await db.batch([
+    ...stopStatements_(db, jobId, `job failed: ${error}`, now),
+    db
+      .prepare(
+        `UPDATE jobs SET state = 'failed', error = ?, updated_at = ?
+         WHERE id = ? AND state IN ('planned', 'running', 'merging')`,
+      )
+      .bind(error, now, jobId),
+  ]);
+  return results[results.length - 1].meta.changes === 1;
+}
+
+// ------------------------------------------------------------- failStrandedJob
+// A live job whose Workflow instance errored or was terminated has nothing
+// left to sweep or finalize it: it fails, so that agents stop leasing its
+// shards. `wf` is the instance's status. Returns true if the job failed.
+export async function failStrandedJob(
+  db: D1Database,
+  jobId: string,
+  wf: { status?: string; error?: { message?: string } | string },
+  now: number,
+): Promise<boolean> {
+  if (wf.status !== "errored" && wf.status !== "terminated") return false;
+  const why = typeof wf.error === "string" ? wf.error : wf.error?.message;
+  return failJob(db, jobId, `the Workflow instance is ${wf.status}${why ? `: ${why}` : ""}`, now);
 }
 
 // -------------------------------------------------------------------- sweepJob
@@ -573,53 +648,69 @@ export async function sweepJob(db: D1Database, jobId: string, now: number): Prom
   return messages;
 }
 
-// ---------------------------------------------------------------- promoteTracks
-// The tracks job becomes pending once every loc shard is done, and the job
-// moves to merging. Returns its queue message (none if not promoted).
-export async function promoteTracks(db: D1Database, jobId: string, now: number): Promise<ShardMessage[]> {
-  await db.batch([
+// ---------------------------------------------------------- promoteStatements_
+// The tracks job becomes pending, and the job merging, once every loc shard
+// is done with the same params_md5 (two loc shards that complete at once can
+// both pass completeShard's check; sweepAndTally fails such a job).
+function promoteStatements_(db: D1Database, jobId: string, now: number): D1PreparedStatement[] {
+  const ready = `NOT EXISTS (SELECT 1 FROM shards WHERE job_id = ? AND kind = 'loc' AND state <> 'done')
+    AND (SELECT COUNT(DISTINCT COALESCE(params_md5, '')) FROM shards WHERE job_id = ? AND kind = 'loc') = 1`;
+  return [
     db
       .prepare(
         `UPDATE shards SET state = 'pending', updated_at = ?
-         WHERE job_id = ? AND kind = 'tracks' AND state = 'blocked'
-           AND NOT EXISTS (SELECT 1 FROM shards WHERE job_id = ? AND kind = 'loc' AND state <> 'done')`,
+         WHERE job_id = ? AND kind = 'tracks' AND state = 'blocked' AND ${ready}`,
       )
-      .bind(now, jobId, jobId),
+      .bind(now, jobId, jobId, jobId),
     db
-      .prepare(
-        `UPDATE jobs SET state = 'merging', updated_at = ? WHERE id = ? AND state = 'running'
-           AND NOT EXISTS (SELECT 1 FROM shards WHERE job_id = ? AND kind = 'loc' AND state <> 'done')`,
-      )
-      .bind(now, jobId, jobId),
-  ]);
+      .prepare(`UPDATE jobs SET state = 'merging', updated_at = ? WHERE id = ? AND state = 'running' AND ${ready}`)
+      .bind(now, jobId, jobId, jobId),
+  ];
+}
+
+// --------------------------------------------------------------- promoteTracks
+// Promotes the tracks job if it is ready (completeShard of the last loc shard
+// has normally done it). Returns its queue message if it is pending.
+export async function promoteTracks(db: D1Database, jobId: string, now: number): Promise<ShardMessage[]> {
+  await db.batch(promoteStatements_(db, jobId, now));
   return pendingMessages(db, jobId, "tracks");
 }
 
 export interface Tally {
   total: number;
   done: number;
+  leased: number;
+  failed: number;
   dead: number;
   cancelled: number;
   dead_error: string | null;
+  params_md5s: number; // distinct params_md5 of the done shards
 }
 
 // ----------------------------------------------------------------------- tally
 export async function tally(db: D1Database, jobId: string, kind: ShardKind): Promise<Tally> {
   const { results } = await db
-    .prepare("SELECT state, COUNT(*) AS n, MAX(CASE WHEN state = 'dead' THEN id || ': ' || COALESCE(error, '') END) AS err FROM shards WHERE job_id = ? AND kind = ? GROUP BY state")
+    .prepare(
+      `SELECT state, COUNT(*) AS n, MAX(CASE WHEN state = 'dead' THEN id || ': ' || COALESCE(error, '') END) AS err,
+         COUNT(DISTINCT COALESCE(params_md5, '')) AS md5s
+       FROM shards WHERE job_id = ? AND kind = ? GROUP BY state`,
+    )
     .bind(jobId, kind)
-    .all<{ state: string; n: number; err: string | null }>();
+    .all<{ state: string; n: number; err: string | null; md5s: number }>();
   const n = (state: string) => results.find((r) => r.state === state)?.n ?? 0;
   return {
     total: results.reduce((sum, r) => sum + r.n, 0),
     done: n("done"),
+    leased: n("leased"),
+    failed: n("failed"),
     dead: n("dead"),
     cancelled: n("cancelled"),
     dead_error: results.find((r) => r.state === "dead")?.err ?? null,
+    params_md5s: results.find((r) => r.state === "done")?.md5s ?? 0,
   };
 }
 
-// ---------------------------------------------------------- correlatedFailure
+// ----------------------------------------------------------- correlatedFailure
 // When the job's last three finished attempts are retryable failures of
 // three different shards with the same class (outcome and the error up to
 // its first ':'), the cause is not the shards: the job is paused as failed.
@@ -638,17 +729,18 @@ export async function correlatedFailure(db: D1Database, jobId: string): Promise<
   return classes.size === 1 && shards.size === 3 ? [...classes][0] : null;
 }
 
-// --------------------------------------------------------------------- finishJob
+// ------------------------------------------------------------------- finishJob
 export async function finishJob(db: D1Database, jobId: string, summary: unknown, now: number): Promise<void> {
   await db
     .prepare(
-      "UPDATE jobs SET state = 'done', summary_json = ?, updated_at = ? WHERE id = ? AND state IN ('running', 'merging')",
+      `UPDATE jobs SET state = 'done', summary_json = ?, updated_at = ?
+       WHERE id = ? AND state IN ('running', 'merging')`,
     )
     .bind(JSON.stringify(summary), now, jobId)
     .run();
 }
 
-// ---------------------------------------------------------------------- shards
+// -------------------------------------------------------------------- shardsOf
 export async function shardsOf(db: D1Database, jobId: string): Promise<ShardRow[]> {
   const { results } = await db
     .prepare("SELECT * FROM shards WHERE job_id = ? ORDER BY kind <> 'loc', seq")
@@ -681,6 +773,15 @@ export async function jobStatus(db: D1Database, jobId: string): Promise<Record<s
         .map(({ job_id: ___, shard_id: ____, ...a }) => a),
     })),
   };
+}
+
+// ------------------------------------------------------------------ liveJobIds
+// The jobs that have not ended (planned, running or merging).
+export async function liveJobIds(db: D1Database): Promise<string[]> {
+  const { results } = await db
+    .prepare("SELECT id FROM jobs WHERE state IN ('planned', 'running', 'merging') ORDER BY created_at")
+    .all<{ id: string }>();
+  return results.map((r) => r.id);
 }
 
 // -------------------------------------------------------------------- listJobs

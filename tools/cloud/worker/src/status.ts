@@ -12,7 +12,7 @@ const k_state_colours: Record<string, string> = {
   cancelled: "#6d4c41",
 };
 
-// ---------------------------------------------------------------------- esc_
+// ------------------------------------------------------------------------ esc_
 function esc_(x: unknown): string {
   return String(x ?? "")
     .replaceAll("&", "&amp;")
@@ -21,12 +21,12 @@ function esc_(x: unknown): string {
     .replaceAll('"', "&quot;");
 }
 
-// --------------------------------------------------------------------- time_
+// ----------------------------------------------------------------------- time_
 function time_(t: unknown): string {
   return typeof t === "number" ? new Date(t * 1000).toISOString().replace("T", " ").slice(0, 19) : "";
 }
 
-// ---------------------------------------------------------------------- bar_
+// ------------------------------------------------------------------------ bar_
 function bar_(states: Record<string, number>): string {
   const total = Object.values(states).reduce((a, b) => a + b, 0) || 1;
   const cells = Object.entries(states)
@@ -42,7 +42,7 @@ function bar_(states: Record<string, number>): string {
   return `${cells} <small>${label}</small>`;
 }
 
-// ---------------------------------------------------------------------- page_
+// ----------------------------------------------------------------------- page_
 function page_(title: string, body: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc_(title)}</title>
 <style>body{font:14px system-ui,sans-serif;margin:1.5em}table{border-collapse:collapse}
@@ -50,31 +50,35 @@ td,th{padding:3px 8px;border-bottom:1px solid #ddd;text-align:left;vertical-alig
 code{font-size:12px}</style></head><body><h1>${esc_(title)}</h1>${body}</body></html>`;
 }
 
-// ---------------------------------------------------------------- renderJobs
-export function renderJobs(jobs: Record<string, unknown>[], token: string): string {
-  const q = token ? `&token=${encodeURIComponent(token)}` : "";
+// ------------------------------------------------------------------ renderJobs
+export function renderJobs(jobs: Record<string, unknown>[]): string {
   const rows = jobs
     .map(
       (j) =>
-        `<tr><td><a href="/?job=${encodeURIComponent(String(j.id))}${q}"><code>${esc_(j.id)}</code></a></td>` +
+        `<tr><td><a href="/?job=${encodeURIComponent(String(j.id))}"><code>${esc_(j.id)}</code></a></td>` +
         `<td>${esc_(j.scene_id)}</td><td>${esc_(j.state)}</td><td>${time_(j.created_at)}</td>` +
         `<td>${bar_(j.shard_states as Record<string, number>)}</td><td>${esc_(j.error)}</td></tr>`,
     )
     .join("");
   return page_(
     "mvcloud jobs",
-    `<table><tr><th>job</th><th>scene</th><th>state</th><th>created (UTC)</th><th>shards</th><th>error</th></tr>${rows}</table>`,
+    `<table><tr><th>job</th><th>scene</th><th>state</th><th>created (UTC)</th><th>shards</th><th>error</th></tr>` +
+      `${rows}</table>`,
   );
 }
 
-// ----------------------------------------------------------------- renderJob
+// ------------------------------------------------------------------- renderJob
 export function renderJob(job: Record<string, unknown>, workflow: string): string {
   const shards = job.shards as Record<string, unknown>[];
   const rows = shards
     .map((s) => {
       const attempts = (s.attempts as Record<string, unknown>[])
-        .map((a) => `a${a.attempt}: ${esc_(a.outcome ?? "running")} ${a.wall_s ? `${Number(a.wall_s).toFixed(1)} s` : ""}` +
-          `${a.error ? ` <small>(${esc_(a.error)})</small>` : ""}`)
+        .map(
+          (a) =>
+            `a${a.attempt}: ${esc_(a.outcome ?? "running")} ` +
+            `${a.wall_s ? `${Number(a.wall_s).toFixed(1)} s` : ""}` +
+            `${a.error ? ` <small>(${esc_(a.error)})</small>` : ""}`,
+        )
         .join("<br>");
       const progress = s.progress as Record<string, unknown> | null;
       return (

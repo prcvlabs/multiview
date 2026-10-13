@@ -5,12 +5,14 @@
 // per job drives it, and the Queue is dispatch only. Every route needs
 // `Authorization: Bearer <token>`: the admin token for job writes, the
 // status page and any blob write, the worker token (or the admin token) for
-// the rest. A worker may write blobs only under its current lease's prefix,
-// named by the x-mvcloud-lease header.
+// the rest. The status page also takes the admin token as ?token=, which it
+// moves into an HttpOnly cookie. A worker may write blobs only under its
+// current lease's prefix, named by the x-mvcloud-lease header. A cron
+// trigger fails live jobs whose Workflow instance has errored.
 //
-//   POST /v1/jobs                   job spec -> {job_id, workflow_id, shards}       (admin)
+//   POST /v1/jobs                   job spec [+ job_id] -> {job_id, workflow_id, shards}  (admin)
 //   GET  /v1/jobs, /v1/jobs/{id}    the jobs; one job with shards, attempts, Workflow status
-//   POST /v1/jobs/{id}/cancel                                                         (admin)
+//   POST /v1/jobs/{id}/cancel       -> 200 | 409 when the job has ended already          (admin)
 //   POST /v1/pull                   {worker_id, gpu, version, scene_affinity?} -> lease | 204
 //   POST /v1/claim                  {job_id, shard_id, attempt, worker_id, ...} -> lease | 409
 //   POST /v1/heartbeat              {job_id, shard_id, lease_token, progress} -> {lease_expires_at} | 409
@@ -28,13 +30,15 @@ import {
   claimShard,
   completeShard,
   failShard,
+  failStrandedJob,
   heartbeatShard,
   insertJob,
   jobStatus,
-  leasePrefix,
   listJobs,
   listWorkers,
+  liveJobIds,
   loadJob,
+  mayWrite,
   pullShard,
   type Outcome,
 } from "./db";
@@ -48,11 +52,13 @@ export { JobWorkflow } from "./job-workflow";
 
 type Role = "admin" | "worker" | null;
 
+const k_cookie = "mvcloud_token";
+
 function now_(): number {
   return Date.now() / 1000;
 }
 
-// ---------------------------------------------------------------- sameToken_
+// ------------------------------------------------------------------ sameToken_
 function sameToken_(a: string, b: string | undefined): boolean {
   if (!b) return false; // an unset token admits nobody
   const x = new TextEncoder().encode(a);
@@ -60,17 +66,39 @@ function sameToken_(a: string, b: string | undefined): boolean {
   return x.byteLength === y.byteLength && crypto.subtle.timingSafeEqual(x, y);
 }
 
-// ---------------------------------------------------------------------- role_
-function role_(request: Request, env: Env): Role {
+// --------------------------------------------------------------------- cookie_
+function cookie_(request: Request, name: string): string {
+  for (const c of (request.headers.get("cookie") ?? "").split(";")) {
+    const [k, ...v] = c.trim().split("=");
+    if (k !== name) continue;
+    try {
+      return decodeURIComponent(v.join("="));
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+// ---------------------------------------------------------------------- token_
+// The bearer token; for the status page (GET /) also ?token= or the cookie,
+// never for the API, so tokens stay out of the URLs of API calls.
+function token_(request: Request, url: URL): string {
   const auth = request.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : new URL(request.url).searchParams.get("token") ?? "";
+  if (auth.startsWith("Bearer ")) return auth.slice(7);
+  if (url.pathname !== "/" || request.method !== "GET") return "";
+  return url.searchParams.get("token") ?? cookie_(request, k_cookie);
+}
+
+// ----------------------------------------------------------------------- role_
+function role_(token: string, env: Env): Role {
   if (token.length === 0) return null;
   if (sameToken_(token, env.MVCLOUD_ADMIN_TOKEN)) return "admin";
   if (sameToken_(token, env.MVCLOUD_WORKER_TOKEN)) return "worker";
   return null;
 }
 
-// ---------------------------------------------------------------- readJson_
+// ------------------------------------------------------------------- readJson_
 async function readJson_(request: Request): Promise<Record<string, unknown>> {
   try {
     const body = await request.json();
@@ -81,14 +109,14 @@ async function readJson_(request: Request): Promise<Record<string, unknown>> {
   throw new PlanError("the request body must be a json object");
 }
 
-// ------------------------------------------------------------------- field_
+// ---------------------------------------------------------------------- field_
 function field_(body: Record<string, unknown>, key: string): string {
   const x = body[key];
   if (typeof x !== "string" || x.length === 0) throw new PlanError(`'${key}' must be a non-empty string`);
   return x;
 }
 
-// ------------------------------------------------------------------ worker_
+// --------------------------------------------------------------------- worker_
 function worker_(body: Record<string, unknown>): WorkerInfo {
   return {
     worker_id: field_(body, "worker_id"),
@@ -97,32 +125,40 @@ function worker_(body: Record<string, unknown>): WorkerInfo {
   };
 }
 
-// -------------------------------------------------------------- partBytes_
+// ------------------------------------------------------------------ partBytes_
 function partBytes_(env: Env): number {
   const n = Number(env.MULTIPART_PART_BYTES ?? "0");
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
-// ------------------------------------------------------------------ lease_
+// ---------------------------------------------------------------------- lease_
 async function lease_(env: Env, row: ShardRow, origin: string): Promise<Response> {
   const job = await loadJob(env.DB, row.job_id);
   if (!job) return json(500, { error: `no job '${row.job_id}'` });
   return json(200, await buildLease(env.DB, row, job.spec, origin, partBytes_(env)));
 }
 
-// -------------------------------------------------------------- outcome_
+// -------------------------------------------------------------------- outcome_
 function outcome_(env: Env, ctx: ExecutionContext, jobId: string, kind: string, o: Outcome): Response {
   if (o.wake) ctx.waitUntil(wakeWorkflow(env, jobId, kind));
   return json(o.status, o.body);
 }
 
-// --------------------------------------------------------------- newJobId_
+// ------------------------------------------------------------------- newJobId_
 function newJobId_(sceneId: string): string {
   const t = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
   return `${sceneId}-${t}-${crypto.randomUUID().slice(0, 6)}`;
 }
 
-// ------------------------------------------------------------ resolveInputs_
+// ---------------------------------------------------------------------- jobId_
+// The job id a client chose: also a Workflow instance id and part of R2 keys.
+function jobId_(x: unknown): string {
+  if (typeof x !== "string" || !/^[A-Za-z0-9_][A-Za-z0-9_-]{0,99}$/.test(x))
+    throw new PlanError("'job_id' may hold up to 100 letters, digits, _ and - (not first)");
+  return x;
+}
+
+// -------------------------------------------------------------- resolveInputs_
 // Every input of the job's shards, with its size and md5 from the bucket.
 // Throws PlanError naming the keys that are missing.
 async function resolveInputs_(env: Env, spec: Omit<JobSpec, "inputs">): Promise<JobInput[]> {
@@ -139,29 +175,56 @@ async function resolveInputs_(env: Env, spec: Omit<JobSpec, "inputs">): Promise<
   return wanted.map((w, i) => ({ ...w, bytes: heads[i]!.bytes, md5: heads[i]!.md5 }));
 }
 
-// ----------------------------------------------------------------- createJob_
-async function createJob_(request: Request, env: Env): Promise<Response> {
-  const specIn = normalizeSpec(await readJson_(request));
-  const spec: JobSpec = { ...specIn, inputs: await resolveInputs_(env, specIn) };
-  const jobId = newJobId_(spec.scene_id);
-  const now = now_();
-  await insertJob(env.DB, jobId, spec, now);
+// -------------------------------------------------------------- startWorkflow_
+// Starts the job's Workflow instance (its id is the job id) and records it.
+// An instance that exists already (an earlier request's create went through)
+// counts. Returns null, or why it could not be started.
+async function startWorkflow_(env: Env, jobId: string): Promise<string | null> {
   try {
-    const instance = await env.JOB_WORKFLOW.create({ id: jobId, params: { jobId } });
-    await env.DB.prepare("UPDATE jobs SET workflow_id = ? WHERE id = ?").bind(instance.id, jobId).run();
+    await env.JOB_WORKFLOW.create({ id: jobId, params: { jobId } });
   } catch (e) {
-    await env.DB.prepare("UPDATE jobs SET state = 'failed', error = ?, updated_at = ? WHERE id = ?")
-      .bind(`could not start the Workflow: ${String(e)}`, now_(), jobId)
-      .run();
-    return json(500, { error: `could not start the Workflow: ${String(e)}`, job_id: jobId });
+    try {
+      await env.JOB_WORKFLOW.get(jobId);
+    } catch {
+      return `could not start the Workflow: ${String(e)}`;
+    }
+  }
+  await env.DB.prepare("UPDATE jobs SET workflow_id = ? WHERE id = ?").bind(jobId, jobId).run();
+  return null;
+}
+
+// ------------------------------------------------------------------ createJob_
+// The client may name the job (mvcloud submit does), so that a retried
+// request finds the job of a lost reply instead of creating a second one.
+// When the Workflow cannot be started the job row is removed again.
+async function createJob_(request: Request, env: Env): Promise<Response> {
+  const body = await readJson_(request);
+  const specIn = normalizeSpec(body);
+  const spec: JobSpec = { ...specIn, inputs: await resolveInputs_(env, specIn) };
+  const jobId = body.job_id === undefined ? newJobId_(spec.scene_id) : jobId_(body.job_id);
+  const row = await insertJob(env.DB, jobId, spec, now_());
+  if (row.spec_json !== JSON.stringify(spec)) return json(409, { error: `job '${jobId}' exists with another spec` });
+  if (row.workflow_id === null) {
+    const error = await startWorkflow_(env, jobId);
+    if (error !== null) {
+      await env.DB.prepare(
+        `DELETE FROM jobs WHERE id = ? AND workflow_id IS NULL
+           AND NOT EXISTS (SELECT 1 FROM shards WHERE job_id = ?)`,
+      )
+        .bind(jobId, jobId)
+        .run();
+      return json(500, { error, job_id: jobId });
+    }
   }
   const shards = planShards(spec.total_frames, spec.start_frame, spec.n_frames, spec.shard_frames,
     spec.overlap_frames, spec.K);
   return json(201, { job_id: jobId, workflow_id: jobId, shards });
 }
 
-// ------------------------------------------------------------ workflowStatus_
-async function workflowStatus_(env: Env, jobId: string): Promise<unknown> {
+type WorkflowStatus = InstanceStatus | { status: "unknown"; error: string };
+
+// ------------------------------------------------------------- workflowStatus_
+async function workflowStatus_(env: Env, jobId: string): Promise<WorkflowStatus> {
   try {
     return await (await env.JOB_WORKFLOW.get(jobId)).status();
   } catch (e) {
@@ -169,38 +232,56 @@ async function workflowStatus_(env: Env, jobId: string): Promise<unknown> {
   }
 }
 
-// --------------------------------------------------------------- blobRoute_
+// ------------------------------------------------------------- jobAndWorkflow_
+// The job as jobStatus shows it and its Workflow instance's status; a live
+// job whose instance has errored fails first (failStrandedJob).
+async function jobAndWorkflow_(
+  env: Env,
+  jobId: string,
+): Promise<{ job: Record<string, unknown>; workflow: WorkflowStatus } | null> {
+  const job = await jobStatus(env.DB, jobId);
+  if (!job) return null;
+  const workflow = await workflowStatus_(env, jobId);
+  if (!(await failStrandedJob(env.DB, jobId, workflow, now_()))) return { job, workflow };
+  return { job: (await jobStatus(env.DB, jobId))!, workflow };
+}
+
+// ------------------------------------------------------------------ blobRoute_
 async function blobRoute_(request: Request, env: Env, role: Role, key: string): Promise<Response> {
   if (request.method === "GET" || request.method === "HEAD") return readBlob(request, env.BUCKET, key);
   if (role !== "admin") {
-    const token = request.headers.get("x-mvcloud-lease") ?? "";
-    const prefix = token ? await leasePrefix(env.DB, token) : null;
-    if (prefix === null) return json(409, { error: "no current lease (x-mvcloud-lease)" });
-    if (!key.startsWith(`${prefix}/`)) return json(403, { error: `the lease may write under ${prefix}/ only` });
+    const refusal = await mayWrite(env.DB, request.headers.get("x-mvcloud-lease") ?? "", key);
+    if (refusal !== null) return json(refusal.status, { error: refusal.error });
   }
   return writeBlob(request, env.BUCKET, key);
 }
 
-// ---------------------------------------------------------------------- route
+// ----------------------------------------------------------------------- route
 async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
   if (path === "/v1/health") return json(200, { ok: true });
 
-  const role = role_(request, env);
+  const bearer = token_(request, url);
+  const role = role_(bearer, env);
   if (role === null) return json(401, { error: "a valid bearer token is required" });
 
   if (path === "/" && method === "GET") {
     if (role !== "admin") return json(403, { error: "the status page needs the admin token" });
     const jobId = url.searchParams.get("job");
+    if (url.searchParams.has("token")) {
+      // Into a cookie, and out of the address bar and the links
+      const secure = url.protocol === "https:" ? "; Secure" : "";
+      const location = jobId === null ? "/" : `/?job=${encodeURIComponent(jobId)}`;
+      const cookie = `${k_cookie}=${encodeURIComponent(bearer)}; HttpOnly; SameSite=Strict; Path=/${secure}`;
+      return new Response(null, { status: 303, headers: { location, "set-cookie": cookie } });
+    }
     const headers = { "content-type": "text/html; charset=utf-8" };
-    if (jobId === null)
-      return new Response(renderJobs(await listJobs(env.DB), url.searchParams.get("token") ?? ""), { headers });
-    const job = await jobStatus(env.DB, jobId);
-    if (!job) return json(404, { error: `no job '${jobId}'` });
-    const wf = (await workflowStatus_(env, jobId)) as { status?: string };
-    return new Response(renderJob(job, wf.status ?? "unknown"), { headers });
+    if (jobId === null) return new Response(renderJobs(await listJobs(env.DB)), { headers });
+    const found = await jobAndWorkflow_(env, jobId);
+    if (!found) return json(404, { error: `no job '${jobId}'` });
+    return new Response(renderJob(found.job, found.workflow.status), { headers });
   }
 
   if (path === "/v1/blobs" && method === "GET") return listBlobs(env.BUCKET, url.searchParams.get("prefix") ?? "");
@@ -222,13 +303,15 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
       // Running agents learn of it from D1 (their next heartbeat is
       // refused); the Workflow is woken to end the instance.
       if (!(await cancelJob(env.DB, jobId, now_()))) return json(404, { error: `no job '${jobId}'` });
+      const state = (await loadJob(env.DB, jobId))?.row.state;
+      if (state !== "cancelled") return json(409, { job_id: jobId, state, error: `the job is ${state} already` });
       ctx.waitUntil(wakeWorkflow(env, jobId, "cancel"));
-      return json(200, { job_id: jobId, state: "cancelled" });
+      return json(200, { job_id: jobId, state });
     }
     if (!m[2] && method === "GET") {
-      const job = await jobStatus(env.DB, jobId);
-      if (!job) return json(404, { error: `no job '${jobId}'` });
-      return json(200, { ...job, workflow: await workflowStatus_(env, jobId) });
+      const found = await jobAndWorkflow_(env, jobId);
+      if (!found) return json(404, { error: `no job '${jobId}'` });
+      return json(200, { ...found.job, workflow: found.workflow });
     }
   }
   if (path === "/v1/workers" && method === "GET") return json(200, { workers: await listWorkers(env.DB) });
@@ -281,6 +364,13 @@ export default {
       console.error(e);
       return json(500, { error: String(e) });
     }
+  },
+
+  // The cron trigger: a live job whose Workflow instance has errored or was
+  // terminated fails, even when nobody looks at it.
+  async scheduled(_controller, env, _ctx): Promise<void> {
+    for (const jobId of await liveJobIds(env.DB))
+      await failStrandedJob(env.DB, jobId, await workflowStatus_(env, jobId), now_());
   },
 
   // The push consumer of the local environment: messages are dispatch hints

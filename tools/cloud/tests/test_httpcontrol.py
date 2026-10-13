@@ -18,7 +18,7 @@ from mvcloud.control import Conflict, HeartbeatResult
 from mvcloud.httpcontrol import HttpControl, tar_poses
 
 
-# --------------------------------------------------------------------- MockApi
+# ---------------------------------------------------------------------- MockApi
 class MockApi(http.server.ThreadingHTTPServer):
     """Records every request; answers routes from `script` (path -> list of
     (status, body), consumed in order, the last one repeated) and keeps
@@ -153,9 +153,15 @@ class TestHttpControl(unittest.TestCase):
         self.assertEqual(len(puts), 5)  # manifest, video, params, poses, gt
         self.assertTrue(all(r["headers"]["x-mvcloud-md5"] == r["path"].split("/")[5] for r in puts))
 
+        self.assertRegex(posted["job_id"], r"^synthetic-\d{8}T\d{6}-[0-9a-f]{6}$")
+
         self.api.requests.clear()
+        self.api.script["/v1/jobs"] = [(503, {}), (201, {"job_id": "synthetic-2"})]
         admin.submit(spec)  # the same files: nothing is uploaded again
         self.assertEqual([r for r in self.api.requests if r["method"] == "PUT"], [])
+        posts = [json.loads(r["body"]) for r in self.api.requests if r["path"] == "/v1/jobs"]
+        self.assertEqual(len(posts), 2)  # retried through the 503 with the same job id
+        self.assertEqual(posts[0]["job_id"], posts[1]["job_id"])
 
         self.api.script["/v1/jobs"] = [(422, {"error": "at least 2 frames required"})]
         with self.assertRaisesRegex(ValueError, "at least 2 frames required"):
