@@ -258,15 +258,29 @@ struct Result::Pimpl
          lock_guard lock(padlock);
          frame_results_->set_frame(int(frame_no));
 
-         std::transform(
-             cbegin(frame_results_->disp_map_update),
-             cend(frame_results_->disp_map_update),
-             begin(pt_clouds),
-             [](const auto& task_ptr) {
-                auto ret = task_ptr->get_result_synchronized()->point_cloud;
-                Expects(ret != nullptr);
-                return ret;
-             });
+         if(scene_desc->is_no_stereo()) {
+            // The point clouds are empty (see disp_init), so only the LAB
+            // images are calculated: no rectification, SLIC or disparity.
+            // The tasks are requested parents first, so that each one runs
+            // here, on this thread. Waiting on a task that must be scheduled
+            // can deadlock: this thread may be a worker, and the job can land
+            // on its own queue while every other worker sleeps.
+            frame_results_->copy_sensor_images.get_result_synchronized();
+            for(const auto& task_ptr : frame_results_->input_images)
+               task_ptr->get_result_synchronized();
+            for(auto& pt_cloud : pt_clouds)
+               pt_cloud = make_shared<PointCloud>();
+         } else {
+            std::transform(
+                cbegin(frame_results_->disp_map_update),
+                cend(frame_results_->disp_map_update),
+                begin(pt_clouds),
+                [](const auto& task_ptr) {
+                   auto ret = task_ptr->get_result_synchronized()->point_cloud;
+                   Expects(ret != nullptr);
+                   return ret;
+                });
+         }
 
          std::transform(cbegin(frame_results_->convert_to_lab),
                         cend(frame_results_->convert_to_lab),
