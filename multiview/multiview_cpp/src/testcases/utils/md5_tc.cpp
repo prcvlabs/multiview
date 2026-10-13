@@ -32,6 +32,9 @@ CATCH_TEST_CASE("Md5Sum_", "[md5_sum]")
          m.finalize();
          CATCH_REQUIRE(m.hexdigest() == digest);
       }
+
+      CATCH_REQUIRE(md5(&dat[0], dat.size()) == digest);
+      CATCH_REQUIRE(md5(string_view(&dat[0], dat.size())) == digest);
    }
 
    CATCH_SECTION("extract-md5")

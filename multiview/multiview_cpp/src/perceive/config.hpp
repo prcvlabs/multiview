@@ -85,11 +85,11 @@ constexpr bool k_has_openpose = true;
 constexpr bool k_has_openpose = false;
 #endif
 
-constexpr const char* k_installation_root = INSTALLATION_ROOT;
-
-constexpr const char* k_multiview_data_dir = MULTIVIEW_DATA_DIR;
-
-constexpr const char* k_version = MULTIVIEW_VERSION;
+// Defined in config.cpp, the one translation unit compiled with the
+// INSTALLATION_ROOT, MULTIVIEW_DATA_DIR and MULTIVIEW_VERSION macros
+extern const char* const k_installation_root;
+extern const char* const k_multiview_data_dir;
+extern const char* const k_version;
 
 // Must be called before any of the functions below
 void load_environment_variables() noexcept;

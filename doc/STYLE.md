@@ -41,7 +41,7 @@ that were duplicated in 2026 and then unified:
 
 - Pipeline nodes (`Task::execute`) are `noexcept`. Anything that can throw inside them (CUDA uploads, GPU kernels, file I/O) is wrapped in `try { } catch(std::exception& e) { LOG_ERR(...); }` with a CPU fallback or `return nullptr`. Letting an exception escape terminates the process with no log line.
 - Per-thread GPU state (`static thread_local`) multiplies GPU memory by the pool size. Prefer one instance behind a `std::mutex`, as `cuda::Remapper` does, and release it with `register_exit_function`.
-- Keep an object alive until every scheduled job that captured `this` has finished: set a flag before `schedule(...)`, clear it as the job's last action, and drain with `try_one_scheduled_job()` in the destructor (`SceneDescription`).
+- Keep an object alive until every scheduled job that captured `this` has finished: set a flag before `schedule(...)`, clear it as the job's last action, and drain with `try_one_scheduled_job()` in the destructor. Better still, do not schedule work nobody asked for: `SceneDescription` calculates its floor grids on first use.
 
 ## Tests
 

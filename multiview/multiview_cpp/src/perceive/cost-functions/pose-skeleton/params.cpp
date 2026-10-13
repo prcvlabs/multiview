@@ -127,6 +127,7 @@ const vector<MemberMetaData>& HyperposeParams::meta_data() const noexcept
    auto make_meta = []() {
       vector<MemberMetaData> m;
       m.push_back(MAKE_META(ThisParams, STRING, model_name, true));
+      m.push_back(MAKE_META(ThisParams, STRING, precision, true));
       m.push_back(MAKE_META(ThisParams, BOOL, feedback, false));
       return m;
    };

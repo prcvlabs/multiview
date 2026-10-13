@@ -36,9 +36,15 @@ endif()
 if(MULTIVIEW_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache)
   if(CCACHE_PROGRAM)
-    # The sloppiness lets ccache cache sources compiled with the PCH
+    # The sloppiness lets ccache cache sources compiled with the PCH. The
+    # base directory keeps the hashes independent of the checkout path;
+    # objects are still not shared between worktrees, because the generated
+    # PCH header names the checkout's absolute path.
+    get_filename_component(MV_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../.. ABSOLUTE)
     set(MV_LAUNCHER ${CMAKE_COMMAND} -E env
       CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+      CCACHE_BASEDIR=${MV_ROOT}
+      CCACHE_NOHASHDIR=1
       ${CCACHE_PROGRAM})
     set(CMAKE_C_COMPILER_LAUNCHER ${MV_LAUNCHER})
     set(CMAKE_CXX_COMPILER_LAUNCHER ${MV_LAUNCHER})
@@ -214,10 +220,14 @@ target_include_directories(mv-common SYSTEM INTERFACE
   ${MV_CONTRIB}/static-math_20180201/include
   ${SVM_INCLUDE_DIR})
 target_compile_definitions(mv-common INTERFACE ${MV_DEFS}
-  MULTIVIEW_VERSION="${MV_VERSION}"
-  INSTALLATION_ROOT="${CMAKE_INSTALL_PREFIX}"
-  MULTIVIEW_DATA_DIR="${MV_DATA}"
   $<$<BOOL:${MULTIVIEW_PROFILE_MEMORY}>:PERCEIVE_PROFILE_MEMORY>)
+
+# The version string and the data directory change with every commit and
+# every checkout, so they are compiled into config.cpp only. The other
+# objects then stay valid across commits and git worktrees (ccache hits).
+set_source_files_properties(${MV_SRC}/perceive/config.cpp PROPERTIES
+  COMPILE_DEFINITIONS
+  "MULTIVIEW_VERSION=\"${MV_VERSION}\";INSTALLATION_ROOT=\"${CMAKE_INSTALL_PREFIX}\";MULTIVIEW_DATA_DIR=\"${MV_DATA}\"")
 target_compile_options(mv-common INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>
   $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)

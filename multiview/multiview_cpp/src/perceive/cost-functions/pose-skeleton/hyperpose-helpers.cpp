@@ -52,6 +52,11 @@ void clear_hyperpose_registry() noexcept {}
 // ----------------------------------------------------------- WITH HYPERPOSE --
 // -----------------------------------------------------------------------------
 
+#include "engine-cache.hpp"
+#include "perceive/utils/cuda-spec.hpp"
+#include "perceive/utils/md5.hpp"
+
+#include <NvInferRuntime.h>
 #include <hyperpose/hyperpose.hpp>
 #include <variant>
 
@@ -223,7 +228,78 @@ static Point2 calc_network_resolution(Point2 x, string_view name) noexcept
 
 static cv::Size to_cv_size(const Point2 x) noexcept { return {x.y, x.x}; }
 
-static SpinLock padlock_;
+// ---------------------------------------------------------------- to-data-type
+//
+static hp::data_type to_data_type(const string_view precision) noexcept
+{
+   if(precision == "fp32") return hp::data_type::kFLOAT;
+   if(precision == "fp16") return hp::data_type::kHALF;
+   FATAL(format("precision must be 'fp32' or 'fp16', not '{}'", precision));
+   return hp::data_type::kFLOAT;
+}
+
+// ------------------------------------------------------------- make-engine-key
+//
+static EngineKey make_engine_key(const string_view filename,
+                                 const Point2 network_resolution,
+                                 const int max_batch_size,
+                                 const string_view precision) noexcept(false)
+{
+   const auto device = cuda::get_device_info();
+   EngineKey key;
+   key.model_md5      = md5(file_get_contents(filename));
+   key.max_batch_size = max_batch_size;
+   key.input_h        = network_resolution.x;
+   key.input_w        = network_resolution.y;
+   key.precision      = string(precision);
+   key.trt_version    = getInferLibVersion();
+   key.gpu_name       = device.name;
+   key.compute_major  = device.major_version;
+   key.compute_minor  = device.minor_version;
+   return key;
+}
+
+// ------------------------------------------------------------ load-onnx-engine
+// Building an engine from an onnx model takes a minute, so engines are cached
+// in `multiview_cache_dir()/trt`.
+//
+static unique_ptr<hp::dnn::tensorrt>
+load_onnx_engine(const hp::dnn::onnx& model,
+                 const Point2 network_resolution,
+                 const int max_batch_size,
+                 const string_view precision) noexcept(false)
+{
+   const auto now        = tick();
+   const auto dtype      = to_data_type(precision);
+   const auto size       = to_cv_size(network_resolution);
+   const bool keep_ratio = false;
+   const auto dir        = format("{}/trt", multiview_cache_dir());
+   const auto key        = make_engine_key(
+       model.model_path, network_resolution, max_batch_size, precision);
+
+   if(const auto plan = find_cached_engine(dir, key); !plan.empty()) {
+      auto engine = make_unique<hp::dnn::tensorrt>(
+          hp::dnn::tensorrt_serialized{plan}, size, max_batch_size);
+      INFO(format("TensorRT engine cache hit for '{}' (batch {}, {}): {:.3f}s",
+                  basename(model.model_path),
+                  max_batch_size,
+                  precision,
+                  tock(now)));
+      return engine;
+   }
+
+   auto engine = make_unique<hp::dnn::tensorrt>(
+       model, size, max_batch_size, keep_ratio, dtype);
+   cache_engine(dir, key, [&](const string& fname) { engine->save(fname); });
+   INFO(format("TensorRT engine cache miss for '{}' (batch {}, {}): {:.3f}s",
+               basename(model.model_path),
+               max_batch_size,
+               precision,
+               tock(now)));
+   return engine;
+}
+
+static std::mutex padlock_;
 
 struct HyperposeModelRegistry
 {
@@ -239,6 +315,7 @@ struct HyperposeModelRegistry
       hp::dnn::uff uff_model               = {};
       hp::dnn::onnx onnx_model             = {};
       int max_batch_size                   = 0;
+      string precision                     = ""s;
       unique_ptr<hp::dnn::tensorrt> engine = nullptr;
    };
 
@@ -263,6 +340,7 @@ struct HyperposeModelRegistry
       RegistryData data;
       data.type           = string_to_model_type(name);
       data.max_batch_size = (n_images > 0) ? n_images : 1;
+      data.precision      = p.precision;
 
       TRACE(format("attempting to load HyperposeModel '{}' with outdir set to "
                    "'{}', type = {}, and network resolution = [{}x{}]",
@@ -279,10 +357,10 @@ struct HyperposeModelRegistry
       try {
          if(data.type == ModelType::ONNX) {
             data.onnx_model.model_path = filename;
-            data.engine
-                = make_unique<hp::dnn::tensorrt>(data.onnx_model,
-                                                 to_cv_size(network_resolution),
-                                                 data.max_batch_size);
+            data.engine                = load_onnx_engine(data.onnx_model,
+                                           network_resolution,
+                                           data.max_batch_size,
+                                           data.precision);
          } else if(data.type == ModelType::UFF) {
             data.uff_model.model_path = filename;
             data.uff_model.input_name = "image"s;
@@ -323,11 +401,12 @@ struct HyperposeModelRegistry
                                  const int n_images,
                                  const string_view outdir) noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       auto ii = registry_.find(p.model_name);
 
       const bool exists  = !(ii == cend(registry_));
-      const bool do_make = !exists || ii->second.max_batch_size < n_images;
+      const bool do_make = !exists || ii->second.max_batch_size < n_images
+                           || ii->second.precision != p.precision;
       if(do_make) {
          if(exists) registry_.erase(ii);
          if(!make_engine_(p, n_images, outdir))
@@ -341,13 +420,13 @@ struct HyperposeModelRegistry
 
    void clear_engine(const string& name) noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       registry_.erase(name);
    }
 
    void reset() noexcept
    {
-      lock_guard lock(padlock_);
+      std::lock_guard<std::mutex> lock(padlock_);
       registry_.clear();
    }
 };
@@ -389,13 +468,7 @@ This::run(const SceneDescription* scene_desc_ptr,
    vector<vector<shared_ptr<const Skeleton2D>>> out;
    auto& parsers = pimpl_->parsers;
 
-   const auto s0 = time_thunk([&]() { // Grab the engine
-      engine_ptr
-          = HyperposeModelRegistry::instance().get_engine(p, n_images, outdir);
-      Expects(engine_ptr != nullptr);
-   });
-
-   const auto s1 = time_thunk([&]() { // Prepare the input
+   const auto s0 = time_thunk([&]() { // Prepare the input
       images.reserve(size_t(n_images));
       indices.reserve(size_t(n_images));
       for(int i = 0; i < n_images; ++i) {
@@ -427,8 +500,14 @@ This::run(const SceneDescription* scene_desc_ptr,
       }
    });
 
+   const auto s1 = time_thunk([&]() { // Grab the engine, sized for `images`
+      engine_ptr = HyperposeModelRegistry::instance().get_engine(
+          p, int(images.size()), outdir);
+      Expects(engine_ptr != nullptr);
+   });
+
    const auto s2 = time_thunk([&]() { // Run the engine
-      lock_guard lock(padlock_);      //
+      std::lock_guard<std::mutex> lock(padlock_);
       raw = engine_ptr->inference(images);
 
    });
@@ -482,8 +561,8 @@ This::run(const SceneDescription* scene_desc_ptr,
       TRACE(format("hyperpose inference timings, with {} images:",
                    images.size()));
       cout << format(R"V0G0N(    
-   load engine:    {:5.3f}ms
    prepare input:  {:5.3f}ms
+   load engine:    {:5.3f}ms
    run engine:     {:5.3f}ms
    parse features: {:5.3f}ms
    unpack poses:   {:5.3f}ms

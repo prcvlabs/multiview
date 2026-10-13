@@ -158,6 +158,12 @@ when CMake configures. To reuse an already downloaded TensorRT wheel, set
 `TRT_WHEEL_FILE`; to use another TensorRT install, set `TENSORRT_ROOT`. The
 `[hyperpose]` testcase runs when `MULTIVIEW_HYPERPOSE_TEST_IMAGE` points to an
 image with a person in it.
+
+The TensorRT engine is built from the ONNX model on first use (40-70 s) and
+cached in `$MULTIVIEW_CACHE_DIR/trt` for the model, batch size, precision,
+TensorRT version and GPU; later runs load it in about two seconds. Delete that
+directory to rebuild. `hp_params.precision` in params.json is `"fp32"` (the
+default) or `"fp16"`, which about halves the inference time.
 </details>
 
 <details>
@@ -245,6 +251,26 @@ build/build.sh Debug                                     # debug build
 multiview/multiview_cpp/build/cmake-debug/multiview-testcases "[cuda_slic]"   # one testcase by tag
 multiview/multiview_cpp/build/cmake-release/multiview-testcases --list-tests
 ```
+
+`build/dev.sh` wraps the day-to-day loop and works from any git worktree of
+the repository, so several branches can be built and tested on one machine:
+
+```
+build/dev.sh build [--hyperpose]       # build this worktree (one build at a time, shared ccache)
+build/dev.sh test "[tracks]"           # unit tests, optionally one Catch tag
+build/dev.sh replay                    # once: 2D poses of testcase 007 for `smoke` (better: the poses of the original videos, see tools/privacy/README.md)
+build/dev.sh smoke                     # 120 frames of 007 with replayed poses, scored against the reference
+build/dev.sh check                     # build + test + smoke
+```
+
+Rebuilds are incremental across commits: the git version string is compiled
+into `config.cpp` only, so touching one file rebuilds one object. A fresh
+worktree compiles once (about 4 minutes; the precompiled header embeds the
+checkout path, so ccache cannot share objects between worktrees). Consecutive
+frames are decoded sequentially (the videos have a keyframe every 250 frames,
+so seeking to each frame used to dominate the per-frame cost), and the floor
+grids used by the debug movie are calculated on first use instead of at
+start-up, which used to hold every run for minutes at exit.
 
 Code follows Aaron's conventions in
 [`doc/coding-style.notes`](doc/coding-style.notes) and the repository's

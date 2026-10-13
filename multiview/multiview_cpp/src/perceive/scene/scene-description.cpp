@@ -241,7 +241,9 @@ struct This::Pimpl
          if(fname.size() > 0) delete_file(fname);
    }
 
-   void calc_floor_grids_(This* o)
+   // The grids are only used for rendering, and take minutes to calculate,
+   // so they are calculated on first use
+   void calc_floor_grids_(const This* o)
    {
       auto& ptr = floor_grids_ptr;
       std::call_once(floor_grid_flag, [this, o, &ptr]() {
@@ -254,23 +256,11 @@ struct This::Pimpl
       });
    }
 
-   const ARGBImage& floor_grid(int sensor_ind)
+   const ARGBImage& floor_grid(const This* o, int sensor_ind)
    {
-      bool first = true;
-
-      auto get_ptr = [&]() {
-         lock_guard lock(padlock);
-         return floor_grids_ptr.get();
-      };
-
-      while(get_ptr() == nullptr) {
-         if(first) WARN(format("floor grids being calculated..."));
-         first = false;
-         std::this_thread::yield();
-      }
-
+      calc_floor_grids_(o);
       Expects(size_t(sensor_ind) < floor_grids_ptr->size());
-      return get_ptr()->at(size_t(sensor_ind));
+      return floor_grids_ptr->at(size_t(sensor_ind));
    }
 };
 
@@ -279,24 +269,7 @@ struct This::Pimpl
 This::This()
     : pimpl_(make_unique<Pimpl>())
 {}
-This::~This() { floor_grids_job_.wait(); }
-
-// --------------------------------------------------------------- FloorGridsJob
-//
-This::FloorGridsJob::FloorGridsJob(FloorGridsJob&& o) noexcept { o.wait(); }
-
-This::FloorGridsJob& This::FloorGridsJob::operator=(FloorGridsJob&& o) noexcept
-{
-   wait();
-   o.wait();
-   return *this;
-}
-
-void This::FloorGridsJob::wait() const noexcept
-{
-   while(pending)
-      if(!try_one_scheduled_job()) std::this_thread::yield();
-}
+This::~This() = default;
 
 Timestamp This::current_timestamp() const noexcept
 {
@@ -375,7 +348,7 @@ vector<cv::Mat> This::grab_video_frame_(int scene_frame_no) const noexcept
       try {
          if(is_video[i]) {
             Expects(P.videos[i]);
-            if(false && advance_one) {
+            if(advance_one) {
                *P.videos[i] >> ret[i];
             } else {
                int fnum = movie_frame_no + P.movie_frame_offsets[i];
@@ -1239,14 +1212,6 @@ void This::init(const SceneManifest& SM,
       }
    }
 
-   { // ---- Asychronously calculate the floor grids
-      floor_grids_job_.pending = true;
-      schedule([this]() {
-         pimpl_->calc_floor_grids_(this);
-         floor_grids_job_.pending = false;
-      });
-   }
-
    { // ---- sanity checks ----
       if(!scene_info.hist_bounds.is_finite())
          WARN(format("no 'hist-bounds' set"));
@@ -1586,7 +1551,7 @@ LABImage This::sensor_LAB_still(int sensor_ind) const noexcept
 
 const ARGBImage& This::floor_grid(int sensor_ind) const noexcept
 {
-   return pimpl_->floor_grid(sensor_ind);
+   return pimpl_->floor_grid(this, sensor_ind);
 }
 
 const vector<ARGBImage>& This::all_floor_grids() const noexcept
