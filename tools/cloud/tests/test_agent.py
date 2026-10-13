@@ -422,5 +422,19 @@ class TestAgent(unittest.TestCase):
         self.assertIn("outside the scene", r.stderr)
 
 
+# -------------------------------------------------------------- ClassifyExitTest
+class ClassifyExitTest(unittest.TestCase):
+    def test_classes(self):
+        model = ("FATAL hyperpose-helpers.cpp:335 failed to find hyperpose-model file "
+                 "'/usr/local/opt/hyperpose/models/openpose-coco-V2-HW=368x656.onnx'\n"
+                 "terminate called after throwing an instance of 'std::system_error'\n"
+                 "  what():  Resource deadlock avoided\n")
+        self.assertEqual(runner.classify_exit(-6, model, False, False), "fatal")
+        self.assertEqual(runner.classify_exit(-6, "FATAL Precondition failed\n", False, False), "retry")
+        self.assertEqual(runner.classify_exit(0, "", True, False), "ok")
+        self.assertEqual(runner.classify_exit(0, "", False, False), "retry")
+        self.assertEqual(runner.classify_exit(-15, model, False, True), "timeout")
+
+
 if __name__ == "__main__":
     unittest.main()

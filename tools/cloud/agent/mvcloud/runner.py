@@ -28,6 +28,7 @@ k_fatal_patterns = (
     "--require-aligned",
     "failed to save localization data",
     "pose replay: missing",
+    "failed to find hyperpose-model file",  # MULTIVIEW_HYPERPOSE_DIR is wrong
 )
 k_retry_patterns = ("FATAL", "Precondition failed", "Resource deadlock avoided", "kBAM")
 k_progress_patterns = ("saving loc-data frames", "Track frames")
