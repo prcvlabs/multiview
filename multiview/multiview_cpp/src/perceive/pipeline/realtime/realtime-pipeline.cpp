@@ -7,6 +7,7 @@
 #include "online-tracker.hpp"
 #include "paced-frame-source.hpp"
 #include "provisional-localizer.hpp"
+#include "publisher.hpp"
 #include "reorder-buffer.hpp"
 #include "track-messages.hpp"
 
@@ -83,7 +84,6 @@ struct RealtimeRun
    real warm_up_s = 0.0;
 
    // ------------------------------------------------------------------- Output
-   std::mutex out_padlock; // the reorder and tracker threads both write
    FILE* out_fp           = nullptr;
    string output_filename = ""s; // pipeline-output.json, once written
 
@@ -98,6 +98,7 @@ struct RealtimeRun
    unique_ptr<FrameSlotPool> slots;
    OnlineTracker::Params tracker_params;
    unique_ptr<OnlineTracker> tracker;
+   unique_ptr<Publisher> publisher;
    std::thread dispatcher;
    std::thread reorder_thread;
    std::atomic<bool> stop_requested  = false;
@@ -121,6 +122,7 @@ struct RealtimeRun
    ~RealtimeRun()
    {
       shutdown();
+      if(publisher) publisher->close();
       if(out_fp != nullptr) fclose(out_fp);
    }
 
@@ -130,9 +132,9 @@ struct RealtimeRun
    void shutdown() noexcept;
    bool finish() noexcept;
 
-   void write_line(const TrackMessage& msg) noexcept;
+   void publish(TrackMessage&& msg) noexcept;
    void check_header(const LocalizationData& loc) noexcept;
-   void write_stats(time_point now) noexcept;
+   StatsMessage make_stats(time_point now) noexcept;
    void emit(const FrameRecord& record) noexcept;
    void emit_and_track(FrameRecord&& record) noexcept;
    void on_slot_done(FrameRecord&& record) noexcept;
@@ -279,6 +281,20 @@ bool RealtimeRun::init() noexcept(false)
       return false;
    }
 
+   // ------------------------------------------------------------ The publisher
+   {
+      vector<Publisher::sink_fn> sinks;
+      sinks.push_back([fp = out_fp](const string& line) {
+         return fputs(line.c_str(), fp) >= 0 and fflush(fp) == 0;
+      });
+      Publisher::Params pp;
+      pp.stats_period_s = rp.stats_period_s;
+      publisher         = make_unique<Publisher>(
+          pp, std::move(sinks), [this](time_point now) {
+             return make_stats(now);
+          });
+   }
+
    // --------------------------------------------------------- The paced source
    {
       SceneManifest manifest;
@@ -339,16 +355,18 @@ void RealtimeRun::start() noexcept(false)
 {
    t_start = steady_clock::now();
    stats   = make_unique<RealtimeStats>(t_start);
-   write_line(header);
+   publish(header);
    tracker = make_unique<OnlineTracker>(
        scene,
        tracker_params,
-       [this](TrackMessage&& msg) { write_line(msg); },
+       [this](TrackMessage&& msg) { publish(std::move(msg)); },
        OnlineTracker::window_fn{},
        [this](const Tracks& newest) {
           labeller->set_tracks(live_tracks(newest));
        },
        stats.get());
+   if(!publisher->start())
+      throw std::runtime_error("failed to start the publisher thread");
    if(!tracker->start())
       throw std::runtime_error("failed to start the tracker thread");
    source->start();
@@ -395,14 +413,13 @@ void RealtimeRun::shutdown() noexcept
    if(tracker) tracker->finish();
 }
 
-// ------------------------------------------------------------------ write-line
+// --------------------------------------------------------------------- publish
 //
-void RealtimeRun::write_line(const TrackMessage& msg) noexcept
+void RealtimeRun::publish(TrackMessage&& msg) noexcept
 {
-   const auto line = to_ndjson_line(msg);
-   std::lock_guard<std::mutex> lock(out_padlock);
-   if(fputs(line.c_str(), out_fp) < 0 or fflush(out_fp) != 0)
-      LOG_ERR(format("failed to write a '{}' line", message_type(msg)));
+   const char* type = message_type(msg);
+   if(!publisher->publish(std::move(msg)))
+      LOG_ERR(format("a '{}' message was published after the end", type));
 }
 
 // ---------------------------------------------------------------- check-header
@@ -429,16 +446,18 @@ void RealtimeRun::check_header(const LocalizationData& loc) noexcept
                   header.top_left_y));
 }
 
-// ----------------------------------------------------------------- write-stats
+// ------------------------------------------------------------------ make-stats
+// The `stats` message (publisher or main thread)
 //
-void RealtimeRun::write_stats(time_point now) noexcept
+StatsMessage RealtimeRun::make_stats(time_point now) noexcept
 {
    stats->set_queue_depth(RealtimeStats::Queue::LOC, loc_q->size());
    stats->set_queue_depth(RealtimeStats::Queue::TRACKER, tracker->queue_size());
+   stats->set_queue_depth(RealtimeStats::Queue::OUT, publisher->queue_size());
    stats->set_slots_busy(slots->n_busy());
    StatsMessage msg;
    msg.stats = stats->to_json(now);
-   write_line(msg);
+   return msg;
 }
 
 // ------------------------------------------------------------------------ emit
@@ -454,7 +473,7 @@ void RealtimeRun::emit(const FrameRecord& record) noexcept
       DroppedMessage msg;
       msg.frame  = record.frame_no();
       msg.reason = str(record.drop_reason);
-      write_line(msg);
+      publish(std::move(msg));
       return;
    }
 
@@ -483,10 +502,9 @@ void RealtimeRun::emit(const FrameRecord& record) noexcept
 
    const auto now = steady_clock::now();
    msg.latency_ms = ms_between(timeline.t_arrival, now);
-   if(rp.publish_provisional) write_line(msg);
-
    stats->count_frame(RealtimeStats::Stage::PROVISIONAL, now);
    stats->add_latency(RealtimeStats::Latency::PROVISIONAL, msg.latency_ms);
+   if(rp.publish_provisional) publish(std::move(msg));
    dag_ms.add(ms_between(timeline.t_dispatch, timeline.t_dag_done));
    wait_ms.add(ms_between(timeline.t_arrival, timeline.t_dispatch));
 }
@@ -588,25 +606,16 @@ void RealtimeRun::run_dispatcher() noexcept
 }
 
 // ----------------------------------------------------------------- run-reorder
-// Writes frames in order as their results come in, and the stats lines
+// Writes frames in order as their results come in
 //
 void RealtimeRun::run_reorder() noexcept
 {
-   const auto period = std::chrono::duration_cast<steady_clock::duration>(
-       std::chrono::duration<double>(rp.stats_period_s));
-   auto next_stats = t_start + period;
-
    while(true) {
       auto record    = loc_q->pop_for(10ms);
       const auto now = steady_clock::now();
       if(record) reorder->push(std::move(*record), now);
       while(auto ready = reorder->pop_ready(now))
          emit_and_track(std::move(*ready));
-      if(now >= next_stats) {
-         write_stats(now);
-         next_stats += period;
-         if(next_stats < now) next_stats = now + period;
-      }
       if(!record and loc_q->is_closed() and loc_q->size() == 0) break;
    }
 
@@ -719,12 +728,13 @@ bool RealtimeRun::finish() noexcept
 {
    const bool has_tracks = write_tracks();
 
-   write_stats(t_end);
+   publish(make_stats(t_end));
    EndMessage end_msg;
    end_msg.frames  = n_frames;
    end_msg.dropped = n_dropped;
    end_msg.output  = output_filename;
-   write_line(end_msg);
+   publish(std::move(end_msg));
+   publisher->close();
 
    try {
       const auto summary = summary_json();
