@@ -47,13 +47,16 @@ struct CliArgs : public MetaCompatible
    string pipeline_output_filename{"pipeline-output.json"};
    bool generate_timings{false};
    bool save_localization_data{false};
-   string localization_data_fname{""s};
+   string localization_data_fname{""s}; // localization_data_fnames[0]
+   Json::Value localization_data_fnames{Json::arrayValue};
    bool developer_features{false};
    bool on_the_fly_still{false};
    bool colour_floor_hist{false};
    string annotations_directory{""s}; // used by annotation system
    bool annotate_mode{false};
    bool no_stereo{false};
+   bool require_aligned{false}; // tracks jobs: see 'shard_alignment_error'
+   int still_warmup_frames{0};  // accumulate the still over frames before start
    bool export_training_data{false};
    string export_training_data_prefix
        = ""s; // should be set to the testcase name
@@ -88,6 +91,10 @@ struct CliArgs : public MetaCompatible
    unsigned n_in_stats_fnames() const noexcept;
    void push_in_stats_fname(const string_view) noexcept;
    string in_stats_fname(const unsigned ind) const noexcept;
+
+   unsigned n_loc_data_fnames() const noexcept;
+   void push_loc_data_fname(const string_view) noexcept;
+   string loc_data_fname(const unsigned ind) const noexcept;
 
    // We're loading precalulcated stats from file somewhere
    bool is_loading_stats() const noexcept;
