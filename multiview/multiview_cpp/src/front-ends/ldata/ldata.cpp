@@ -44,7 +44,8 @@ void show_help(const string_view argv0)
    Localization-data files are written by `pipeline --save-loc-data`.
 
       info                Print a json summary of each file: frame range,
-                          fps, histogram geometry, detections, size, md5.
+                          fps, histogram geometry, detections, size, md5,
+                          and the md5 of each frame.
 
       cat                 Concatenate files (e.g., shards) into one, as
                           `pipeline --load-loc-data a --load-loc-data b`
@@ -58,13 +59,14 @@ void show_help(const string_view argv0)
          -o <filename>    Output file.
          -y               Allow overwrite.
 
-      diff                Compare the frames two files have in common:
-                          histogram cells and 2D poses, per frame.
+      diff                Compare the frames two files have in common, per
+                          frame: bytes as written, histogram cells and 2D
+                          poses (operator==, which has a tolerance).
          --verbose        List every frame that differs.
          --json <file>    Also write the result to <file>.
 
-   Exit status: 0 on success; for diff, 0 if the files are identical, 1 if
-   they differ, and 2 on error.
+   Exit status: 0 on success; for diff, 0 if the files are identical (same
+   frame range, every frame byte-equal), 1 if they differ, and 2 on error.
 
 {:s})V0G0N",
                   basename(argv0),
@@ -106,7 +108,7 @@ Config parse_args(int argc, char** argv)
 
    for(int i = 1; i < argc; ++i) {
       const string_view arg = argv[i];
-      if(arg == "-h" || arg == "--help") config.show_help = true;
+      if(arg == "-h" or arg == "--help") config.show_help = true;
    }
    if(config.show_help) return config;
 

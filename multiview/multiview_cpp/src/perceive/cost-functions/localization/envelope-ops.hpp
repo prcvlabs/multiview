@@ -29,10 +29,16 @@ struct CatResult
 CatResult cat_envelopes(const vector<LocalizationDataEnvelope>& envelopes,
                         const vector<KeepRange>& keep) noexcept;
 
+// Frames are compared twice: as the bytes `LocalizationData::write` produces
+// (`bytes_equal`, which is what 'identical' means), and with operator==
+// (`equal`), which has a tolerance on the 2D poses and skips `prob_xy`.
 struct FrameDiff
 {
    int frame_no           = -1;
+   bool bytes_equal       = false;
    bool equal             = false; // operator== and the same 'frame_no'
+   string md5_a           = ""s;   // of the frame's bytes
+   string md5_b           = ""s;
    bool header_equal      = false; // frame_no, loc-min/max, hist-sz, bounds
    bool hist_dims_equal   = false;
    int hist_cells_differ  = 0;
@@ -52,9 +58,10 @@ struct DiffResult
    bool headers_equal       = false; // start-frame, n-frames, frame-duration
    int first_frame          = -1;    // the common frame range
    int n_frames             = 0;
+   int n_bytes_equal        = 0;
    int n_equal              = 0;
    FrameDiff worst          = {}; // by hist-max-abs, then cells, then p2ds
-   vector<FrameDiff> frames = {}; // the frames that differ
+   vector<FrameDiff> frames = {}; // the frames whose bytes differ
 
    bool identical() const noexcept;
    Json::Value to_json(const bool verbose) const noexcept;
@@ -64,7 +71,8 @@ struct DiffResult
 DiffResult diff_envelopes(const LocalizationDataEnvelope& a,
                           const LocalizationDataEnvelope& b) noexcept;
 
-// Summary of an envelope; `fname`, if not empty, adds its size and md5.
+// Summary of an envelope, including the md5 of each frame's bytes;
+// `fname`, if not empty, adds the file's size and md5.
 Json::Value envelope_info(const LocalizationDataEnvelope& env,
                           const string_view fname) noexcept;
 

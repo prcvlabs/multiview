@@ -11,6 +11,7 @@
 # [0,F), [F,2F), ... (default F = 60) with --save-loc-data --no-tracks, then
 #
 #   (a) ldata cat of the shards, then ldata diff against ref-N.data: exit 0
+#       (every frame byte-equal)
 #   (b) a tracks job with one --load-loc-data per shard and --require-aligned:
 #       track_results equal to R3's (lab_p included) and to R1's (lab_p nulled)
 #   (c) tracks jobs with an unaligned end, or starting before the envelope:
@@ -71,9 +72,9 @@ run_pipeline() # run_pipeline <dir> pipeline-args...
     # shellcheck disable=SC2046
     flock "$GPU_LOCK" $(capped_cmd) /usr/bin/time -f '%e' -o "$dir/wall-seconds" \
         "$CLI" pipeline -m "$MANIFEST" -p "$GOLD/params-replay.json" -d "$dir" -y \
-        --no-stereo --pose-classifier pose-svm-lite_v0 --verbosity 1 "$@" \
+        --no-stereo --verbosity 1 "$@" \
         > "$dir/stdout" 2> "$dir/stderr" || ret=$?
-    echo "check_shard_parity: $(basename "$dir"): exit $ret, $(cat "$dir/wall-seconds" 2>/dev/null || echo '?')s"
+    echo "check_shard_parity: $(basename "$dir"): exit $ret, $(tail -1 "$dir/wall-seconds" 2>/dev/null || echo "?")s"
     return "$ret"
 }
 
@@ -102,7 +103,7 @@ check "(a) ldata diff merged ref-$N.data" \
 
 # ---- (b) tracks job over the shards
 run_pipeline "$OUT/tracks" "${loads[@]}" --start 0 --n-frames "$N" --require-aligned \
-    --tracks-file "$GT" --pipeline-testcase || FAILED=1
+    --pose-classifier pose-svm-lite_v0 --tracks-file "$GT" --pipeline-testcase || FAILED=1
 check "(b) tracks job == R3 (lab_p included)" \
     python3 "$THIS_DIR/compare_tracks.py" --keep-lab-p --json "$OUT/tracks-vs-R3.json" \
     "$GOLD/n$N/R3/pipeline-output.json" "$OUT/tracks/pipeline-output.json"

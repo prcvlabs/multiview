@@ -161,6 +161,7 @@ CATCH_TEST_CASE("DiffEnvelopes", "[ldata]")
       CATCH_REQUIRE(diff.identical());
       CATCH_REQUIRE(diff.n_frames == 20);
       CATCH_REQUIRE(diff.n_equal == 20);
+      CATCH_REQUIRE(diff.n_bytes_equal == 20);
       CATCH_REQUIRE(diff.frames.empty());
       CATCH_REQUIRE(diff.to_json(false)["identical"].asBool());
    }
@@ -174,8 +175,13 @@ CATCH_TEST_CASE("DiffEnvelopes", "[ldata]")
       CATCH_REQUIRE(!diff.identical());
       CATCH_REQUIRE(diff.headers_equal);
       CATCH_REQUIRE(diff.n_equal == 19);
+      CATCH_REQUIRE(diff.n_bytes_equal == 19);
       CATCH_REQUIRE(diff.frames.size() == 1);
       CATCH_REQUIRE(diff.worst.frame_no == 7);
+      CATCH_REQUIRE(!diff.worst.equal);
+      CATCH_REQUIRE(!diff.worst.bytes_equal);
+      CATCH_REQUIRE(diff.worst.md5_a.size() == 32);
+      CATCH_REQUIRE(diff.worst.md5_a != diff.worst.md5_b);
       CATCH_REQUIRE(diff.worst.hist_cells_differ == 1);
       CATCH_REQUIRE(diff.worst.hist_max_abs == 5);
       CATCH_REQUIRE(std::fabs(diff.worst.hist_l1_mean - 5.0 / 48.0) < 1e-12);
@@ -194,9 +200,14 @@ CATCH_TEST_CASE("DiffEnvelopes", "[ldata]")
       auto c                          = b;
       c.loc_data[4].p2ds[1].back().id = 2;
 
+      // A 2D pose without a skeleton cannot be written, so it is never
+      // bytes-equal
       auto diff = diff_envelopes(a, b);
       CATCH_REQUIRE(diff.n_equal == 19);
+      CATCH_REQUIRE(diff.n_bytes_equal == 19);
+      CATCH_REQUIRE(!diff.identical());
       CATCH_REQUIRE(diff.worst.frame_no == 4);
+      CATCH_REQUIRE(diff.worst.md5_b.empty());
       CATCH_REQUIRE(diff.worst.hist_cells_differ == 0);
       CATCH_REQUIRE(!diff.worst.p2ds_equal);
       CATCH_REQUIRE(diff.worst.p2d_count_a == 0);
@@ -219,6 +230,7 @@ CATCH_TEST_CASE("DiffEnvelopes", "[ldata]")
       CATCH_REQUIRE(diff.first_frame == 10);
       CATCH_REQUIRE(diff.n_frames == 20);
       CATCH_REQUIRE(diff.n_equal == 20);
+      CATCH_REQUIRE(diff.n_bytes_equal == 20);
 
       diff = diff_envelopes(make_envelope(0, 10), make_envelope(10, 10));
       CATCH_REQUIRE(!diff.error.empty());
@@ -256,6 +268,11 @@ CATCH_TEST_CASE("EnvelopeInfo", "[ldata]")
    CATCH_REQUIRE(info0["bytes"].asUInt64() > 0);
    CATCH_REQUIRE(info0["md5"].asString().size() == 32);
    CATCH_REQUIRE(info0["md5"].asString() == info1["md5"].asString());
+   CATCH_REQUIRE(info0["frame_md5"].size() == 20);
+   CATCH_REQUIRE(info0["frame_md5"][0].asString().size() == 32);
+   CATCH_REQUIRE(info0["frame_md5"][0] != info0["frame_md5"][1]);
+   CATCH_REQUIRE(info0["frames_md5"] == info1["frames_md5"]);
+   CATCH_REQUIRE(info0["frames_md5"] == envelope_info(env, "")["frames_md5"]);
 
    remove_all(tmpd);
 }
@@ -299,6 +316,25 @@ CATCH_TEST_CASE("CatEnvelopesTestcase007", "[ldata]")
    CATCH_REQUIRE(ret.overlap_reports.size() == 1);
    CATCH_REQUIRE(ret.overlap_reports[0]["n_equal"].asInt() == 2);
    CATCH_REQUIRE(envelope_info(env, fname)["frame_no_contiguous"].asBool());
+
+   // operator== skips `prob_xy`; the bytes do not
+   auto changed               = env;
+   LocalizationData* ldat_ptr = nullptr;
+   for(auto& ldat : changed.loc_data)
+      for(auto& p2d_vec : ldat.p2ds)
+         for(auto& info : p2d_vec)
+            if(ldat_ptr == nullptr and info.prob_xy.size() > 0) {
+               info.prob_xy(0, 0) += 1.0f;
+               ldat_ptr = &ldat;
+            }
+   CATCH_REQUIRE(ldat_ptr != nullptr);
+   const auto diff = diff_envelopes(env, changed);
+   CATCH_REQUIRE(diff.n_equal == diff.n_frames);
+   CATCH_REQUIRE(diff.n_bytes_equal == diff.n_frames - 1);
+   CATCH_REQUIRE(!diff.identical());
+   CATCH_REQUIRE(diff.worst.frame_no == ldat_ptr->frame_no);
+   CATCH_REQUIRE(diff.worst.equal);
+   CATCH_REQUIRE(!diff.worst.bytes_equal);
 }
 
 } // namespace perceive::ldata

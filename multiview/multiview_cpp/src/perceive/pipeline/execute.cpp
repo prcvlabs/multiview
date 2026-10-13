@@ -55,7 +55,7 @@ bool run_pipeline(const CliArgs& config) noexcept
       const int start_frame = config.start_frame_no;
       const int first_frame
           = std::max(0, start_frame - config.still_warmup_frames);
-      if(config.ldata_env_ptr == nullptr and first_frame < start_frame) {
+      if(config.ldata_env_ptr == nullptr && first_frame < start_frame) {
          const auto now = tick();
          for(auto t = first_frame; t < start_frame; ++t)
             scene_desc->get_images_for_frame(t);
@@ -121,7 +121,7 @@ bool run_pipeline(const CliArgs& config) noexcept
       return false;
    }
 
-   if(p.config.require_aligned and p.config.generate_tracks) {
+   if(p.config.require_aligned && p.config.generate_tracks) {
       // (*) ---- Check that the tracker's windows line up with the shards
       const int k = int(movie->tracklet_task.params()
                             .tracklet_params.max_frames_per_tracklet);

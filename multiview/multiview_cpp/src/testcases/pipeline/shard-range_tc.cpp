@@ -36,6 +36,8 @@ CATCH_TEST_CASE("ShardAlignmentError", "[shard]")
           shard_alignment_error(490, 20, 499, 10, nullptr), "outside"));
       CATCH_REQUIRE(error_contains(
           shard_alignment_error(-10, 20, 499, 10, nullptr), "outside"));
+      CATCH_REQUIRE(error_contains(
+          shard_alignment_error(80, 70, 149, 10, nullptr), "outside"));
       CATCH_REQUIRE(shard_alignment_error(0, 120, 499, 0, nullptr));
       CATCH_REQUIRE(shard_alignment_error(0, 120, 499, -10, nullptr));
    }
@@ -53,6 +55,8 @@ CATCH_TEST_CASE("ShardAlignmentError", "[shard]")
           shard_alignment_error(290, 110, 499, 10, &env), "localization"));
       CATCH_REQUIRE(error_contains(
           shard_alignment_error(300, 110, 499, 10, &env), "localization"));
+      CATCH_REQUIRE(error_contains(shard_alignment_error(0, 200, 499, 10, &env),
+                                   "localization"));
    }
 }
 

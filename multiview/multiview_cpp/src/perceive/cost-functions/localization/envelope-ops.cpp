@@ -33,6 +33,33 @@ static bool same_geometry(const LocalizationData& a,
           and a.bounds == b.bounds;
 }
 
+// ----------------------------------------------------------------- frame-bytes
+//
+// The bytes `LocalizationData::write` produces for `ldat`, or nothing if the
+// frame cannot be written (a 2D pose without its skeleton).
+static std::optional<string> frame_bytes(const LocalizationData& ldat) noexcept
+{
+   for(const auto& p2d_vec : ldat.p2ds)
+      for(const auto& info : p2d_vec)
+         if(info.p2d_ptr == nullptr) return std::nullopt;
+
+   char* buffer = nullptr;
+   size_t size  = 0;
+   FILE* fp     = open_memstream(&buffer, &size);
+   if(fp == nullptr) return std::nullopt;
+   ldat.write(fp);
+   fclose(fp);
+   string ret(buffer, size);
+   free(buffer);
+   return ret;
+}
+
+static string frame_md5(const LocalizationData& ldat) noexcept
+{
+   const auto bytes = frame_bytes(ldat);
+   return bytes.has_value() ? md5(*bytes) : ""s;
+}
+
 static int count_p2ds(const LocalizationData& ldat) noexcept
 {
    int ret = 0;
@@ -82,6 +109,13 @@ static FrameDiff diff_frame(const LocalizationData& a,
 
    ret.equal = ret.header_equal and ret.hist_cells_differ == 0
                and ret.p2ds_equal and a == b;
+
+   const auto bytes_a = frame_bytes(a);
+   const auto bytes_b = frame_bytes(b);
+   ret.bytes_equal
+       = bytes_a.has_value() and bytes_b.has_value() and *bytes_a == *bytes_b;
+   ret.md5_a = bytes_a.has_value() ? md5(*bytes_a) : ""s;
+   ret.md5_b = bytes_b.has_value() ? md5(*bytes_b) : ""s;
    return ret;
 }
 
@@ -89,8 +123,11 @@ static FrameDiff diff_frame(const LocalizationData& a,
 static bool is_worse(const FrameDiff& a, const FrameDiff& b) noexcept
 {
    auto key = [](const FrameDiff& o) {
-      return std::make_tuple(
-          o.hist_max_abs, o.hist_cells_differ, !o.p2ds_equal, !o.header_equal);
+      return std::make_tuple(o.hist_max_abs,
+                             o.hist_cells_differ,
+                             !o.p2ds_equal,
+                             !o.header_equal,
+                             !o.equal);
    };
    return key(a) > key(b);
 }
@@ -103,14 +140,16 @@ static void diff_range(DiffResult& ret,
                        const int first_frame,
                        const int n_frames) noexcept
 {
-   ret.first_frame = first_frame;
-   ret.n_frames    = n_frames;
-   ret.n_equal     = 0;
+   ret.first_frame   = first_frame;
+   ret.n_frames      = n_frames;
+   ret.n_bytes_equal = 0;
+   ret.n_equal       = 0;
    ret.frames.clear();
    for(auto t = first_frame; t < first_frame + n_frames; ++t) {
       const auto diff = diff_frame(env_frame(a, t), env_frame(b, t));
-      if(diff.equal) {
-         ret.n_equal += 1;
+      if(diff.equal) ret.n_equal += 1;
+      if(diff.bytes_equal) {
+         ret.n_bytes_equal += 1;
          continue;
       }
       if(ret.frames.empty() or is_worse(diff, ret.worst)) ret.worst = diff;
@@ -124,7 +163,10 @@ Json::Value FrameDiff::to_json() const noexcept
 {
    Json::Value o{Json::objectValue};
    o["frame_no"]           = frame_no;
+   o["bytes_equal"]        = bytes_equal;
    o["equal"]              = equal;
+   o["md5_a"]              = md5_a;
+   o["md5_b"]              = md5_b;
    o["header_equal"]       = header_equal;
    o["hist_dims_equal"]    = hist_dims_equal;
    o["hist_cells_differ"]  = hist_cells_differ;
@@ -142,7 +184,7 @@ Json::Value FrameDiff::to_json() const noexcept
 bool DiffResult::identical() const noexcept
 {
    return error.empty() and headers_equal and n_frames > 0
-          and n_equal == n_frames;
+          and n_bytes_equal == n_frames;
 }
 
 Json::Value DiffResult::to_json(const bool verbose) const noexcept
@@ -153,6 +195,7 @@ Json::Value DiffResult::to_json(const bool verbose) const noexcept
    o["headers_equal"] = headers_equal;
    o["first_frame"]   = first_frame;
    o["n_frames"]      = n_frames;
+   o["n_bytes_equal"] = n_bytes_equal;
    o["n_equal"]       = n_equal;
    o["n_differ"]      = int(frames.size());
    if(!frames.empty()) o["worst"] = worst.to_json();
@@ -358,6 +401,18 @@ Json::Value envelope_info(const LocalizationDataEnvelope& env,
       o["p2d_count_max"]       = p2d_max;
       o["p2d_count_mean"]      = real(p2d_total) / n_frames;
       o["frame_no_contiguous"] = frame_no_contiguous;
+   }
+
+   { // md5 of each frame's bytes, and of all of them in order
+      Json::Value md5s{Json::arrayValue};
+      string all_md5s = ""s;
+      for(const auto& ldat : env.loc_data) {
+         const auto s = frame_md5(ldat);
+         md5s.append(s);
+         all_md5s += s;
+      }
+      o["frame_md5"]  = md5s;
+      o["frames_md5"] = md5(all_md5s);
    }
 
    return o;
