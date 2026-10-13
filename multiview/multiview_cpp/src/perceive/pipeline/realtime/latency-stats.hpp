@@ -90,6 +90,10 @@ class RealtimeStats
    static constexpr int k_n_queues    = 4;
    static constexpr int k_n_latencies = 4;
 
+   // Overloaded: more than this share of the frames of the last window dropped
+   static constexpr std::chrono::seconds k_overload_window{5};
+   static constexpr double k_overload_share = 0.2;
+
  private:
    time_point t0_;
    array<RateCounter, k_n_stages> rates_;
@@ -99,6 +103,8 @@ class RealtimeStats
    std::atomic<uint64_t> still_samples_ = 0;
    array<LatencyStats, k_n_latencies> latencies_;
    LatencyStats window_ms_;
+   RateCounter recent_frames_; // provisional or dropped, `k_overload_window`
+   RateCounter recent_drops_;
 
  public:
    explicit RealtimeStats(time_point t0 = std::chrono::steady_clock::now());
@@ -116,8 +122,14 @@ class RealtimeStats
    const LatencyStats& latency(Latency which) const noexcept;
    const LatencyStats& window_ms() const noexcept { return window_ms_; }
 
+   // Dropped frames over provisional and dropped ones in the last
+   // `k_overload_window`; 0 if there were none
+   double drop_share(time_point now) const noexcept;
+   bool is_overloaded(time_point now) const noexcept;
+
    void count_frame(Stage stage, time_point t) noexcept;
-   void count_drop(DropReason reason) noexcept;
+   void count_drop(DropReason reason) noexcept; // at `steady_clock::now()`
+   void count_drop(DropReason reason, time_point t) noexcept;
    void set_queue_depth(Queue queue, size_t depth) noexcept;
    void set_slots_busy(unsigned n) noexcept;
    void set_still_samples(uint64_t n) noexcept;
@@ -126,6 +138,9 @@ class RealtimeStats
 
    // The body of the `stats` message (without "type")
    Json::Value to_json(time_point now) const noexcept;
+
+   // `to_json`, with "status" ("ok" or "overloaded") and "drop_share"
+   Json::Value to_health_json(time_point now) const noexcept;
 
    // Prometheus text exposition format, version 0.0.4
    string to_prometheus(time_point now) const noexcept;

@@ -148,7 +148,8 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
            "\"0.95\"} 95.0\n",
            "multiview_realtime_latency_ms_count{status=\"provisional\"} 100\n",
            "multiview_realtime_window_ms{quantile=\"0.5\"} 250.0\n",
-           "multiview_realtime_window_ms_count 1\n"}) {
+           "multiview_realtime_window_ms_count 1\n",
+           "multiview_realtime_overloaded 0\n"}) {
          CATCH_INFO(line);
          CATCH_REQUIRE(text.find(line) != string::npos);
       }
@@ -162,6 +163,39 @@ CATCH_TEST_CASE("RealtimeStats", "[realtime_metrics]")
          CATCH_REQUIRE(line.rfind("multiview_realtime_", 0) == 0);
          CATCH_REQUIRE(std::count(cbegin(line), cend(line), ' ') == 1);
       }
+   }
+
+   CATCH_SECTION("overloaded")
+   {
+      // 10 frames a second; from t1 on, 3 of them dropped
+      RealtimeStats o(t0);
+      const auto t1 = t0 + 10s;
+      for(int i = 0; i < 100; ++i)
+         o.count_frame(RealtimeStats::Stage::PROVISIONAL, t0 + i * 100ms);
+      CATCH_REQUIRE(o.drop_share(t1) == 0.0);
+      CATCH_REQUIRE(!o.is_overloaded(t1));
+      CATCH_REQUIRE(o.to_health_json(t1)["status"].asString() == "ok");
+
+      for(int i = 0; i < 50; ++i) {
+         const auto t = t1 + i * 100ms;
+         if(i % 10 < 3)
+            o.count_drop(DropReason::NO_FREE_SLOT, t);
+         else
+            o.count_frame(RealtimeStats::Stage::PROVISIONAL, t);
+      }
+      const auto t2 = t1 + 4900ms; // the window holds the last 50 frames
+      CATCH_REQUIRE(o.drop_share(t2) == 0.3);
+      CATCH_REQUIRE(o.is_overloaded(t2));
+      const auto health = o.to_health_json(t2);
+      CATCH_REQUIRE(health["status"].asString() == "overloaded");
+      CATCH_REQUIRE(health["drop_share"].asDouble() == 0.3);
+      CATCH_REQUIRE(health.isMember("latency_ms"));
+      CATCH_REQUIRE(
+          o.to_prometheus(t2).find("multiview_realtime_overloaded 1\n")
+          != string::npos);
+
+      // Five quiet seconds later, nothing is left in the window
+      CATCH_REQUIRE(o.drop_share(t2 + 5s) == 0.0);
    }
 }
 

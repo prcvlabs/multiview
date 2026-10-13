@@ -207,6 +207,8 @@ RealtimeStats::RealtimeStats(time_point t0)
 {
    for(auto& x : drops_) x = 0;
    for(auto& x : queue_depths_) x = 0;
+   recent_frames_.set_window(k_overload_window);
+   recent_drops_.set_window(k_overload_window);
 }
 
 // -------------------------------------------------------------------- n-frames
@@ -264,18 +266,42 @@ const LatencyStats& RealtimeStats::latency(Latency which) const noexcept
    return latencies_[size_t(which)];
 }
 
+// ------------------------------------------------------------------ drop-share
+//
+double RealtimeStats::drop_share(time_point now) const noexcept
+{
+   const double n_frames = recent_frames_.rate(now);
+   return (n_frames > 0.0) ? recent_drops_.rate(now) / n_frames : 0.0;
+}
+
+// --------------------------------------------------------------- is-overloaded
+//
+bool RealtimeStats::is_overloaded(time_point now) const noexcept
+{
+   return drop_share(now) > k_overload_share;
+}
+
 // ----------------------------------------------------------------- count-frame
 //
 void RealtimeStats::count_frame(Stage stage, time_point t) noexcept
 {
    rates_[size_t(stage)].add(t);
+   if(stage == Stage::PROVISIONAL) recent_frames_.add(t);
 }
 
 // ------------------------------------------------------------------ count-drop
 //
 void RealtimeStats::count_drop(DropReason reason) noexcept
 {
-   if(reason != DropReason::NONE) ++drops_[size_t(reason)];
+   count_drop(reason, std::chrono::steady_clock::now());
+}
+
+void RealtimeStats::count_drop(DropReason reason, time_point t) noexcept
+{
+   if(reason == DropReason::NONE) return;
+   ++drops_[size_t(reason)];
+   recent_frames_.add(t);
+   recent_drops_.add(t);
 }
 
 // ------------------------------------------------------------- set-queue-depth
@@ -348,6 +374,16 @@ Json::Value RealtimeStats::to_json(time_point now) const noexcept
    return o;
 }
 
+// -------------------------------------------------------------- to-health-json
+//
+Json::Value RealtimeStats::to_health_json(time_point now) const noexcept
+{
+   Json::Value o   = to_json(now);
+   o["status"]     = is_overloaded(now) ? "overloaded" : "ok";
+   o["drop_share"] = drop_share(now);
+   return o;
+}
+
 // --------------------------------------------------------------- to-prometheus
 //
 string RealtimeStats::to_prometheus(time_point now) const noexcept
@@ -415,6 +451,9 @@ string RealtimeStats::to_prometheus(time_point now) const noexcept
                    prefix,
                    str(DropReason(i)),
                    n_dropped(DropReason(i)));
+
+   type_line("overloaded", "gauge");
+   ss << format("{}overloaded {}\n", prefix, is_overloaded(now) ? 1 : 0);
 
    type_line("still_samples_total", "counter");
    ss << format("{}still_samples_total {}\n", prefix, still_samples());
