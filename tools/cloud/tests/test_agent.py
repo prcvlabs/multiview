@@ -176,6 +176,9 @@ class TestAgent(unittest.TestCase):
                 self.assertEqual((got, r["state"], r["attempts"][-1]["outcome"]),
                                  (outcome, state, outcome))
                 self.assertTrue(r["error"])
+                if mode == "savefail":  # the line that says why, without the colours
+                    self.assertEqual(r["error"],
+                                     "exit 1: ERROR failed to save localization data: frame 3 differs")
 
     def test_waiting_for_the_gpu_does_not_count(self):
         lock = os.path.join(self.tmp.name, "gpu.lock")

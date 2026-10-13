@@ -80,7 +80,8 @@ def pipeline(argv):
         print("WARN: Unused argument: '--bogus'\nERROR aborting due to previous errors...", flush=True)
         return 1
     if mode == "savefail":
-        print("ERROR failed to save localization data: frame 3 differs", flush=True)
+        print("\x1b[31mERROR\x1b[0m failed to save localization data: frame 3 differs\nexiting",
+              flush=True)
         return 1
     if mode == "progress-then-sleep":
         print(f"saving loc-data frames [{start:4d}-{start:4d}] - 1.0s per frame", flush=True)

@@ -11,6 +11,7 @@ cancelled or the agent terminated; retried).
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -31,6 +32,7 @@ k_fatal_patterns = (
 k_retry_patterns = ("FATAL", "Precondition failed", "Resource deadlock avoided", "kBAM")
 k_progress_patterns = ("saving loc-data frames", "Track frames")
 k_tail_bytes = 4000
+k_ansi = re.compile(r"\x1b\[[0-9;]*m")  # the logger's colours
 
 
 # -------------------------------------------------------------------- RunResult
@@ -305,7 +307,7 @@ def outcome_of_(code, error, tail, present):
 def last_line_(tail):
     """The line of the log tail that says why: the last one with a fatal,
     then a retry pattern, else the last line."""
-    lines = [x.strip() for x in tail.splitlines() if x.strip()]
+    lines = [k_ansi.sub("", x).strip() for x in tail.splitlines() if x.strip()]
     for patterns in (k_fatal_patterns, k_retry_patterns):
         hits = [x for x in lines if any(p in x for p in patterns)]
         if hits:
