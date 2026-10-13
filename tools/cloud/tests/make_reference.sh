@@ -2,10 +2,12 @@
 # Reference runs on testcase 007 for the cloud-distributed parity tests.
 #
 # Usage: tools/cloud/tests/make_reference.sh [--frames N]... [--runs R1,R2,R3]
+#                                            [--no-still]
 #                                            [--cli <multiview-cli>] [--out <dir>]
 #
 # For each N (default 120 and 499), all with --no-stereo and the 2D poses
-# replayed from $MULTIVIEW_POSE_REPLAY/007_site03_sparse_tracks:
+# replayed from $MULTIVIEW_POSE_REPLAY/007_site03_sparse_tracks (the pose
+# classifier is only passed where the tracker runs):
 #
 #   R1  batch run: --tracks-file ground-truth.json --pipeline-testcase
 #   R2  loc-shard run over the whole range: --save-loc-data --no-tracks
@@ -17,6 +19,12 @@
 # fp_info.lab_p nulled) written to <out>/n<N>/t0a.json. Each run's wall time
 # and maximum RSS are in its time.txt. Every run takes the GPU lock that
 # build/dev.sh uses, runs at nice 15 and is memory-capped.
+#
+# --no-still passes --no-still to R2 and R3, whose products then go to
+# R2-no-still, R3-no-still, ref-<N>-no-still.data and t0a-no-still.json
+# (R1 is shared). ref-<N>-no-still.data must equal ref-<N>.data byte for
+# byte; t0a-no-still.json shows what the still changes in a tracks job (the
+# pose classifier's input, hence the pose labels, and lab_p).
 
 set -euo pipefail
 
@@ -33,14 +41,17 @@ CLI="$ROOT/multiview/multiview_cpp/build/cmake-release/multiview-cli"
 OUT="$DATA_D/cloud-golden/007"
 FRAMES=()
 RUNS="R1,R2,R3"
+NO_STILL=()
+SUF=""
 
 while [ "$#" -gt 0 ] ; do
     case "$1" in
         --frames) shift ; FRAMES+=("$1") ;;
         --runs)   shift ; RUNS="$1" ;;
+        --no-still) NO_STILL=(--no-still) ; SUF="-no-still" ;;
         --cli)    shift ; CLI="$1" ;;
         --out)    shift ; OUT="$1" ;;
-        -h|--help) sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
+        -h|--help) sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
         *) echo "make_reference: unknown argument '$1'" ; exit 1 ;;
     esac
     shift
@@ -84,7 +95,7 @@ run_pipeline() # run_pipeline <dir> pipeline-args...: logs, wall time and max RS
     # shellcheck disable=SC2046
     flock "$GPU_LOCK" $(capped_cmd) /usr/bin/time -v -o "$dir/rusage.txt" \
         "$CLI" pipeline -m "$MANIFEST" -p "$OUT/params-replay.json" -d "$dir" -y \
-        --no-stereo --pose-classifier pose-svm-lite_v0 --verbosity 1 "$@" \
+        --no-stereo --verbosity 1 "$@" \
         > "$dir/stdout" 2> "$dir/stderr" || ret=$?
     # /usr/bin/time runs inside the lock: waiting for the GPU is not counted
     python3 - "$dir/rusage.txt" "$ret" "$*" > "$dir/time.txt" <<'EOF'
@@ -107,19 +118,28 @@ for n in "${FRAMES[@]}" ; do
     mkdir -p "$d"
     range=(--start 0 --n-frames "$n")
     if [[ ",$RUNS," == *",R1,"* ]] ; then
-        run_pipeline "$d/R1" "${range[@]}" --tracks-file "$GT" --pipeline-testcase
-    fi
-    if [[ ",$RUNS," == *",R2,"* ]] ; then
-        run_pipeline "$d/R2" "${range[@]}" --save-loc-data --no-tracks
-        cp "$d/R2/localization.data" "$OUT/ref-$n.data"
-        ls -l "$OUT/ref-$n.data" | awk -v n="$n" '{printf "make_reference: ref-%s.data %d bytes, %.0f bytes/frame\n", n, $5, $5 / n}'
-    fi
-    if [[ ",$RUNS," == *",R3,"* ]] ; then
-        run_pipeline "$d/R3" "${range[@]}" --load-loc-data "$OUT/ref-$n.data" \
+        run_pipeline "$d/R1" "${range[@]}" --pose-classifier pose-svm-lite_v0 \
             --tracks-file "$GT" --pipeline-testcase
     fi
-    if [ -f "$d/R1/pipeline-output.json" ] && [ -f "$d/R3/pipeline-output.json" ] ; then
-        python3 "$THIS_DIR/compare_tracks.py" --json "$d/t0a.json" \
-            "$d/R1/pipeline-output.json" "$d/R3/pipeline-output.json" || true
+    if [[ ",$RUNS," == *",R2,"* ]] ; then
+        run_pipeline "$d/R2$SUF" "${range[@]}" --save-loc-data --no-tracks "${NO_STILL[@]}"
+        cp "$d/R2$SUF/localization.data" "$OUT/ref-$n$SUF.data"
+        ls -l "$OUT/ref-$n$SUF.data" | awk -v f="ref-$n$SUF.data" -v n="$n" '{printf "make_reference: %s %d bytes, %.0f bytes/frame\n", f, $5, $5 / n}'
+        if [ -n "$SUF" ] && [ -f "$OUT/ref-$n.data" ] ; then
+            if cmp -s "$OUT/ref-$n.data" "$OUT/ref-$n$SUF.data" ; then
+                echo "make_reference: ref-$n$SUF.data == ref-$n.data (bytes)"
+            else
+                echo "make_reference: ref-$n$SUF.data DIFFERS from ref-$n.data"
+            fi
+        fi
+    fi
+    if [[ ",$RUNS," == *",R3,"* ]] ; then
+        run_pipeline "$d/R3$SUF" "${range[@]}" --load-loc-data "$OUT/ref-$n$SUF.data" \
+            "${NO_STILL[@]}" --pose-classifier pose-svm-lite_v0 \
+            --tracks-file "$GT" --pipeline-testcase
+    fi
+    if [ -f "$d/R1/pipeline-output.json" ] && [ -f "$d/R3$SUF/pipeline-output.json" ] ; then
+        python3 "$THIS_DIR/compare_tracks.py" --json "$d/t0a$SUF.json" \
+            "$d/R1/pipeline-output.json" "$d/R3$SUF/pipeline-output.json" || true
     fi
 done

@@ -4,6 +4,7 @@
 # tracks job over that one envelope.
 #
 # Usage: tools/cloud/tests/check_shard_parity.sh [--frames N] [--shard-frames F]
+#                                                [--no-still]
 #                                                [--cli <multiview-cli>] [--out <dir>]
 #
 # Needs the references of make_reference.sh for N frames (default 120) in
@@ -16,6 +17,10 @@
 #       track_results equal to R3's (lab_p included) and to R1's (lab_p nulled)
 #   (c) tracks jobs with an unaligned end, or starting before the envelope:
 #       refused by --require-aligned
+#
+# --no-still passes --no-still to the loc shards only: (a) then shows that
+# the envelope does not depend on the still (ref-N.data was made with it).
+# The tracks job keeps the still, which the pose classifier reads.
 #
 # Exit status 0 if all hold. Outputs go to <out> (default a new directory
 # under ${TMPDIR:-/tmp}), which is kept.
@@ -34,14 +39,16 @@ CLI="$ROOT/multiview/multiview_cpp/build/cmake-release/multiview-cli"
 N=120
 F=60
 OUT=""
+NO_STILL=()
 
 while [ "$#" -gt 0 ] ; do
     case "$1" in
         --frames)       shift ; N="$1" ;;
         --shard-frames) shift ; F="$1" ;;
+        --no-still)     NO_STILL=(--no-still) ;;
         --cli)          shift ; CLI="$1" ;;
         --out)          shift ; OUT="$1" ;;
-        -h|--help) sed -n '2,19p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
+        -h|--help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ; exit 0 ;;
         *) echo "check_shard_parity: unknown argument '$1'" ; exit 1 ;;
     esac
     shift
@@ -91,7 +98,7 @@ loads=()
 for (( s = 0, i = 0 ; s < N ; s += F, i++ )) ; do
     n=$(( s + F <= N ? F : N - s ))
     d="$OUT/loc-$(printf '%04d' "$i")"
-    run_pipeline "$d" --start "$s" --n-frames "$n" --save-loc-data --no-tracks
+    run_pipeline "$d" --start "$s" --n-frames "$n" --save-loc-data --no-tracks "${NO_STILL[@]}"
     shards+=("$d/localization.data")
     loads+=(--load-loc-data "$d/localization.data")
 done
