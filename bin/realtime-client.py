@@ -116,6 +116,10 @@ class WsConnection:
             except TimeoutError:
                 self.close()
                 return
+            except OSError as e:  # closed without a close frame
+                print(f"realtime-client: {e}", file=sys.stderr)
+                self.is_closed = True
+                return
             if opcode == K_OP_PING:
                 self.send(K_OP_PONG, payload)
             elif opcode == K_OP_CLOSE:

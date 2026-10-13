@@ -287,7 +287,7 @@ bool RealtimeRun::init() noexcept(false)
       return false;
    }
 
-   // ----------------------------------------------- The WebSocket/HTTP server
+   // ------------------------------------------------ The WebSocket/HTTP server
    if(rp.ws_port > 0) {
       WsServer::Params wp;
       wp.port = uint16_t(rp.ws_port);

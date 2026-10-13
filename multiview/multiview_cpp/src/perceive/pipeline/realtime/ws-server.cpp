@@ -32,7 +32,8 @@ static constexpr const char* k_server_name = "multiview-realtime";
 // ----------------------------------------------------------------------- Pimpl
 // Everything but the atomics and `no_clients` belongs to the server's thread
 // once it has started. The sessions refer to the Pimpl, so the members they
-// touch are declared before `ioc`, whose destruction destroys them.
+// touch are declared before `ioc`, whose destruction destroys them. What the
+// handlers throw (a failed allocation) escapes `ioc.run()`, and `run` logs it.
 //
 struct WsServer::Pimpl
 {
@@ -60,10 +61,10 @@ struct WsServer::Pimpl
    bool is_stopping  = false;
    std::thread thread;
 
-   void do_accept() noexcept;
+   void do_accept();
    void on_stream(tcp::socket&& socket, request_type&& req) noexcept;
-   void deliver(const line_ptr& line) noexcept;
-   void close_all() noexcept;
+   void deliver(const line_ptr& line);
+   void close_all();
    void client_gone() noexcept;
    void run() noexcept;
 };
@@ -89,7 +90,7 @@ struct WsServer::Pimpl::HttpSession
 
    // ---------------------------------------------------------------------- run
    //
-   void run() noexcept
+   void run()
    {
       stream.expires_after(k_http_timeout);
       http::async_read(stream,
@@ -102,7 +103,7 @@ struct WsServer::Pimpl::HttpSession
 
    // ------------------------------------------------------------------ on-read
    //
-   void on_read(error_code ec) noexcept
+   void on_read(error_code ec)
    {
       if(ec) return; // the client went away, or timed out
       if(websocket::is_upgrade(req) and req.target() == "/v1/stream") {
@@ -115,7 +116,7 @@ struct WsServer::Pimpl::HttpSession
 
    // -------------------------------------------------------------------- reply
    //
-   void reply(http::status status, const char* type, string body) noexcept
+   void reply(http::status status, const char* type, string body)
    {
       res.result(status);
       res.set(http::field::content_type, type);
@@ -124,7 +125,7 @@ struct WsServer::Pimpl::HttpSession
 
    // ------------------------------------------------------------------ respond
    //
-   void respond() noexcept
+   void respond()
    {
       res.version(req.version());
       res.keep_alive(false);
@@ -184,7 +185,7 @@ struct WsServer::Pimpl::StreamSession
 
    // -------------------------------------------------------------------- start
    //
-   void start(request_type&& in_req) noexcept
+   void start(request_type&& in_req)
    {
       req = std::move(in_req);
       ws.set_option(
@@ -200,7 +201,7 @@ struct WsServer::Pimpl::StreamSession
 
    // ---------------------------------------------------------------- on-accept
    //
-   void on_accept(error_code ec) noexcept
+   void on_accept(error_code ec)
    {
       if(ec) {
          fail(ec);
@@ -214,7 +215,7 @@ struct WsServer::Pimpl::StreamSession
    // ------------------------------------------------------------------ do-read
    // Messages from the client are discarded
    //
-   void do_read() noexcept
+   void do_read()
    {
       ws.async_read(read_buffer,
                     [self = shared_from_this()](error_code ec, size_t) {
@@ -229,7 +230,7 @@ struct WsServer::Pimpl::StreamSession
 
    // ------------------------------------------------------------------ deliver
    //
-   void deliver(const line_ptr& line) noexcept
+   void deliver(const line_ptr& line)
    {
       if(is_done or is_closing) return;
       if(queue.size() >= std::max<size_t>(1, server.params.client_queue)) {
@@ -242,7 +243,7 @@ struct WsServer::Pimpl::StreamSession
 
    // ----------------------------------------------------------------- do-write
    //
-   void do_write() noexcept
+   void do_write()
    {
       if(is_done) return;
       if(queue.empty()) {
@@ -267,7 +268,7 @@ struct WsServer::Pimpl::StreamSession
    // -------------------------------------------------------------------- close
    // Once the queue is sent
    //
-   void close() noexcept
+   void close()
    {
       is_closing = true;
       if(!is_open) {
@@ -280,7 +281,7 @@ struct WsServer::Pimpl::StreamSession
 
    // ----------------------------------------------------------------- do-close
    //
-   void do_close() noexcept
+   void do_close()
    {
       if(is_done) return;
       is_done = true;
@@ -299,7 +300,7 @@ struct WsServer::Pimpl::StreamSession
 
 // ------------------------------------------------------------------- do-accept
 //
-void WsServer::Pimpl::do_accept() noexcept
+void WsServer::Pimpl::do_accept()
 {
    acceptor.async_accept([this](error_code ec, tcp::socket socket) {
       if(is_stopping) return;
@@ -338,7 +339,7 @@ void WsServer::Pimpl::on_stream(tcp::socket&& socket,
 
 // --------------------------------------------------------------------- deliver
 //
-void WsServer::Pimpl::deliver(const line_ptr& line) noexcept
+void WsServer::Pimpl::deliver(const line_ptr& line)
 {
    auto ii = std::remove_if(begin(sessions), end(sessions), [](auto& weak) {
       return weak.expired();
@@ -350,7 +351,7 @@ void WsServer::Pimpl::deliver(const line_ptr& line) noexcept
 
 // ------------------------------------------------------------------- close-all
 //
-void WsServer::Pimpl::close_all() noexcept
+void WsServer::Pimpl::close_all()
 {
    is_stopping = true;
    error_code ec;
@@ -371,7 +372,8 @@ void WsServer::Pimpl::client_gone() noexcept
    no_clients.notify_all();
 }
 
-// ----------------------------------------------------- run The server's thread
+// ------------------------------------------------------------------------- run
+// The server's thread
 //
 void WsServer::Pimpl::run() noexcept
 {
