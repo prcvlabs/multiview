@@ -2,6 +2,8 @@
 #include "tracker-results.hpp"
 
 #include "perceive/cost-functions/floor-histogram.hpp"
+#include "perceive/cost-functions/fowlkes/fowlkes.hpp"
+#include "perceive/cost-functions/tracks/tracks-exec.hpp"
 #include "perceive/geometry/skeleton/skeleton-2d-info.hpp"
 
 #define This TrackerResult
@@ -217,6 +219,8 @@ struct SeqFalsePositiveInfo
    }
 };
 
+// ---------------------------------------------------------------- calc-fp-info
+//
 TrackFalsePositiveInfo calc_fp_info(const TrackerResult& tr,
                                     const PostProcessParams& params,
                                     const NodeSequence* ptr)
@@ -301,6 +305,85 @@ TrackerResult post_process(const TrackerResult& tr,
    }
 
    return out;
+}
+
+// --------------------------------------------------------- make-tracker-result
+//
+TrackerResult make_tracker_result(const vector<const Tracks*>& windows,
+                                  const int start_frame,
+                                  const int n_frames,
+                                  const Vector2& top_left,
+                                  const real hist_sz,
+                                  const real frame_duration) noexcept
+{
+   { // Sanity
+      if(windows.size() == 0) {
+         LOG_ERR(format("attempt to get tracks result, because apparently "
+                        "there's no frames!"));
+         return {};
+      }
+   }
+
+   // Create the result
+   TrackerResult ret;
+   ret.start_frame    = start_frame;
+   ret.n_frames       = n_frames;
+   ret.hist_w         = windows[0]->w;
+   ret.hist_h         = windows[0]->h;
+   ret.top_left       = top_left;
+   ret.hist_sz        = hist_sz;
+   ret.frame_duration = frame_duration;
+
+   // How many tracks could we be looking at?
+   auto calc_max_id = [&]() {
+      int max_id = -1;
+      for(auto& ptr : windows)
+         for(const auto& tt : ptr->seqs)
+            if(tt.id() > max_id) max_id = tt.id();
+      return max_id;
+   };
+
+   { // Combine all the node-sequences, merging as necessary
+      ret.seqs.resize(size_t(calc_max_id() + 1));
+      vector<bool> marks(ret.seqs.size(), false);
+      for(const auto& track : windows) {
+         for(const auto& seq : track->seqs) {
+            Expects(size_t(seq.id()) < ret.seqs.size());
+            if(!marks[size_t(seq.id())]) {
+               ret.seqs[size_t(seq.id())] = seq;  // copy
+               marks[size_t(seq.id())]    = true; // so we append next time
+            } else {
+               ret.seqs[size_t(seq.id())].append(seq); // append
+            }
+         }
+      }
+   }
+
+   { // Remove all empty tracks
+      auto ii = std::stable_partition(
+          begin(ret.seqs), end(ret.seqs), [&](const auto& seq) {
+             return seq.size() > 0;
+          });
+      ret.seqs.erase(ii, end(ret.seqs));
+   }
+
+   return ret;
+}
+
+// ------------------------------------------------------------- finalise-tracks
+//
+FowlkesResult finalise_tracks(const TrackerResult& tr,
+                              const PostProcessParams& post_process_params,
+                              const fowlkes::Params& fowlkes_params,
+                              FowlkesResult* presmooth) noexcept
+{
+   // Remove ghost tracks here, and filter short tracks
+   const auto result1 = post_process(tr, post_process_params);
+
+   // Smooth tracks
+   const auto unsmoothed = result1.to_fowlkes_result();
+   if(presmooth != nullptr) *presmooth = unsmoothed;
+   return smooth_tracks(fowlkes_params, unsmoothed);
 }
 
 } // namespace perceive
