@@ -29,14 +29,14 @@ const k_defaults = {
   videos: [] as { name: string; key: string }[],
 };
 
-// ------------------------------------------------------------------ isBlobKey
+// ------------------------------------------------------------------- isBlobKey
 // A key the blob routes accept: relative, no empty, "." or ".." segment.
 export function isBlobKey(key: string): boolean {
   if (key.length === 0 || key.length > 1024) return false;
   return key.split("/").every((s) => s.length > 0 && s !== "." && s !== "..");
 }
 
-// ---------------------------------------------------------------- integer_
+// -------------------------------------------------------------------- integer_
 function integer_(spec: Record<string, unknown>, key: string, min: number): number {
   const x = spec[key];
   if (typeof x !== "number" || !Number.isInteger(x) || x < min)
@@ -44,7 +44,7 @@ function integer_(spec: Record<string, unknown>, key: string, min: number): numb
   return x;
 }
 
-// ---------------------------------------------------------------- string_
+// --------------------------------------------------------------------- string_
 function string_(spec: Record<string, unknown>, key: string): string {
   const x = spec[key];
   if (typeof x !== "string" || x.length === 0)
@@ -52,14 +52,14 @@ function string_(spec: Record<string, unknown>, key: string): string {
   return x;
 }
 
-// --------------------------------------------------------------- key_
+// ------------------------------------------------------------------------ key_
 function key_(spec: Record<string, unknown>, key: string): string {
   const x = string_(spec, key);
   if (!isBlobKey(x)) throw new PlanError(`'${key}' is not a valid object key: '${x}'`);
   return x;
 }
 
-// ---------------------------------------------------------------- normalizeSpec
+// --------------------------------------------------------------- normalizeSpec
 // The spec with its defaults filled in; throws PlanError when a field is
 // missing or invalid, or the range cannot be planned.
 export function normalizeSpec(body: unknown): JobSpecIn {
@@ -142,13 +142,13 @@ export function normalizeSpec(body: unknown): JobSpecIn {
   return spec;
 }
 
-// ------------------------------------------------------------- extraArgs
+// ------------------------------------------------------------------- extraArgs
 export function extraArgs(spec: JobSpec, kind: ShardKind): string[] {
   const x = spec.extra_cli_args;
   return Array.isArray(x) ? [...x] : [...(x[kind] ?? [])];
 }
 
-// ------------------------------------------------------------- outputNames
+// ----------------------------------------------------------------- outputNames
 // The products of a shard and which of them must exist for `complete`.
 export function outputNames(kind: ShardKind, hasGt: boolean): { name: string; required: boolean }[] {
   const loc = ["localization.data", "params.json", "run-object.json", "stdout.log", "poses.tar", "done.json"];

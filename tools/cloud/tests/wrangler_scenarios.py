@@ -31,7 +31,7 @@ k_heartbeat_s = 3
 k_kill_grace_s = 2.0
 
 
-# ------------------------------------------------------------------- alive_
+# ----------------------------------------------------------------------- alive_
 def alive_(pids_file):
     """The pids the fake recorded that are still running."""
     if not os.path.isfile(pids_file):
@@ -46,7 +46,7 @@ def alive_(pids_file):
     return alive
 
 
-# ------------------------------------------------------------------- Scenario
+# --------------------------------------------------------------------- Scenario
 class Scenario:
     """A synthetic job on the Worker and an agent running it in a thread."""
 
@@ -84,7 +84,7 @@ class Scenario:
         self.thread.join()
 
 
-# --------------------------------------------------------------------- cancel
+# ----------------------------------------------------------------------- cancel
 def cancel(base, out):
     s = Scenario(base, out, "cancel")
     try:
@@ -110,7 +110,7 @@ def cancel(base, out):
         s.stop()
 
 
-# -------------------------------------------------------------------- timeout
+# ---------------------------------------------------------------------- timeout
 def timeout(base, out):
     s = Scenario(base, out, "timeout", max_wall_s={"loc": 4, "tracks": None}, max_attempts=2,
                  retry_delay_s=0)

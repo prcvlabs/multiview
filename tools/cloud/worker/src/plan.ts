@@ -27,7 +27,7 @@ export interface ShardSpec {
 export type ShardKind = "loc" | "tracks";
 export type PoseMode = "replay" | "hyperpose";
 
-// ----------------------------------------------------------------- checkRange
+// ------------------------------------------------------------------ checkRange
 // Throws PlanError unless [start, start + n) is a valid tracks-job range of a
 // scene with `total` frames (shard_alignment_error in shard-range.cpp).
 export function checkRange(total: number, start: number, n: number, K: number): void {
@@ -43,7 +43,7 @@ export function checkRange(total: number, start: number, n: number, K: number): 
     );
 }
 
-// ----------------------------------------------------------------- planShards
+// ------------------------------------------------------------------ planShards
 // The loc shards of the job range [start, start + n). A last shard of fewer
 // than 2 frames (the pipeline refuses those) is folded into the one before.
 export function planShards(
@@ -72,7 +72,7 @@ export function planShards(
   });
 }
 
-// ---------------------------------------------------------------- wallBudgetS
+// ----------------------------------------------------------------- wallBudgetS
 // The wall-clock budget of one attempt (plan.wall_budget_s): the measured
 // 1.3-2.3 s per loc frame and ~1 s per tracks frame, with a large margin. A
 // HyperPose loc shard may also build its TensorRT engine.

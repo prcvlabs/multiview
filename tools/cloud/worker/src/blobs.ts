@@ -24,7 +24,7 @@ export function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 
-// --------------------------------------------------------------------- toHex_
+// ---------------------------------------------------------------------- toHex_
 function toHex_(buf: ArrayBuffer | undefined): string | null {
   return buf ? [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("") : null;
 }
@@ -44,7 +44,7 @@ export async function headObject(
   return o ? { bytes: o.size, md5: objectMd5(o) } : null;
 }
 
-// ------------------------------------------------------------- objectHeaders_
+// -------------------------------------------------------------- objectHeaders_
 function objectHeaders_(o: R2Object): Headers {
   const h = new Headers({ "content-length": String(o.size), etag: o.httpEtag });
   o.writeHttpMetadata(h);
@@ -128,7 +128,7 @@ export async function writeBlob(request: Request, bucket: R2Bucket, key: string)
   return json(405, { error: `${request.method} is not a blob write` });
 }
 
-// ------------------------------------------------------------- deleteExcept
+// ---------------------------------------------------------------- deleteExcept
 // Deletes every object under `prefix` that is not under one of `keep`.
 // Returns the number deleted.
 export async function deleteExcept(bucket: R2Bucket, prefix: string, keep: string[]): Promise<number> {
