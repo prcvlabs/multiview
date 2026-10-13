@@ -47,7 +47,22 @@ struct Result
 class Task : public PipelineTask<Params, Result>
 {
  public:
+   using images_provider_type
+       = std::function<shared_ptr<const SceneDescription::FrameImages>(
+           int frame_num)>;
+
+ private:
+   images_provider_type images_provider_ = nullptr;
+
+ public:
    CUSTOM_NEW_DELETE(Task)
+
+   // The images of frame `frame_num` come from `f` instead of the scene's
+   // videos (nullptr from `f` fails the frame). Set before the first result.
+   void set_images_provider(images_provider_type f) noexcept
+   {
+      images_provider_ = std::move(f);
+   }
 
  protected:
    shared_ptr<const Result>
