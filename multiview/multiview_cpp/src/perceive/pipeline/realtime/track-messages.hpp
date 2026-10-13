@@ -131,6 +131,17 @@ struct TrackEndMessage
    bool operator==(const TrackEndMessage&) const = default;
 };
 
+// ---------------------------------------------------------- WindowErrorMessage
+// A tracking window that failed validation and was skipped.
+//
+struct WindowErrorMessage
+{
+   int window    = -1;
+   string reason = ""s;
+
+   bool operator==(const WindowErrorMessage&) const = default;
+};
+
 // ---------------------------------------------------------------- StatsMessage
 // `RealtimeStats::to_json`
 //
@@ -161,11 +172,12 @@ using TrackMessage = std::variant<HeaderMessage,
                                   TracksMessage,
                                   SmoothedMessage,
                                   TrackEndMessage,
+                                  WindowErrorMessage,
                                   StatsMessage,
                                   EndMessage>;
 
 // The "type" of the message: "header", "frame", "dropped", "tracks",
-// "smoothed", "track_end", "stats", or "end"
+// "smoothed", "track_end", "window_error", "stats", or "end"
 const char* message_type(const TrackMessage& msg) noexcept;
 
 Json::Value to_json(const TrackMessage& msg) noexcept;

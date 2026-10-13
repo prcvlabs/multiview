@@ -21,7 +21,7 @@ static const Json::Value& array_key(const Json::Value& o, const char* key)
    return o[key];
 }
 
-// ---------------------------------------------------------- to-json (messages)
+// ------------------------------------------------------------ to-json (header)
 //
 static Json::Value to_json_(const HeaderMessage& m)
 {
@@ -43,6 +43,8 @@ static Json::Value to_json_(const HeaderMessage& m)
    return o;
 }
 
+// ------------------------------------------------------------- to-json (frame)
+//
 static Json::Value to_json_(const FrameMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -65,6 +67,8 @@ static Json::Value to_json_(const FrameMessage& m)
    return o;
 }
 
+// ----------------------------------------------------------- to-json (dropped)
+//
 static Json::Value to_json_(const DroppedMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -73,6 +77,8 @@ static Json::Value to_json_(const DroppedMessage& m)
    return o;
 }
 
+// ------------------------------------------------------------ to-json (tracks)
+//
 static Json::Value to_json_(const TracksMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -104,6 +110,8 @@ static Json::Value to_json_(const TracksMessage& m)
    return o;
 }
 
+// ---------------------------------------------------------- to-json (smoothed)
+//
 static Json::Value to_json_(const SmoothedMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -122,6 +130,8 @@ static Json::Value to_json_(const SmoothedMessage& m)
    return o;
 }
 
+// --------------------------------------------------------- to-json (track-end)
+//
 static Json::Value to_json_(const TrackEndMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -131,11 +141,25 @@ static Json::Value to_json_(const TrackEndMessage& m)
    return o;
 }
 
+// ------------------------------------------------------ to-json (window-error)
+//
+static Json::Value to_json_(const WindowErrorMessage& m)
+{
+   Json::Value o{Json::objectValue};
+   o["window"] = m.window;
+   o["reason"] = m.reason;
+   return o;
+}
+
+// ------------------------------------------------------------- to-json (stats)
+//
 static Json::Value to_json_(const StatsMessage& m)
 {
    return m.stats.isObject() ? m.stats : Json::Value{Json::objectValue};
 }
 
+// --------------------------------------------------------------- to-json (end)
+//
 static Json::Value to_json_(const EndMessage& m)
 {
    Json::Value o{Json::objectValue};
@@ -145,7 +169,7 @@ static Json::Value to_json_(const EndMessage& m)
    return o;
 }
 
-// -------------------------------------------------------- from-json (messages)
+// ---------------------------------------------------------- from-json (header)
 //
 static void from_json_(const Json::Value& o, HeaderMessage& m)
 {
@@ -166,6 +190,8 @@ static void from_json_(const Json::Value& o, HeaderMessage& m)
    m.version           = load_key<string>(o, "version");
 }
 
+// ----------------------------------------------------------- from-json (frame)
+//
 static void from_json_(const Json::Value& o, FrameMessage& m)
 {
    m.frame      = load_key<int>(o, "frame");
@@ -185,12 +211,16 @@ static void from_json_(const Json::Value& o, FrameMessage& m)
    }
 }
 
+// --------------------------------------------------------- from-json (dropped)
+//
 static void from_json_(const Json::Value& o, DroppedMessage& m)
 {
    m.frame  = load_key<int>(o, "frame");
    m.reason = load_key<string>(o, "reason");
 }
 
+// ---------------------------------------------------------- from-json (tracks)
+//
 static void from_json_(const Json::Value& o, TracksMessage& m)
 {
    m.window   = load_key<int>(o, "window");
@@ -217,6 +247,8 @@ static void from_json_(const Json::Value& o, TracksMessage& m)
    }
 }
 
+// -------------------------------------------------------- from-json (smoothed)
+//
 static void from_json_(const Json::Value& o, SmoothedMessage& m)
 {
    m.id           = load_key<int>(o, "id");
@@ -234,6 +266,8 @@ static void from_json_(const Json::Value& o, SmoothedMessage& m)
    }
 }
 
+// ------------------------------------------------------- from-json (track-end)
+//
 static void from_json_(const Json::Value& o, TrackEndMessage& m)
 {
    m.id        = load_key<int>(o, "id");
@@ -241,12 +275,24 @@ static void from_json_(const Json::Value& o, TrackEndMessage& m)
    m.confirmed = load_key<bool>(o, "confirmed");
 }
 
+// ---------------------------------------------------- from-json (window-error)
+//
+static void from_json_(const Json::Value& o, WindowErrorMessage& m)
+{
+   m.window = load_key<int>(o, "window");
+   m.reason = load_key<string>(o, "reason");
+}
+
+// ----------------------------------------------------------- from-json (stats)
+//
 static void from_json_(const Json::Value& o, StatsMessage& m)
 {
    m.stats = o;
    m.stats.removeMember("type");
 }
 
+// ------------------------------------------------------------- from-json (end)
+//
 static void from_json_(const Json::Value& o, EndMessage& m)
 {
    m.frames  = load_key<int>(o, "frames");
@@ -265,6 +311,7 @@ const char* message_type(const TrackMessage& msg) noexcept
           "tracks",
           "smoothed",
           "track_end",
+          "window_error",
           "stats",
           "end"};
    return names[msg.index()];

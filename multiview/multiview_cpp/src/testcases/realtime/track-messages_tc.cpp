@@ -61,6 +61,8 @@ static vector<TrackMessage> make_messages()
 
    out.push_back(TrackEndMessage{12, 44, true});
 
+   out.push_back(WindowErrorMessage{9, "start_frame 90 != prev 70 + 10"});
+
    RealtimeStats stats;
    stats.count_drop(DropReason::NO_FREE_SLOT);
    stats.add_latency(RealtimeStats::Latency::PROVISIONAL, 12.5);
@@ -87,6 +89,7 @@ CATCH_TEST_CASE("TrackMessages", "[realtime_publish]")
                              "tracks",
                              "smoothed",
                              "track_end",
+                             "window_error",
                              "stats",
                              "end"})
          CATCH_REQUIRE(std::count(cbegin(types), cend(types), type) >= 1);
@@ -146,9 +149,10 @@ CATCH_TEST_CASE("TrackMessages", "[realtime_publish]")
       CATCH_REQUIRE(
           has_all(keys_of(5), {"type", "id", "final_upto_t", "points"}));
       CATCH_REQUIRE(has_all(keys_of(6), {"type", "id", "last_t", "confirmed"}));
+      CATCH_REQUIRE(has_all(keys_of(7), {"type", "window", "reason"}));
       CATCH_REQUIRE(
-          has_all(keys_of(7), {"type", "uptime_s", "drops", "latency_ms"}));
-      CATCH_REQUIRE(has_all(keys_of(8), {"type", "frames", "dropped"}));
+          has_all(keys_of(8), {"type", "uptime_s", "drops", "latency_ms"}));
+      CATCH_REQUIRE(has_all(keys_of(9), {"type", "frames", "dropped"}));
 
       const auto o = to_json(messages.at(4));
       CATCH_REQUIRE(o["tracks"][0].isMember("interp"));
