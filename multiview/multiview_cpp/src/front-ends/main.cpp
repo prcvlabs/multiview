@@ -17,6 +17,7 @@
 #include "classifier/classifier-inc.hpp"
 #include "distortion-calib/distortion-calib-inc.hpp"
 #include "dump-default-params/dump-default-params-inc.hpp"
+#include "ldata/ldata-inc.hpp"
 #include "phase-camera-extrinsic/phase-camera-extrinsic-inc.hpp"
 #include "phase-stereo-calib/phase-stereo-calib-inc.hpp"
 #include "pipeline/pipeline-inc.hpp"
@@ -70,6 +71,7 @@ static auto make_runs()
    REGISTER(blur_faces);
    REGISTER(training_data);
    REGISTER(classifier);
+   REGISTER(ldata);
 #endif
 
 #undef REGISTER
