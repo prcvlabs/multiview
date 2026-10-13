@@ -90,8 +90,14 @@ with_lock() # with_lock <lockfile> <what> command...
         echo "dev.sh: waiting for the $what lock ($lock)"
         flock 9
     fi
-    "$@"
+    # Run the command as a child and forward a termination signal to it, so an
+    # interrupted dev.sh does not leave an orphan holding the lock (or the GPU)
+    "$@" &
+    local child=$!
+    trap 'kill -TERM $child 2>/dev/null' INT TERM
+    wait $child
     local ret=$?
+    trap - INT TERM
     flock -u 9
     return $ret
 }
