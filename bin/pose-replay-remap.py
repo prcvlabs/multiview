@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rename pose replay files for a run at a lower --target-fps.
 
-  pose-replay-remap.py MAPPING SRC DST [--copy]
+  pose-replay-remap.py MAPPING SRC DST
 
 Pose replay files are named by scene frame (pose-2d_<frame:06d>_<sensor:02d>.json).
 A replay set recorded at the videos' rate cannot be replayed at a lower
@@ -11,14 +11,15 @@ the output of
   multiview-cli realtime -m MANIFEST --target-fps F --print-frame-mapping
 
 (lines `k m`, `#` comments), and DST receives, for every k and every sensor,
-SRC/pose-2d_<m(k)>_<s>.json as DST/pose-2d_<k>_<s>.json (a symbolic link, or
-a copy with --copy). Exits 1 if a source file is missing.
+SRC/pose-2d_<m(k)>_<s>.json as DST/pose-2d_<k>_<s>.json, with each pose's
+"frame-no" set to k (the tracker looks frames up by it). Exits 1 if a source
+file is missing.
 """
 
 import argparse
+import json
 import os
 import re
-import shutil
 import sys
 
 K_POSE_FILE = re.compile(r"^pose-2d_(\d{6})_(\d{2})\.json$")
@@ -57,7 +58,6 @@ def main():
     ap.add_argument("mapping")
     ap.add_argument("src")
     ap.add_argument("dst")
-    ap.add_argument("--copy", action="store_true")
     args = ap.parse_args()
 
     mapping = load_mapping(args.mapping)
@@ -71,17 +71,19 @@ def main():
     missing = []
     for k, m in enumerate(mapping):
         for s in sensors:
-            src = os.path.abspath(os.path.join(args.src, f"pose-2d_{m:06d}_{s:02d}.json"))
+            src = os.path.join(args.src, f"pose-2d_{m:06d}_{s:02d}.json")
             dst = os.path.join(args.dst, f"pose-2d_{k:06d}_{s:02d}.json")
             if not os.path.isfile(src):
                 missing.append(src)
                 continue
+            with open(src) as fp:
+                poses = json.load(fp)
+            for pose in poses:
+                pose["frame-no"] = k
             if os.path.lexists(dst):
                 os.remove(dst)
-            if args.copy:
-                shutil.copyfile(src, dst)
-            else:
-                os.symlink(src, dst)
+            with open(dst, "w") as fp:
+                json.dump(poses, fp)
             n_written += 1
 
     print(f"{n_written} files for {len(mapping)} scene frames and {len(sensors)} sensors in {args.dst}")
