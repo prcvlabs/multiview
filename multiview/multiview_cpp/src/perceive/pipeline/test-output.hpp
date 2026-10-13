@@ -46,7 +46,9 @@ struct TestOutput
 
    real proportion_with_gaze = 0.0;
 
-   real f1() const noexcept;
+   real precision() const noexcept; // tp / (tp + fp), 0 when no detections
+   real recall() const noexcept;    // tp / (tp + fn), 0 when no ground-truth
+   real f1() const noexcept;        // tp / (tp + fp + fn), i.e., Jaccard
 
    // One element for each frame
    struct FrameInfo
@@ -85,6 +87,10 @@ struct TestOutput
              const real hist_sz,
              const real track_radius,
              const real gaze_theta_threshold) noexcept(false);
+
+   // The numbers that `to_string` prints, as json. Theta values are degrees,
+   // and non-finite values (e.g., theta without ground-truth gaze) are null.
+   Json::Value to_json() const noexcept;
 
    string to_string() const noexcept;
    friend string str(const TestOutput&) noexcept;

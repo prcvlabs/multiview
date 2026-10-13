@@ -158,7 +158,7 @@ static constexpr string_view testcase_output_raw1_calc = R"V0G0N(
          "comment" : "4 FP",
          "path" : [
             [ 4, 9, 0, 0, -1, "W" ],
-            [ 5, 8, 1, 0, -1, "W" ],
+            [ 5.01, 8, 1, 0, -1, "W" ],
             [ 6, 9, 2, 0, -1, "W" ],
             [ 7, 9, 3, 0, -1, "W" ]
          ]
@@ -189,27 +189,54 @@ static constexpr string_view testcase_output_raw1_calc = R"V0G0N(
 }
 )V0G0N";
 
+// ---------------------------------------------------------------- shift-frames
+//
+static string shift_frames(const string_view raw, const int offset)
+{
+   Json::Value o    = parse_json(string(raw));
+   o["start-frame"] = o["start-frame"].asInt() + offset;
+   for(auto& track : o["tracks"])
+      for(auto& tp : track["path"]) tp[2] = tp[2].asInt() + offset;
+   return str(o);
+}
+
 CATCH_TEST_CASE("TestcaseOutput", "[testcase-output]")
 {
    const real person_radius = 0.2;
 
+   auto load_fw = [&](string_view s) {
+      FowlkesResult fw;
+      try {
+         read(fw, s);
+      } catch(std::exception& e) {
+         FATAL(format("oops: {}", e.what()));
+      }
+      return fw;
+   };
+
+   // The counts are worked out by hand from the tracks above
+   auto check_counts = [&](const TestOutput& output) {
+      CATCH_REQUIRE(output.total_true_positives == 7);
+      CATCH_REQUIRE(output.total_false_positives == 4);
+      CATCH_REQUIRE(output.total_false_negatives == 9);
+      CATCH_REQUIRE(output.total_identity_switches == 1);
+      CATCH_REQUIRE(output.total_track_frags == 1);
+      CATCH_REQUIRE(output.total_mt == 0);
+      CATCH_REQUIRE(output.total_pt() == 3);
+      CATCH_REQUIRE(output.total_ml == 1);
+      CATCH_REQUIRE(std::fabs(output.total_tp_distances - 0.02) < 1e-6);
+      CATCH_REQUIRE(std::fabs(output.f1() - 7.0 / 20.0) < 1e-9);
+      CATCH_REQUIRE(std::fabs(output.precision() - 7.0 / 11.0) < 1e-9);
+      CATCH_REQUIRE(std::fabs(output.recall() - 7.0 / 16.0) < 1e-9);
+   };
+
    CATCH_SECTION("testcase-output")
    {
-      auto load_fw = [&](string_view s) {
-         FowlkesResult fw;
-         try {
-            read(fw, s);
-         } catch(std::exception& e) {
-            FATAL(format("oops: {}", e.what()));
-         }
-         return fw;
-      };
-
       const auto fw_gt   = load_fw(testcase_output_raw1_gt);
       const auto fw_calc = load_fw(testcase_output_raw1_calc);
 
       const auto output = compare_tracker_output(fw_gt, fw_calc, person_radius);
-      cout << str(output) << endl;
+      if(feedback) cout << str(output) << endl;
 
       // MOTP: total-tp-distance / n-tps
       // MOTA: (n-fn + n-fp + ID) / total-gt-track-points
@@ -223,6 +250,45 @@ CATCH_TEST_CASE("TestcaseOutput", "[testcase-output]")
       // TP
       // FP
       // FN
+      check_counts(output);
+
+      const auto o = output.to_json();
+      CATCH_REQUIRE(o["start_frame"].asInt() == 0);
+      CATCH_REQUIRE(o["calc_n_frames"].asInt() == 4);
+      CATCH_REQUIRE(o["n_gt_tracks"].asInt() == 4);
+      CATCH_REQUIRE(o["n_calc_tracks"].asInt() == 3);
+      CATCH_REQUIRE(o["tp"].asInt() == 7);
+      CATCH_REQUIRE(o["fp"].asInt() == 4);
+      CATCH_REQUIRE(o["fn"].asInt() == 9);
+      CATCH_REQUIRE(o["id_switches"].asInt() == 1);
+      CATCH_REQUIRE(o["frags"].asInt() == 1);
+      CATCH_REQUIRE(std::fabs(o["precision"].asDouble() - 7.0 / 11.0) < 1e-9);
+      CATCH_REQUIRE(std::fabs(o["recall"].asDouble() - 7.0 / 16.0) < 1e-9);
+      CATCH_REQUIRE(std::fabs(o["f1_jaccard"].asDouble() - 0.35) < 1e-9);
+      CATCH_REQUIRE(std::fabs(o["tp_distance_mean"].asDouble() - 0.02 / 7.0)
+                    < 1e-6);
+   }
+
+   CATCH_SECTION("testcase-output-start-frame")
+   {
+      // The same tracks, 100 frames later, scored from frame 100
+      const auto fw_gt = load_fw(shift_frames(testcase_output_raw1_gt, 100));
+      const auto fw_calc
+          = load_fw(shift_frames(testcase_output_raw1_calc, 100));
+      CATCH_REQUIRE(fw_calc.start_frame == 100);
+
+      const auto output = compare_tracker_output(unsigned(fw_calc.start_frame),
+                                                 unsigned(fw_calc.frames),
+                                                 fw_gt.tracks,
+                                                 fw_gt.frame_duration,
+                                                 fw_calc.tracks,
+                                                 fw_calc.frame_duration,
+                                                 fw_calc.bounds(),
+                                                 fw_calc.hist_sz,
+                                                 person_radius,
+                                                 to_radians(45.0));
+      check_counts(output);
+      CATCH_REQUIRE(output.to_json()["start_frame"].asInt() == 100);
    }
 }
 } // namespace perceive::pipeline
