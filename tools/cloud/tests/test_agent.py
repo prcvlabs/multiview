@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import sys
+import tarfile
 import tempfile
 import threading
 import time
@@ -14,7 +15,7 @@ import unittest
 
 import support
 from mvcloud import runner, storage
-from mvcloud.agent import Agent
+from mvcloud.agent import Agent, extract_once_
 from mvcloud.control import HeartbeatResult
 from mvcloud.fsbackend import FsControl
 
@@ -86,6 +87,25 @@ class TestAgent(unittest.TestCase):
         return Agent(control or self.control, cli_bin=self.cli, cache_dir=os.path.join(d, "cache"),
                      work_dir=os.path.join(d, "work"), gpu_lock=os.path.join(d, "gpu.lock"),
                      mem=None, kill_grace_s=1.0, env=env, **kw)
+
+    def agent_process(self, mode, *args):
+        """`python3 -m mvcloud agent` on this test's root, work dir and GPU
+        lock."""
+        d = self.tmp.name
+        env = {**os.environ, "PYTHONPATH": os.path.join(os.path.dirname(support.k_tests_dir), "agent"),
+               "MVCLOUD_FAKE_MODE": mode, "MVCLOUD_FAKE_PIDS": self.pids}
+        return subprocess.Popen(
+            [sys.executable, "-m", "mvcloud", "agent", "--control", f"fs://{self.root}", "--cli",
+             self.cli, "--cache", os.path.join(d, "cache"), "--work", os.path.join(d, "work"),
+             "--gpu-lock", os.path.join(d, "gpu.lock"), "--mem", "", "--kill-grace", "1", *args],
+            env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+
+    def wait_for_pids(self, n):
+        for _ in range(100):
+            if len(pids_alive(self.pids)) == n:
+                break
+            time.sleep(0.1)
+        self.assertEqual(len(pids_alive(self.pids)), n)
 
     def submit(self, **kw):
         return self.control.submit(support.make_spec(self.paths, **kw))
@@ -277,19 +297,8 @@ class TestAgent(unittest.TestCase):
 
     def test_sigterm_kills_the_session_and_fails_the_attempt(self):
         job_id = self.submit(n_frames=20)
-        d = self.tmp.name
-        env = {**os.environ, "PYTHONPATH": os.path.join(os.path.dirname(support.k_tests_dir), "agent"),
-               "MVCLOUD_FAKE_MODE": "fork", "MVCLOUD_FAKE_PIDS": self.pids}
-        agent = subprocess.Popen(
-            [sys.executable, "-m", "mvcloud", "agent", "--control", f"fs://{self.root}", "--cli",
-             self.cli, "--cache", os.path.join(d, "cache"), "--work", os.path.join(d, "work"),
-             "--gpu-lock", os.path.join(d, "gpu.lock"), "--mem", "", "--kill-grace", "1", "--once"],
-            env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-        for _ in range(100):
-            if len(pids_alive(self.pids)) == 2:
-                break
-            time.sleep(0.1)
-        self.assertEqual(len(pids_alive(self.pids)), 2)
+        agent = self.agent_process("fork", "--once")
+        self.wait_for_pids(2)
         agent.send_signal(signal.SIGTERM)
         _, err = agent.communicate(timeout=20)
         self.assertEqual(agent.returncode, 0, err)
@@ -297,6 +306,56 @@ class TestAgent(unittest.TestCase):
         r = self.shard(job_id, "loc-0000")
         self.assertEqual((r["state"], r["error"]), ("pending", "agent terminated"))
         self.assertEqual(r["attempts"][-1]["outcome"], "stopped")
+
+    def test_a_second_agent_on_the_same_work_dir_exits(self):
+        job_id = self.submit(n_frames=20)
+        first = self.agent_process("sleep", "--once")
+        try:
+            self.wait_for_pids(1)
+            second = self.agent_process("sleep", "--once")
+            _, err = second.communicate(timeout=20)
+            self.assertEqual(second.returncode, 1, err)
+            self.assertIn("another agent is using", err)
+            self.assertEqual(len(pids_alive(self.pids)), 1)  # the first agent's child lives on
+            r = self.shard(job_id, "loc-0000")
+            self.assertEqual((r["state"], r["attempt"]), ("leased", 1))
+        finally:
+            first.send_signal(signal.SIGTERM)
+            _, err = first.communicate(timeout=20)
+        self.assertEqual(first.returncode, 0, err)
+        self.assertEqual(pids_alive(self.pids), [])
+
+    def test_the_child_of_a_dead_agent_is_killed(self):
+        a1 = os.path.join(self.tmp.name, "work", "job", "loc-0000", "a1")
+        os.makedirs(a1)
+        env = {**os.environ, "MVCLOUD_FAKE_MODE": "sleep", "MVCLOUD_FAKE_PIDS": self.pids}
+        orphan = subprocess.Popen([self.cli, "pipeline", "-d", a1], env=env,
+                                  stdout=subprocess.DEVNULL, start_new_session=True)
+        with open(os.path.join(a1, "child.pid"), "w") as f:
+            f.write(f"{orphan.pid}\n")
+        self.wait_for_pids(1)
+        with open(f"/proc/{orphan.pid}/comm") as f:
+            self.assertEqual(f.read().strip(), "multiview-cli")  # as the real binary's
+        self.assertEqual(self.agent().run(drain=True), 0)
+        orphan.wait(timeout=5)
+        self.assertEqual(pids_alive(self.pids), [])
+        self.assertFalse(os.path.exists(os.path.join(a1, "child.pid")))
+
+    def test_complete_refused_fails_the_attempt(self):
+        job_id = self.submit(n_frames=20)
+
+        def short_put(url, src, headers=None):  # the blob store keeps a short params.json
+            storage.put(url, src, headers=headers)
+            if url.endswith("/params.json"):
+                with open(storage.local_path(url), "r+b") as f:
+                    f.truncate(1)
+
+        a = self.agent(uploader=short_put)
+        self.assertEqual(a.run_lease(self.control.pull({"worker_id": "t"})), "conflict")
+        r = self.shard(job_id, "loc-0000")
+        self.assertEqual(r["state"], "pending")  # at once, not when the lease expires
+        self.assertEqual(r["attempts"][-1]["outcome"], "retry")
+        self.assertTrue(r["error"].startswith("complete refused:"), r["error"])
 
     def test_fault_injection_kills_once(self):
         job_id = self.submit(n_frames=20)
@@ -310,6 +369,31 @@ class TestAgent(unittest.TestCase):
         self.assertEqual([x["outcome"] for x in r["attempts"]], ["retry", "done"])
         self.assertTrue(r["attempts"][0]["error"].startswith("fault injection"))
         self.assertEqual(self.control.status(job_id)[0]["state"], "done")
+
+    def test_concurrent_extractions_of_one_tar(self):
+        tar = os.path.join(self.tmp.name, "poses.tar")
+        with tarfile.open(tar, "w") as t:
+            for f in sorted(os.listdir(self.paths["poses"])):
+                t.add(os.path.join(self.paths["poses"], f), arcname=f)
+        got = []
+        errors = []
+
+        def extract():
+            try:
+                got.append(extract_once_(tar))
+            except OSError as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=extract) for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(errors, [])
+        self.assertEqual(set(got), {f"{tar}.d"})
+        self.assertEqual(len(os.listdir(f"{tar}.d")), 40)
+        self.assertEqual(sorted(os.listdir(self.tmp.name)).count("poses.tar.d"), 1)
+        self.assertFalse([f for f in os.listdir(self.tmp.name) if ".tmp" in f])
 
     def test_cli_submit_fills_the_scene_from_scene_info(self):
         spec = support.make_spec(self.paths)

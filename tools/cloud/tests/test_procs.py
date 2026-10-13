@@ -82,28 +82,37 @@ class TestProcs(unittest.TestCase):
         work = os.path.join(self.d, "work")
         a = os.path.join(work, "job", "loc-0000", "a1")
         b = os.path.join(work, "job", "loc-0001", "a1")
-        os.makedirs(a)
-        os.makedirs(b)
+        c = os.path.join(work, "job", "loc-0002", "a1")
+        for x in (a, b, c):
+            os.makedirs(x)
         orphan = subprocess.Popen([os.path.join(bin_dir, "multiview-cli"), "60"],
                                   start_new_session=True)
         with open(os.path.join(a, "child.pid"), "w") as f:
             f.write(f"{orphan.pid}\n")
-        gone = subprocess.Popen(["true"], start_new_session=True)
-        gone.wait()
-        with open(os.path.join(b, "child.pid"), "w") as f:
-            f.write(f"{gone.pid}\n")
         other = subprocess.Popen(["sleep", "60"], start_new_session=True)  # not a multiview-cli
         with open(os.path.join(b, "child.pid"), "w") as f:
             f.write(f"{other.pid}\n")
+        gone = subprocess.Popen(["true"], start_new_session=True)  # its leader has exited
+        gone.wait()
+        with open(os.path.join(c, "child.pid"), "w") as f:
+            f.write(f"{gone.pid}\n")
         try:
             self.assertEqual(procs.reap_orphans(work, grace_s=2.0), 1)
             orphan.wait(timeout=5)
             self.assertFalse(alive(orphan.pid))
             self.assertTrue(alive(other.pid))
-            self.assertFalse(os.path.exists(os.path.join(a, "child.pid")))
+            for x in (a, b, c):
+                self.assertFalse(os.path.exists(os.path.join(x, "child.pid")))
         finally:
             other.kill()
             other.wait()
+
+    def test_work_lock(self):
+        with procs.WorkLock(self.d):
+            with self.assertRaises(procs.WorkBusy):
+                procs.WorkLock(self.d).acquire()  # another open file: refused, also in-process
+        with procs.WorkLock(self.d):  # released
+            pass
 
     def test_memory_cap_prefix(self):
         prefix, capped = procs.memory_cap_prefix("24G", probe=["true"])

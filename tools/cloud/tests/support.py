@@ -61,8 +61,10 @@ def make_spec(paths, **kw):
 
 # --------------------------------------------------------------------- fake_cli
 def fake_cli(d):
-    """The fake as an executable named multiview-cli (its comm, as for the
-    real binary)."""
+    """The fake as an executable named multiview-cli. Its comm is
+    multiview-cli, as for the real binary, because the kernel runs the
+    script's interpreter directly (#!/usr/bin/python3; through
+    /usr/bin/env it would read python3), so reap_orphans takes it for one."""
     src = os.path.join(k_tests_dir, "fake_multiview_cli.py")
     os.chmod(src, os.stat(src).st_mode | stat.S_IXUSR)
     os.makedirs(d, exist_ok=True)

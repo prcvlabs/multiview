@@ -25,7 +25,7 @@ import logging
 import os
 import sys
 
-from . import agent, plan, scene
+from . import agent, plan, procs, scene
 from .control import open_control
 
 log = logging.getLogger("mvcloud")
@@ -63,7 +63,7 @@ def parse(argv):
     p.add_argument("--cache", default=os.path.expanduser("~/mvcloud-cache"),
                    help="inputs, cached by md5")
     p.add_argument("--work", default="/tmp/mvcloud-work",
-                   help="attempt directories, one per agent (orphans found there are killed)")
+                   help="attempt directories, one per agent: a second agent on it exits 1")
     p.add_argument("--gpu-lock", default=agent.k_default_gpu_lock)
     p.add_argument("--mem", default="24G", help="memory cap of a shard; '' for none")
     p.add_argument("--kill-grace", type=float, default=20.0, help="seconds from SIGTERM to SIGKILL")
@@ -136,7 +136,8 @@ def main(argv=None):
                 print(event)
         elif args.cmd == "cancel":
             open_control(args.control).cancel(args.job_id)
-    except (plan.PlanError, scene.SceneInfoError, KeyError, ValueError, OSError) as e:
+    except (plan.PlanError, scene.SceneInfoError, procs.WorkBusy, KeyError, ValueError,
+            OSError) as e:
         log.error(f"{args.cmd}: {e}")
         return 1
     return 0

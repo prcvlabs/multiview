@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """A stand-in for multiview-cli in the agent tests: `pipeline`, `ldata
 info|cat`, `score` and `scene_info`, with the products' shapes but none of
 the work. Envelopes are json: {"start_frame", "n_frames", "frame_md5"}.

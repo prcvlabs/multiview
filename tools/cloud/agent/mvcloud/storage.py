@@ -6,9 +6,11 @@ and every file appears under its final name only when it is complete.
 """
 
 import hashlib
+import http.client
 import json
 import os
 import shutil
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -66,9 +68,10 @@ def copy_(src, dst):
 # ------------------------------------------------------------------------ fetch
 def fetch(url, dest, *, size=None, md5=None, headers=None):
     """Downloads `url` to `dest`, verifying `size` and `md5` when given. The
-    data goes to `dest`.part first, so `dest` is either absent or complete."""
+    data goes to a .part file of this thread's own first, so `dest` is
+    either absent or complete, also when two agents fetch it at once."""
     os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
-    part = f"{dest}.part"
+    part = f"{dest}.{os.getpid()}.{threading.get_ident()}.part"
     try:
         path = local_path(url)
         if path is not None:
@@ -77,13 +80,16 @@ def fetch(url, dest, *, size=None, md5=None, headers=None):
         else:
             request = urllib.request.Request(url, headers=headers or {})
             with urllib.request.urlopen(request, timeout=k_timeout_s) as src:
+                length = src.headers.get("Content-Length")
                 got_size, got_md5 = copy_(src, part)
+            if length is not None and got_size != int(length):
+                raise TransferError(f"{url}: {got_size} bytes, Content-Length {length}")
         if size is not None and got_size != size:
             raise TransferError(f"{url}: {got_size} bytes, expected {size}")
         if md5 is not None and got_md5 != md5:
             raise TransferError(f"{url}: md5 {got_md5}, expected {md5}")
         os.replace(part, dest)
-    except (OSError, urllib.error.URLError) as e:
+    except (OSError, urllib.error.URLError, http.client.HTTPException) as e:
         raise TransferError(f"{url}: {e}") from e
     finally:
         if os.path.exists(part):

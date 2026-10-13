@@ -109,27 +109,29 @@ class Agent:
     # ---------------------------------------------------------------------- run
     def run(self, *, once=False, drain=False, install_signals=False):
         """Processes leases until stopped; `once`: at most one; `drain`:
-        until there is no work. Returns the number of leases processed."""
+        until there is no work. Returns the number of leases processed;
+        raises procs.WorkBusy if another agent holds the work directory."""
         if install_signals:
             signal.signal(signal.SIGTERM, lambda *_: self.stop("agent terminated"))
             signal.signal(signal.SIGINT, lambda *_: self.stop("agent terminated"))
         os.makedirs(self.work_dir, exist_ok=True)
-        n = procs.reap_orphans(self.work_dir, grace_s=self.kill_grace_s)
-        if n > 0:
-            log.warning(f"killed {n} orphaned session(s) under {self.work_dir}")
-        n = 0
-        while not self.stop_reason:
-            lease = self.control.pull(self.worker)
-            if lease is None:
-                if once or drain:
-                    log.info("no work")
+        with procs.WorkLock(self.work_dir):  # raises WorkBusy
+            n = procs.reap_orphans(self.work_dir, grace_s=self.kill_grace_s)
+            if n > 0:
+                log.warning(f"killed {n} orphaned session(s) under {self.work_dir}")
+            n = 0
+            while not self.stop_reason:
+                lease = self.control.pull(self.worker)
+                if lease is None:
+                    if once or drain:
+                        log.info("no work")
+                        break
+                    self.wake_.wait(self.poll_s * random.uniform(0.8, 1.2))
+                    continue
+                self.run_lease(lease)
+                n += 1
+                if once:
                     break
-                self.wake_.wait(self.poll_s * random.uniform(0.8, 1.2))
-                continue
-            self.run_lease(lease)
-            n += 1
-            if once:
-                break
         return n
 
     def stop(self, reason):
@@ -182,9 +184,10 @@ class Agent:
             try:
                 self.control.complete(lease, done)
                 log.info(f"{name}: done in {done['wall_s']:.1f} s")
-            except Conflict as e:
+            except Conflict as e:  # a no-op for the backend if the lease is gone
                 log.error(f"{name}: complete refused: {e}")
                 outcome = "conflict"
+                self.control.fail(lease, f"complete refused: {e}", True, outcome="retry")
         else:
             log.warning(f"{name}: {error} ({outcome})")
             self.control.fail(lease, error, outcome in k_retryable, outcome=outcome)
@@ -336,11 +339,17 @@ def extract_once_(tar_path):
     """The directory a (cached) tar is extracted to, extracting it once."""
     dest = f"{tar_path}.d"
     if not os.path.isdir(dest):
-        tmp = f"{dest}.tmp{os.getpid()}"
+        tmp = f"{dest}.tmp{os.getpid()}.{threading.get_ident()}"
         shutil.rmtree(tmp, ignore_errors=True)
         with tarfile.open(tar_path) as t:
             t.extractall(tmp, filter="data")
-        os.replace(tmp, dest)
+        try:
+            os.replace(tmp, dest)
+        except OSError:
+            if not os.path.isdir(dest):  # else another agent extracted it first
+                raise
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
     return dest
 
 

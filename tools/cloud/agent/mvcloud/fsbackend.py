@@ -208,8 +208,9 @@ class FsControl:
                     self.save_(r)
                 elif r["state"] == "done":
                     problem = self.check_done_(r, verify)
-                    if problem:
+                    if problem:  # a fresh run: a full retry budget
                         r["state"] = "pending"
+                        r["max_attempts"] = r["attempt"] + job["spec"]["max_attempts"]
                         r["error"] = f"invalidated: {problem}"
                         r["output_prefix"] = None
                         r["done"] = None
@@ -221,7 +222,8 @@ class FsControl:
             if not all_loc_done and tracks["state"] in ("pending", "failed", "leased", "done"):
                 if tracks["state"] == "leased":
                     self.end_attempt_(tracks, "invalidated", "a loc shard was re-queued")
-                tracks.update(state="blocked", lease_token=None, output_prefix=None, done=None)
+                tracks.update(state="blocked", lease_token=None, output_prefix=None, done=None,
+                              max_attempts=tracks["attempt"] + job["spec"]["max_attempts"])
                 events.append(f"{job['id']}/tracks: blocked again")
                 self.save_(tracks)
             elif all_loc_done and tracks["state"] == "blocked":

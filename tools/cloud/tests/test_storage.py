@@ -74,6 +74,20 @@ class MockHandler(http.server.BaseHTTPRequestHandler):
         self.server.aborted = True
         self.reply(204)
 
+    def do_GET(self):
+        """Serves s.blobs; s.claimed[path] overrides the Content-Length, a
+        body cut short when it is larger."""
+        s = self.server
+        path = urllib.parse.urlparse(self.path).path
+        body = s.blobs.get(path)
+        if body is None:
+            return self.reply(404)
+        self.send_response(200)
+        self.send_header("Content-Length", str(s.claimed.get(path, len(body))))
+        self.end_headers()
+        self.wfile.write(body)
+        self.close_connection = True
+
     def do_HEAD(self):
         size = self.server.objects.get(urllib.parse.urlparse(self.path).path)
         if size is None:
@@ -85,7 +99,7 @@ class MockHandler(http.server.BaseHTTPRequestHandler):
 
 def start_server():
     s = http.server.ThreadingHTTPServer(("127.0.0.1", 0), MockHandler)
-    s.calls, s.parts, s.objects = [], {}, {}
+    s.calls, s.parts, s.objects, s.blobs, s.claimed = [], {}, {}, {}, {}
     s.failures_left, s.fail_part, s.completed, s.aborted = 0, None, None, False
     threading.Thread(target=s.serve_forever, daemon=True).start()
     return s, f"http://127.0.0.1:{s.server_address[1]}"
@@ -127,12 +141,44 @@ class TestStorage(unittest.TestCase):
 
     def test_fetch_http(self):
         s, base = start_server()
+        with open(self.src, "rb") as f:
+            s.blobs["/x"] = f.read()
+        s.blobs["/cut"] = s.blobs["/x"][:100_000]
+        s.claimed["/cut"] = 300_000
+        out = os.path.join(self.d, "http")
         try:
-            s.objects["/x"] = 0
-            with self.assertRaises(storage.TransferError):
-                storage.fetch(base + "/nothing-there", os.path.join(self.d, "h.bin"))  # GET 501
+            dest = os.path.join(out, "good.bin")
+            storage.fetch(base + "/x", dest, size=300_000, md5=self.md5)
+            self.assertEqual(storage.file_md5(dest), self.md5)
+            for path, kw in [("/x", {"md5": "0" * 32}), ("/cut", {}),
+                             ("/cut", {"size": 300_000, "md5": self.md5}), ("/nothing-there", {})]:
+                bad = os.path.join(out, "bad.bin")
+                with self.subTest(path=path, kw=kw), self.assertRaises(storage.TransferError):
+                    storage.fetch(base + path, bad, **kw)
+                self.assertFalse(os.path.exists(bad))
+            self.assertEqual(os.listdir(out), ["good.bin"])  # no .part left behind
         finally:
             s.shutdown()
+
+    def test_concurrent_fetches_of_one_file(self):
+        cache = os.path.join(self.d, "cache")
+        errors = []
+
+        def fetch():
+            try:
+                storage.fetch_cached(self.src, cache, "x.bin", size=300_000, md5=self.md5)
+            except storage.TransferError as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=fetch) for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(errors, [])
+        dest = os.path.join(cache, self.md5[:2], self.md5)
+        self.assertEqual(os.listdir(dest), ["x.bin"])
+        self.assertEqual(storage.file_md5(os.path.join(dest, "x.bin")), self.md5)
 
     def test_put_file_url(self):
         dest = os.path.join(self.d, "blobs", "k", "v.bin")

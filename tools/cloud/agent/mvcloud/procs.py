@@ -70,6 +70,45 @@ class GpuLock:
         self.release()
 
 
+# --------------------------------------------------------------------- WorkLock
+class WorkBusy(Exception):
+    """Another agent holds the work directory."""
+
+
+class WorkLock:
+    """An exclusive flock on `work_dir`/.agent.lock, held while an agent
+    runs: reap_orphans takes every multiview-cli named in a child.pid there
+    for an orphan, so a second agent must not share the directory."""
+
+    def __init__(self, work_dir):
+        self.path = os.path.join(work_dir, ".agent.lock")
+        self.fd_ = None
+
+    def acquire(self):
+        """Takes the lock or raises WorkBusy; never waits."""
+        fd = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o666)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            os.close(fd)
+            raise WorkBusy(f"another agent is using {os.path.dirname(self.path)}: "
+                           "give each agent its own --work") from None
+        self.fd_ = fd
+
+    def release(self):
+        if self.fd_ is not None:
+            fcntl.flock(self.fd_, fcntl.LOCK_UN)
+            os.close(self.fd_)
+            self.fd_ = None
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *exc):
+        self.release()
+
+
 # ----------------------------------------------------------------- proc_status_
 def proc_status_(pid):
     """(state, pgrp, session) of a process, or None if it is gone."""
@@ -147,8 +186,9 @@ def kill_session(sid, *, grace_s, proc=None):
 # ----------------------------------------------------------------- reap_orphans
 def reap_orphans(work_dir, *, grace_s):
     """Kills the sessions named in child.pid files under `work_dir` whose
-    leader is still a multiview-cli: children of an agent that died. Returns
-    the number of sessions killed."""
+    leader is still a multiview-cli: children of an agent that died. Call it
+    only while holding the directory's WorkLock. Returns the number of
+    sessions killed."""
     n = 0
     for dirpath, _, files in os.walk(work_dir):
         if "child.pid" not in files:

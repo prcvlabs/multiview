@@ -208,6 +208,27 @@ class TestFsBackend(unittest.TestCase):
         self.assertEqual((lease["shard_id"], lease["attempt"]), ("loc-0001", 2))
         self.assertIn("/a2/", lease["outputs"][0]["url"])
 
+    def test_invalidated_shard_gets_a_full_retry_budget(self):
+        job_id = self.submit(n_frames=20, shard_frames=20)
+        for _ in range(2):
+            self.control.fail(self.control.pull(k_worker), "exit -6: abort", retryable=True)
+        support.complete_lease(self.control, self.control.pull(k_worker))  # attempt 3 of 3
+        support.complete_lease(self.control, self.control.pull(k_worker))  # tracks, attempt 1
+        self.assertEqual(self.job_state(job_id), "done")
+        prefix = self.shard(job_id, "loc-0000")["output_prefix"]
+        os.remove(self.control.blob_path(f"{prefix}/done.json"))
+        self.control.sweep()
+        self.assertEqual(self.shard(job_id, "tracks")["max_attempts"], 1 + 3)
+        for attempt in (4, 5):  # retryable failures of the fresh run
+            lease = self.control.pull(k_worker)
+            self.assertEqual((lease["shard_id"], lease["attempt"]), ("loc-0000", attempt))
+            self.control.fail(lease, "exit -6: abort", retryable=True)
+        self.assertEqual(self.shard(job_id, "loc-0000")["state"], "pending")
+        self.assertEqual(self.job_state(job_id), "running")
+        support.complete_lease(self.control, self.control.pull(k_worker))
+        support.complete_lease(self.control, self.control.pull(k_worker))
+        self.assertEqual(self.job_state(job_id), "done")
+
     def test_verify_finds_a_corrupt_output(self):
         job_id = self.submit()
         for _ in range(4):
