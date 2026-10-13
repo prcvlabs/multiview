@@ -25,6 +25,7 @@
 #include "position-scene-cameras/position-scene-cameras-inc.hpp"
 #include "render-floor-map/render-floor-map-inc.hpp"
 #include "run-scraps/run-scraps-inc.hpp"
+#include "score/score-inc.hpp"
 #include "sprite-main/sprite-main-inc.hpp"
 #include "training-data/training-data-inc.hpp"
 #include "undistort/undistort-inc.hpp"
@@ -72,6 +73,7 @@ static auto make_runs()
    REGISTER(training_data);
    REGISTER(classifier);
    REGISTER(ldata);
+   REGISTER(score);
 #endif
 
 #undef REGISTER
