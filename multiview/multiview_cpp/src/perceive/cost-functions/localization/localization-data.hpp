@@ -159,6 +159,13 @@ struct LocalizationData
              const LocalizationData::Params& p,
              const bool feedback,
              const int frame_no) noexcept;
+
+   // A frame with no evidence: the geometry of `like` (histogram size,
+   // bounds, `hist_sz`, `loc_min/max`), no detections (one empty list per
+   // sensor), and every histogram cell at the value `calculate` gives a cell
+   // without detections under `p`.
+   static LocalizationData
+   make_empty(const LocalizationData& like, const Params& p, int frame_no);
 };
 
 // ------------------------------------------------------------------- load/save
