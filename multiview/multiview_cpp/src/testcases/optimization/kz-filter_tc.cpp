@@ -27,7 +27,7 @@ CATCH_TEST_CASE("KzFilter0", "[kz-filter-0]")
    }
 }
 
-// ------------------------------------------------------------ window and lag
+// -------------------------------------------------------------- window and lag
 // KZ(m, k) convolves a box filter of width m with itself k - 1 times. The
 // tracker smooths with KZ(9, 4): 33 coefficients, half-width 16.
 //

@@ -464,6 +464,19 @@ auto calc_median(InputItr begin, InputItr end) noexcept
    return *mid;
 }
 
+// Nearest rank: the smallest element with at least p% of the elements at or
+// below it. `p` is clamped to [0, 100]. Reorders the range, as `calc_median`.
+template<typename InputItr>
+auto calc_percentile(InputItr begin, InputItr end, double p) noexcept
+{
+   const auto N = std::distance(begin, end);
+   Expects(N > 0);
+   const double rank = std::ceil(std::clamp(p, 0.0, 100.0) * double(N) / 100.0);
+   auto ii           = begin + (long(std::max(1.0, rank)) - 1);
+   std::nth_element(begin, ii, end);
+   return *ii;
+}
+
 template<typename InputItr>
 real calc_average(InputItr begin, InputItr end) noexcept
 {

@@ -3,7 +3,7 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <deque>
+#include <optional>
 
 namespace perceive::pipeline::realtime
 {
@@ -12,7 +12,8 @@ namespace perceive::pipeline::realtime
 // plain condition variables: a thread that waits here never runs a job of the
 // global thread pool. `push` blocks while the queue is full, unless the queue
 // drops its oldest element to make room (`drop_oldest`). `close()` wakes every
-// waiter; after it `push` fails, and `pop` drains what is left.
+// waiter; after it `push` fails, and `pop` drains what is left. The storage is
+// a ring allocated in the constructor, so pushing never allocates.
 //
 template<typename T> class BoundedQueue
 {
@@ -20,14 +21,17 @@ template<typename T> class BoundedQueue
    mutable std::mutex padlock_;
    mutable std::condition_variable not_empty_;
    mutable std::condition_variable not_full_;
-   std::deque<T> queue_;
+   vector<std::optional<T>> ring_; // `capacity_` slots
    size_t capacity_    = 1;
+   size_t head_        = 0; // index of the oldest element
+   size_t size_        = 0;
    bool drop_oldest_   = false;
    bool is_closed_     = false;
    uint64_t n_pushed_  = 0;
    uint64_t n_dropped_ = 0;
 
    void push_locked_(T&& value);
+   T pop_locked_();
 
  public:
    explicit BoundedQueue(size_t capacity, bool drop_oldest = false);
@@ -74,6 +78,7 @@ BoundedQueue<T>::BoundedQueue(size_t capacity, bool drop_oldest)
     , drop_oldest_(drop_oldest)
 {
    Expects(capacity_ > 0);
+   ring_.resize(capacity_);
 }
 
 // ------------------------------------------------------------------------ size
@@ -81,7 +86,7 @@ BoundedQueue<T>::BoundedQueue(size_t capacity, bool drop_oldest)
 template<typename T> size_t BoundedQueue<T>::size() const noexcept
 {
    std::lock_guard<std::mutex> lock(padlock_);
-   return queue_.size();
+   return size_;
 }
 
 // ------------------------------------------------------------------- is-closed
@@ -113,7 +118,7 @@ template<typename T> uint64_t BoundedQueue<T>::n_dropped() const noexcept
 template<typename T> bool BoundedQueue<T>::has_room(size_t n) const noexcept
 {
    std::lock_guard<std::mutex> lock(padlock_);
-   return queue_.size() + n <= capacity_;
+   return size_ + n <= capacity_;
 }
 
 // ----------------------------------------------------------------- push-locked
@@ -121,12 +126,26 @@ template<typename T> bool BoundedQueue<T>::has_room(size_t n) const noexcept
 //
 template<typename T> void BoundedQueue<T>::push_locked_(T&& value)
 {
-   while(queue_.size() >= capacity_) {
-      queue_.pop_front();
+   if(size_ == capacity_) {
+      pop_locked_();
       ++n_dropped_;
    }
-   queue_.push_back(std::move(value));
+   ring_[(head_ + size_) % capacity_] = std::move(value);
+   ++size_;
    ++n_pushed_;
+}
+
+// ------------------------------------------------------------------ pop-locked
+// The caller holds `padlock_`, and the queue is not empty.
+//
+template<typename T> T BoundedQueue<T>::pop_locked_()
+{
+   auto& slot = ring_[head_];
+   T value    = std::move(*slot);
+   slot.reset();
+   head_ = (head_ + 1) % capacity_;
+   --size_;
+   return value;
 }
 
 // ------------------------------------------------------------------------ push
@@ -137,7 +156,7 @@ template<typename T> bool BoundedQueue<T>::push(T value)
       std::unique_lock<std::mutex> lock(padlock_);
       if(!drop_oldest_)
          not_full_.wait(lock, [this]() {
-            return is_closed_ || queue_.size() < capacity_;
+            return is_closed_ || size_ < capacity_;
          });
       if(is_closed_) return false;
       push_locked_(std::move(value));
@@ -153,7 +172,7 @@ template<typename T> bool BoundedQueue<T>::try_push(T value) noexcept
    {
       std::lock_guard<std::mutex> lock(padlock_);
       if(is_closed_) return false;
-      if(!drop_oldest_ && queue_.size() >= capacity_) return false;
+      if(!drop_oldest_ && size_ >= capacity_) return false;
       push_locked_(std::move(value));
    }
    not_empty_.notify_one();
@@ -167,10 +186,9 @@ template<typename T> std::optional<T> BoundedQueue<T>::pop()
    std::optional<T> ret;
    {
       std::unique_lock<std::mutex> lock(padlock_);
-      not_empty_.wait(lock, [this]() { return is_closed_ || !queue_.empty(); });
-      if(queue_.empty()) return ret;
-      ret = std::move(queue_.front());
-      queue_.pop_front();
+      not_empty_.wait(lock, [this]() { return is_closed_ || size_ > 0; });
+      if(size_ == 0) return ret;
+      ret = pop_locked_();
    }
    not_full_.notify_all();
    return ret;
@@ -185,10 +203,9 @@ std::optional<T> BoundedQueue<T>::pop_for(std::chrono::milliseconds timeout)
    {
       std::unique_lock<std::mutex> lock(padlock_);
       not_empty_.wait_for(
-          lock, timeout, [this]() { return is_closed_ || !queue_.empty(); });
-      if(queue_.empty()) return ret;
-      ret = std::move(queue_.front());
-      queue_.pop_front();
+          lock, timeout, [this]() { return is_closed_ || size_ > 0; });
+      if(size_ == 0) return ret;
+      ret = pop_locked_();
    }
    not_full_.notify_all();
    return ret;
@@ -201,9 +218,8 @@ template<typename T> std::optional<T> BoundedQueue<T>::try_pop() noexcept
    std::optional<T> ret;
    {
       std::lock_guard<std::mutex> lock(padlock_);
-      if(queue_.empty()) return ret;
-      ret = std::move(queue_.front());
-      queue_.pop_front();
+      if(size_ == 0) return ret;
+      ret = pop_locked_();
    }
    not_full_.notify_all();
    return ret;
@@ -215,7 +231,7 @@ template<typename T> bool BoundedQueue<T>::wait_for_room(size_t n) const
 {
    std::unique_lock<std::mutex> lock(padlock_);
    not_full_.wait(lock, [this, n]() {
-      return is_closed_ || queue_.size() + n <= capacity_;
+      return is_closed_ || size_ + n <= capacity_;
    });
    return !is_closed_;
 }

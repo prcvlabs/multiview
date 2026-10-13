@@ -111,7 +111,8 @@ struct SceneDescription
                                 int frame_no) const noexcept;
 
    // Adds the frame's sensor images to the running still, as
-   // `get_images_for_frame` does. thread-safe.
+   // `get_images_for_frame` does. thread-safe. `still_max_frames` is a soft
+   // cap: N concurrent callers can overshoot it by up to N - 1 frames.
    void accumulate_still(const FrameImages& images,
                          int still_period,
                          int still_max_frames) const noexcept;

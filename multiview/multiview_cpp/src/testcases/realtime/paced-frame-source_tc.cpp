@@ -232,7 +232,11 @@ CATCH_TEST_CASE("PacedFrameSource", "[realtime_source]")
       p.ring_size = 2;
       PacedFrameSource source(make_readers(2), p);
       source.start();
-      std::this_thread::sleep_for(30ms);
+      const auto t0 = tick();
+      while(source.latest_frame_no() < 1 and tock(t0) < 2.0)
+         std::this_thread::sleep_for(1ms);
+      CATCH_REQUIRE(source.latest_frame_no() == 1);
+      std::this_thread::sleep_for(20ms);
       CATCH_REQUIRE(source.latest_frame_no() == 1); // the ring is full
       vector<int> seen;
       while(auto f = source.next(1000ms)) {

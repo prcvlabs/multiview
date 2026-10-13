@@ -1,6 +1,8 @@
 
 #include "latency-stats.hpp"
 
+#include "perceive/utils/math.hpp"
+
 #include <unistd.h>
 
 namespace perceive::pipeline::realtime
@@ -99,18 +101,13 @@ double LatencyStats::mean() const noexcept
 }
 
 // ------------------------------------------------------------------ percentile
-// Nearest rank: the smallest sample with at least p% of the samples at or
-// below it.
+// Nearest rank, over the ring
 //
 double LatencyStats::percentile(double p) const noexcept
 {
    vector<double> xs = samples();
    if(xs.empty()) return 0.0;
-   const double rank
-       = std::ceil(std::clamp(p, 0.0, 100.0) * double(xs.size()) / 100.0);
-   const size_t n = size_t(std::max(1.0, rank)) - 1;
-   std::nth_element(begin(xs), begin(xs) + long(n), end(xs));
-   return xs[n];
+   return calc_percentile(begin(xs), end(xs), p);
 }
 
 // --------------------------------------------------------------------- samples

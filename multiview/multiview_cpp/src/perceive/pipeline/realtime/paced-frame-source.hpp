@@ -148,7 +148,7 @@ class PacedFrameSource
    const Params& params() const noexcept;
    int n_cameras() const noexcept;
    Stats stats() const noexcept;
-   int latest_frame_no() const noexcept; // last to enter the ring, or -1
+   int latest_frame_no() const noexcept; // last decoded frame in, or -1
    bool is_finished() const noexcept;    // the clock is done, the ring empty
 
    void start() noexcept; // spawns the decoder threads and the clock thread

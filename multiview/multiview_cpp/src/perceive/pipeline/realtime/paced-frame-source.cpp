@@ -405,7 +405,13 @@ struct PacedFrameSource::Pimpl
          frame->timestamp = timestamp_of(k);
          frame->t_due     = t_due;
          if(params.split) {
-            frame->images = params.split(std::move(raw), k);
+            try {
+               frame->images = params.split(std::move(raw), k);
+            } catch(std::exception& e) {
+               LOG_ERR(format("exception splitting frame {}: {}", k, e.what()));
+               push_drop(k, t_due, DropReason::DECODE_ERROR);
+               continue;
+            }
          } else {
             frame->images.frame_no     = k;
             frame->images.raw_images   = std::move(raw);
